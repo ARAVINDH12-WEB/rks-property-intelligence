@@ -130,22 +130,26 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
-    return !!localStorage.getItem('rks_auth_session');
+    return !!sessionStorage.getItem('rks_auth_session');
   });
 
   // Role Management
   const [activeRole, setActiveRoleState] = useState<UserRole>(() => {
-    return (localStorage.getItem('rks_active_role') as UserRole) || 'VIEWER';
+    return (sessionStorage.getItem('rks_active_role') as UserRole) || 'VIEWER';
   });
 
   const setActiveRole = (role: UserRole) => {
     setActiveRoleState(role);
+    sessionStorage.setItem('rks_active_role', role);
     localStorage.setItem('rks_active_role', role);
     showToast(`Switched active role to ${role}`, 'Permissions updated dynamically', 'info');
     refreshInventory();
   };
 
   const logoutToGateway = () => {
+    sessionStorage.removeItem('rks_auth_session');
+    sessionStorage.removeItem('rks_auth_token');
+    sessionStorage.setItem('rks_active_role', 'VIEWER');
     localStorage.removeItem('rks_auth_session');
     localStorage.removeItem('rks_auth_token');
     localStorage.setItem('rks_active_role', 'VIEWER');
@@ -156,7 +160,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const [savedUser, setSavedUser] = useState<any>(() => {
     try {
-      const stored = localStorage.getItem('rks_auth_session');
+      const stored = sessionStorage.getItem('rks_auth_session') || localStorage.getItem('rks_auth_session');
       return stored ? JSON.parse(stored) : null;
     } catch {
       return null;

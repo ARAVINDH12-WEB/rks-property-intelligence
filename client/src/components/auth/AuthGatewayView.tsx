@@ -54,6 +54,8 @@ export const AuthGatewayView: React.FC<AuthGatewayViewProps> = ({ onLoginSuccess
       role: 'VIEWER',
     };
 
+    sessionStorage.setItem('rks_active_role', 'VIEWER');
+    sessionStorage.setItem('rks_auth_session', JSON.stringify(guestUser));
     localStorage.setItem('rks_active_role', 'VIEWER');
     localStorage.setItem('rks_auth_session', JSON.stringify(guestUser));
     showToast(`Welcome, ${guestUser.name}!`, 'Logged in as Customer (Viewer Access)', 'success');
@@ -68,6 +70,9 @@ export const AuthGatewayView: React.FC<AuthGatewayViewProps> = ({ onLoginSuccess
 
     try {
       const res = await api.login(staffEmail, staffPassword);
+      sessionStorage.setItem('rks_active_role', res.user.role);
+      sessionStorage.setItem('rks_auth_session', JSON.stringify(res.user));
+      localStorage.setItem('rks_active_role', res.user.role);
       localStorage.setItem('rks_auth_session', JSON.stringify(res.user));
       showToast(`Welcome back, ${res.user.name}`, `Logged in as ${res.user.role}`, 'success');
       onLoginSuccess(res.user.role as UserRole, res.user);
@@ -90,6 +95,8 @@ export const AuthGatewayView: React.FC<AuthGatewayViewProps> = ({ onLoginSuccess
       email,
       role,
     };
+    sessionStorage.setItem('rks_active_role', role);
+    sessionStorage.setItem('rks_auth_session', JSON.stringify(demoUser));
     localStorage.setItem('rks_active_role', role);
     localStorage.setItem('rks_auth_session', JSON.stringify(demoUser));
     showToast(`Authenticated as ${name}`, `Role: ${role}`, 'success');
