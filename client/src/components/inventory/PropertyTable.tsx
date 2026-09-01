@@ -101,9 +101,9 @@ export const PropertyTable: React.FC<PropertyTableProps> = ({
   const statuses: PropertyStatus[] = ['AVAILABLE', 'RESERVED', 'SOLD', 'BLOCKED', 'HOLD', 'UPCOMING'];
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-zinc-800 bg-[#12161F]/95 shadow-xl backdrop-blur-md">
-      <table className="w-full text-left text-sm text-zinc-300">
-        <thead className="border-b border-zinc-800 bg-[#0A0C10]/80 text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+    <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#12161F]/95 shadow-sm dark:shadow-xl backdrop-blur-md">
+      <table className="w-full text-left text-sm text-slate-800 dark:text-zinc-300">
+        <thead className="border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-[#0A0C10]/80 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
           <tr>
             <th className="w-10 px-4 py-3.5">
               <input
@@ -113,17 +113,17 @@ export const PropertyTable: React.FC<PropertyTableProps> = ({
                   if (el) el.indeterminate = someSelected;
                 }}
                 onChange={onToggleSelectAll}
-                className="h-4 w-4 rounded border-zinc-700 bg-zinc-800 text-amber-500 focus:ring-amber-500/30 accent-amber-500 cursor-pointer"
+                className="h-4 w-4 rounded border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-amber-500 focus:ring-amber-500/30 accent-amber-500 cursor-pointer"
               />
             </th>
 
             <th
               onClick={() => onSort('property_code')}
-              className="cursor-pointer px-4 py-3.5 hover:text-white transition-colors"
+              className="cursor-pointer px-4 py-3.5 hover:text-slate-900 dark:hover:text-white transition-colors"
             >
               <div className="flex items-center gap-1.5">
                 <span>Property ID</span>
-                <ArrowUpDown className={`h-3 w-3 ${currentSortField === 'property_code' ? 'text-amber-400' : 'opacity-40'}`} />
+                <ArrowUpDown className={`h-3 w-3 ${currentSortField === 'property_code' ? 'text-amber-500 dark:text-amber-400' : 'opacity-40'}`} />
               </div>
             </th>
 
@@ -131,21 +131,21 @@ export const PropertyTable: React.FC<PropertyTableProps> = ({
 
             <th
               onClick={() => onSort('project_name')}
-              className="cursor-pointer px-4 py-3.5 hover:text-white transition-colors"
+              className="cursor-pointer px-4 py-3.5 hover:text-slate-900 dark:hover:text-white transition-colors"
             >
               <div className="flex items-center gap-1.5">
                 <span>Project</span>
-                <ArrowUpDown className={`h-3 w-3 ${currentSortField === 'project_name' ? 'text-amber-400' : 'opacity-40'}`} />
+                <ArrowUpDown className={`h-3 w-3 ${currentSortField === 'project_name' ? 'text-amber-500 dark:text-amber-400' : 'opacity-40'}`} />
               </div>
             </th>
 
             <th
               onClick={() => onSort('location_name')}
-              className="cursor-pointer px-4 py-3.5 hover:text-white transition-colors"
+              className="cursor-pointer px-4 py-3.5 hover:text-slate-900 dark:hover:text-white transition-colors"
             >
               <div className="flex items-center gap-1.5">
                 <span>Location</span>
-                <ArrowUpDown className={`h-3 w-3 ${currentSortField === 'location_name' ? 'text-amber-400' : 'opacity-40'}`} />
+                <ArrowUpDown className={`h-3 w-3 ${currentSortField === 'location_name' ? 'text-amber-500 dark:text-amber-400' : 'opacity-40'}`} />
               </div>
             </th>
 
@@ -153,57 +153,47 @@ export const PropertyTable: React.FC<PropertyTableProps> = ({
 
             <th
               onClick={() => onSort('area_sqft')}
-              className="cursor-pointer px-4 py-3.5 text-right hover:text-white transition-colors"
+              className="cursor-pointer px-4 py-3.5 text-right hover:text-slate-900 dark:hover:text-white transition-colors"
             >
               <div className="flex items-center justify-end gap-1.5">
                 <span>Area (Sq.Ft)</span>
-                <ArrowUpDown className={`h-3 w-3 ${currentSortField === 'area_sqft' ? 'text-amber-400' : 'opacity-40'}`} />
+                <ArrowUpDown className={`h-3 w-3 ${currentSortField === 'area_sqft' ? 'text-amber-500 dark:text-amber-400' : 'opacity-40'}`} />
               </div>
             </th>
 
             <th
               onClick={() => onSort('rate_per_sqft')}
-              className="cursor-pointer px-4 py-3.5 text-right hover:text-white transition-colors"
+              className="cursor-pointer px-4 py-3.5 text-right hover:text-slate-900 dark:hover:text-white transition-colors"
             >
               <div className="flex items-center justify-end gap-1.5">
                 <span>Rate / Sq.Ft</span>
-                <ArrowUpDown className={`h-3 w-3 ${currentSortField === 'rate_per_sqft' ? 'text-amber-400' : 'opacity-40'}`} />
+                <ArrowUpDown className={`h-3 w-3 ${currentSortField === 'rate_per_sqft' ? 'text-amber-500 dark:text-amber-400' : 'opacity-40'}`} />
               </div>
             </th>
 
             <th
               onClick={() => onSort('total_price')}
-              className="cursor-pointer px-4 py-3.5 text-right hover:text-white transition-colors"
+              className="cursor-pointer px-4 py-3.5 text-right hover:text-slate-900 dark:hover:text-white transition-colors"
             >
               <div className="flex items-center justify-end gap-1.5">
                 <span>Total Price</span>
-                <ArrowUpDown className={`h-3 w-3 ${currentSortField === 'total_price' ? 'text-amber-400' : 'opacity-40'}`} />
+                <ArrowUpDown className={`h-3 w-3 ${currentSortField === 'total_price' ? 'text-amber-500 dark:text-amber-400' : 'opacity-40'}`} />
               </div>
             </th>
 
-            <th
-              onClick={() => onSort('status')}
-              className="cursor-pointer px-4 py-3.5 hover:text-white transition-colors"
-            >
-              <div className="flex items-center gap-1.5">
-                <span>Availability</span>
-                <ArrowUpDown className={`h-3 w-3 ${currentSortField === 'status' ? 'text-amber-400' : 'opacity-40'}`} />
-              </div>
-            </th>
+            <th className="px-4 py-3.5 text-center">Status</th>
 
-            <th className="px-4 py-3.5">Updated</th>
-
-            <th className="w-16 px-4 py-3.5 text-right">Actions</th>
+            <th className="px-4 py-3.5 text-center">Actions</th>
           </tr>
         </thead>
 
-        <tbody className="divide-y divide-zinc-800/60 font-sans">
+        <tbody className="divide-y divide-slate-200 dark:divide-zinc-800/60 font-sans">
           {properties.map((prop) => {
             const isSelected = selectedIds.includes(prop.id);
             return (
               <tr
                 key={prop.id}
-                className={`group transition-colors hover:bg-zinc-800/40 ${
+                className={`group transition-colors hover:bg-slate-50 dark:hover:bg-zinc-800/40 ${
                   isSelected ? 'bg-amber-500/5' : ''
                 }`}
               >
@@ -213,15 +203,15 @@ export const PropertyTable: React.FC<PropertyTableProps> = ({
                     type="checkbox"
                     checked={isSelected}
                     onChange={() => onToggleSelect(prop.id)}
-                    className="h-4 w-4 rounded border-zinc-700 bg-zinc-800 text-amber-500 focus:ring-amber-500/30 accent-amber-500 cursor-pointer"
+                    className="h-4 w-4 rounded border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-amber-500 focus:ring-amber-500/30 accent-amber-500 cursor-pointer"
                   />
                 </td>
 
                 {/* Property ID */}
-                <td className="px-4 py-3 font-mono font-bold text-white">
+                <td className="px-4 py-3 font-mono font-bold text-slate-900 dark:text-white">
                   <button
                     onClick={() => setSelectedPropertyId(prop.id)}
-                    className="hover:text-amber-400 hover:underline transition-colors flex items-center gap-1.5"
+                    className="hover:text-amber-500 dark:hover:text-amber-400 hover:underline transition-colors flex items-center gap-1.5 cursor-pointer"
                   >
                     <span>{prop.property_code}</span>
                   </button>
@@ -229,31 +219,31 @@ export const PropertyTable: React.FC<PropertyTableProps> = ({
 
                 {/* Plot / Unit Name */}
                 <td className="px-4 py-3">
-                  <div className="font-medium text-zinc-200 truncate max-w-[140px]">
+                  <div className="font-medium text-slate-800 dark:text-zinc-200 truncate max-w-[140px]">
                     {prop.plot_number || prop.unit_number || 'Plot Unit'}
                   </div>
                   {prop.facing && (
-                    <div className="text-[11px] text-zinc-500">{prop.facing} Facing</div>
+                    <div className="text-[11px] text-slate-500 dark:text-zinc-500">{prop.facing} Facing</div>
                   )}
                 </td>
 
                 {/* Project */}
                 <td className="px-4 py-3">
-                  <div className="font-semibold text-zinc-200 truncate max-w-[160px]">
+                  <div className="font-semibold text-slate-800 dark:text-zinc-200 truncate max-w-[160px]">
                     {prop.project_name || 'Project'}
                   </div>
-                  <div className="text-[11px] text-zinc-500 font-mono">{prop.project_code}</div>
+                  <div className="text-[11px] text-slate-500 dark:text-zinc-500 font-mono">{prop.project_code}</div>
                 </td>
 
                 {/* Location */}
                 <td className="px-4 py-3">
-                  <div className="text-zinc-300 truncate max-w-[140px]">{prop.city || 'Chennai'}</div>
-                  <div className="text-[11px] text-zinc-500 truncate max-w-[140px]">{prop.location_name}</div>
+                  <div className="text-slate-700 dark:text-zinc-300 truncate max-w-[140px]">{prop.city || 'Chennai'}</div>
+                  <div className="text-[11px] text-slate-500 dark:text-zinc-500 truncate max-w-[140px]">{prop.location_name}</div>
                 </td>
 
                 {/* Property Type */}
                 <td className="px-4 py-3">
-                  <span className="inline-flex items-center rounded-md bg-zinc-800/80 px-2 py-0.5 text-xs text-zinc-300 border border-zinc-700/50">
+                  <span className="inline-flex items-center rounded-md bg-slate-100 dark:bg-zinc-800/80 px-2 py-0.5 text-xs text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700/50">
                     {prop.property_type}
                   </span>
                 </td>

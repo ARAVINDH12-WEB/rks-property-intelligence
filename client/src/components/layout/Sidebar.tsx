@@ -27,6 +27,7 @@ export const Sidebar: React.FC = () => {
     setSidebarCollapsed,
     badgeCounts,
     activeRole,
+    currentUser,
   } = useApp();
 
   const allNavItems: {
@@ -88,23 +89,23 @@ export const Sidebar: React.FC = () => {
 
   return (
     <aside
-      className={`fixed top-0 bottom-0 left-0 z-30 flex flex-col border-r border-zinc-800/80 bg-[#0D1017] transition-all duration-300 ${
+      className={`fixed top-0 bottom-0 left-0 z-30 flex flex-col border-r border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#0D1017] transition-all duration-300 shadow-sm ${
         sidebarCollapsed ? 'w-20' : 'w-64'
       }`}
     >
       {/* Brand Header */}
-      <div className="flex h-16 items-center justify-between px-4 border-b border-zinc-800/80">
+      <div className="flex h-16 items-center justify-between px-4 border-b border-slate-200 dark:border-zinc-800/80">
         <div className="flex items-center gap-3 overflow-hidden">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 font-extrabold text-black shadow-lg shadow-amber-500/20 font-mono tracking-tighter">
             RKS
           </div>
           {!sidebarCollapsed && (
             <div className="flex flex-col truncate">
-              <span className="text-sm font-black tracking-wider text-white uppercase">
+              <span className="text-sm font-black tracking-wider text-slate-900 dark:text-white uppercase">
                 RKS Intelligence
               </span>
-              <span className="text-[10px] font-medium tracking-widest text-amber-400/90 uppercase">
-                Command Center
+              <span className="text-[10px] font-medium tracking-widest text-amber-600 dark:text-amber-400/90 uppercase font-mono">
+                {activeRole === 'VIEWER' ? 'Customer Portal' : 'Command Center'}
               </span>
             </div>
           )}
@@ -112,7 +113,7 @@ export const Sidebar: React.FC = () => {
 
         <button
           onClick={() => setSidebarCollapsed((prev) => !prev)}
-          className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
+          className="rounded-lg p-1.5 text-slate-400 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
           title={sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
         >
           {sidebarCollapsed ? (
@@ -131,15 +132,15 @@ export const Sidebar: React.FC = () => {
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 ${
+              className={`group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 cursor-pointer ${
                 isActive
-                  ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30 shadow-sm'
-                  : 'text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-200'
+                  ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 shadow-sm font-bold'
+                  : 'text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800/60 hover:text-slate-900 dark:hover:text-zinc-200'
               } ${sidebarCollapsed ? 'justify-center' : 'justify-between'}`}
               title={sidebarCollapsed ? item.label : undefined}
             >
               <div className="flex items-center gap-3 truncate">
-                <span className={`${isActive ? 'text-amber-400' : 'text-zinc-400 group-hover:text-zinc-200'}`}>
+                <span className={`${isActive ? 'text-amber-500 dark:text-amber-400' : 'text-slate-400 dark:text-zinc-400 group-hover:text-slate-700 dark:group-hover:text-zinc-200'}`}>
                   {item.icon}
                 </span>
                 {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
@@ -154,7 +155,7 @@ export const Sidebar: React.FC = () => {
               )}
 
               {isActive && (
-                <div className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-amber-400 shadow-sm shadow-amber-400" />
+                <div className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-amber-500 shadow-sm shadow-amber-500" />
               )}
             </button>
           );
@@ -162,21 +163,21 @@ export const Sidebar: React.FC = () => {
       </div>
 
       {/* Role Badge Footer */}
-      <div className="p-3 border-t border-zinc-800/80 bg-[#0A0C10]/60">
+      <div className="p-3 border-t border-slate-200 dark:border-zinc-800/80 bg-slate-50/80 dark:bg-[#0A0C10]/60">
         <div
-          className={`flex items-center gap-3 rounded-xl border border-zinc-800/80 bg-[#12161F] p-2.5 ${
+          className={`flex items-center gap-3 rounded-xl border border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#12161F] p-2.5 shadow-sm ${
             sidebarCollapsed ? 'justify-center' : ''
           }`}
         >
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
             <Shield className="h-4 w-4" />
           </div>
           {!sidebarCollapsed && (
             <div className="flex flex-col truncate">
-              <span className="text-xs font-semibold text-white truncate">
-                Rajesh Kumar S
+              <span className="text-xs font-semibold text-slate-800 dark:text-white truncate">
+                {currentUser?.name || 'Guest User'}
               </span>
-              <span className="text-[10px] font-mono text-amber-400 font-bold uppercase tracking-wider">
+              <span className="text-[10px] font-mono text-amber-600 dark:text-amber-400 font-bold uppercase tracking-wider">
                 {activeRole}
               </span>
             </div>

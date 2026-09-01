@@ -39,10 +39,10 @@ export const ProjectsView: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-white font-sans">
+          <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white font-sans">
             Project Portfolio Management
           </h1>
-          <p className="text-xs text-zinc-400 mt-1">
+          <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">
             Overview of RKS township developments, gated communities, and plotted layouts.
           </p>
         </div>
@@ -50,7 +50,7 @@ export const ProjectsView: React.FC = () => {
 
       {/* Projects Grid */}
       {isLoading ? (
-        <div className="flex h-72 items-center justify-center rounded-2xl border border-zinc-800 bg-[#12161F]/60 text-zinc-400">
+        <div className="flex h-72 items-center justify-center rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#12161F]/60 text-slate-400 dark:text-zinc-400 shadow-sm">
           <div className="flex flex-col items-center gap-3">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
             <span className="text-xs font-medium">Loading Projects...</span>
@@ -66,16 +66,16 @@ export const ProjectsView: React.FC = () => {
             return (
               <div
                 key={proj.id}
-                className="group flex flex-col overflow-hidden rounded-2xl border border-zinc-800/80 bg-[#12161F]/90 shadow-xl backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-amber-500/40"
+                className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#12161F]/90 shadow-sm dark:shadow-xl backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-amber-500/40 hover:shadow-md"
               >
                 {/* Image Banner */}
-                <div className="relative h-48 w-full overflow-hidden bg-zinc-900">
+                <div className="relative h-48 w-full overflow-hidden bg-slate-200 dark:bg-zinc-900">
                   <img
                     src={imageUrl}
                     alt={proj.name}
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#12161F] via-transparent to-black/60" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/50" />
 
                   <div className="absolute top-3 left-3 flex items-center gap-2">
                     <span className="rounded-full bg-emerald-950/80 border border-emerald-500/40 px-2.5 py-0.5 text-[10px] font-bold text-emerald-400 uppercase tracking-wider backdrop-blur-md">
@@ -95,53 +95,53 @@ export const ProjectsView: React.FC = () => {
 
                 {/* Project Details */}
                 <div className="flex flex-1 flex-col p-5">
-                  <h3 className="font-bold text-white text-lg group-hover:text-amber-400 transition-colors">
+                  <h3 className="font-bold text-slate-900 dark:text-white text-lg group-hover:text-amber-500 dark:group-hover:text-amber-400 transition-colors">
                     {proj.name}
                   </h3>
 
-                  <div className="mt-1 flex items-center gap-1 text-xs text-zinc-400 truncate">
-                    <MapPin className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                  <div className="mt-1 flex items-center gap-1 text-xs text-slate-500 dark:text-zinc-400 truncate">
+                    <MapPin className="h-3.5 w-3.5 text-amber-500 shrink-0" />
                     <span>{proj.city}, {proj.location_name}</span>
                   </div>
 
-                  <p className="mt-2 text-xs text-zinc-400 line-clamp-2 leading-relaxed">
+                  <p className="mt-2 text-xs text-slate-600 dark:text-zinc-400 line-clamp-2 leading-relaxed">
                     {proj.description || 'Master planned gated township development.'}
                   </p>
 
                   {/* 4-KPI Grid */}
-                  <div className="mt-4 grid grid-cols-3 gap-2 rounded-xl border border-zinc-800/80 bg-[#0A0C10]/60 p-2.5 text-center font-mono">
+                  <div className="mt-4 grid grid-cols-3 gap-2 rounded-xl border border-slate-200 dark:border-zinc-800/80 bg-slate-50 dark:bg-[#0A0C10]/60 p-2.5 text-center font-mono">
                     <div>
-                      <div className="text-[10px] text-zinc-500 uppercase font-sans">Available</div>
-                      <div className="mt-0.5 text-sm font-bold text-emerald-400">
+                      <div className="text-[10px] text-slate-500 dark:text-zinc-500 uppercase font-sans">Available</div>
+                      <div className="mt-0.5 text-sm font-bold text-emerald-600 dark:text-emerald-400">
                         {proj.available_properties || 0}
                       </div>
                     </div>
                     <div>
-                      <div className="text-[10px] text-zinc-500 uppercase font-sans">Reserved</div>
-                      <div className="mt-0.5 text-sm font-bold text-amber-400">
+                      <div className="text-[10px] text-slate-500 dark:text-zinc-500 uppercase font-sans">Reserved</div>
+                      <div className="mt-0.5 text-sm font-bold text-amber-600 dark:text-amber-400">
                         {proj.reserved_properties || 0}
                       </div>
                     </div>
                     <div>
-                      <div className="text-[10px] text-zinc-500 uppercase font-sans">Sold</div>
-                      <div className="mt-0.5 text-sm font-bold text-rose-400">
+                      <div className="text-[10px] text-slate-500 dark:text-zinc-500 uppercase font-sans">Sold</div>
+                      <div className="mt-0.5 text-sm font-bold text-rose-600 dark:text-rose-400">
                         {proj.sold_properties || 0}
                       </div>
                     </div>
                   </div>
 
                   {/* Financial Metrics */}
-                  <div className="mt-4 flex items-center justify-between border-t border-zinc-800/60 pt-3 text-xs">
+                  <div className="mt-4 flex items-center justify-between border-t border-slate-200 dark:border-zinc-800/60 pt-3 text-xs">
                     <div>
-                      <span className="text-[10px] text-zinc-500 uppercase">Valuation</span>
-                      <div className="font-mono font-bold text-white">
+                      <span className="text-[10px] text-slate-500 dark:text-zinc-500 uppercase">Valuation</span>
+                      <div className="font-mono font-bold text-slate-900 dark:text-white">
                         {formatCurrencyINR(proj.total_inventory_value, true)}
                       </div>
                     </div>
 
                     <div className="text-right">
-                      <span className="text-[10px] text-zinc-500 uppercase">Avg Rate</span>
-                      <div className="font-mono font-bold text-amber-400">
+                      <span className="text-[10px] text-slate-500 dark:text-zinc-500 uppercase">Avg Rate</span>
+                      <div className="font-mono font-bold text-amber-600 dark:text-amber-400">
                         ₹{Number(proj.average_rate || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}/sqft
                       </div>
                     </div>
@@ -150,7 +150,7 @@ export const ProjectsView: React.FC = () => {
                   {/* View Properties in Project Button */}
                   <button
                     onClick={() => handleFilterByProject(proj.id)}
-                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-800/80 py-2.5 text-xs font-bold text-zinc-200 hover:bg-amber-500 hover:text-black transition-all"
+                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800/80 py-2.5 text-xs font-bold text-slate-700 dark:text-zinc-200 hover:bg-amber-500 hover:text-black dark:hover:bg-amber-500 dark:hover:text-black transition-all cursor-pointer shadow-sm"
                   >
                     <span>View All {proj.total_properties || 0} Properties</span>
                     <ArrowRight className="h-3.5 w-3.5" />

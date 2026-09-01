@@ -23,6 +23,7 @@ import {
   ChevronRight,
   RefreshCw,
   Building,
+  Calendar,
 } from 'lucide-react';
 
 interface InventoryViewProps {
@@ -43,6 +44,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ forcedStatusFilter
     refreshTrigger,
     refreshInventory,
     activeRole,
+    openSiteVisitModal,
     showToast,
   } = useApp();
 
@@ -231,29 +233,39 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ forcedStatusFilter
             )}
           </button>
 
-          <button
-            onClick={() => setIsExportModalOpen(true)}
-            className="flex items-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-800/80 px-3.5 py-2 text-xs font-semibold text-zinc-200 hover:bg-zinc-700 hover:text-white transition-colors"
-          >
-            <Download className="h-4 w-4 text-cyan-400" />
-            <span>Export</span>
-          </button>
+          {activeRole !== 'VIEWER' ? (
+            <>
+              <button
+                onClick={() => setIsExportModalOpen(true)}
+                className="flex items-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-800/80 px-3.5 py-2 text-xs font-semibold text-zinc-200 hover:bg-zinc-700 hover:text-white transition-colors"
+              >
+                <Download className="h-4 w-4 text-cyan-400" />
+                <span>Export</span>
+              </button>
 
-          <button
-            onClick={() => setActiveTab('import')}
-            className="flex items-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2 text-xs font-semibold text-amber-400 hover:bg-amber-500/20 transition-colors"
-          >
-            <FileSpreadsheet className="h-4 w-4" />
-            <span>Import</span>
-          </button>
+              <button
+                onClick={() => setActiveTab('import')}
+                className="flex items-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2 text-xs font-semibold text-amber-400 hover:bg-amber-500/20 transition-colors"
+              >
+                <FileSpreadsheet className="h-4 w-4" />
+                <span>Import</span>
+              </button>
 
-          {activeRole !== 'VIEWER' && (
+              <button
+                onClick={() => setIsAddModalOpen(true)}
+                className="flex items-center gap-1.5 rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-black shadow-lg shadow-amber-500/20 hover:bg-amber-400 transition-all cursor-pointer"
+              >
+                <Plus className="h-4 w-4 stroke-[3]" />
+                <span>Add Property</span>
+              </button>
+            </>
+          ) : (
             <button
-              onClick={() => setIsAddModalOpen(true)}
-              className="flex items-center gap-1.5 rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-black shadow-lg shadow-amber-500/20 hover:bg-amber-400 transition-all"
+              onClick={() => openSiteVisitModal()}
+              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-2 text-xs font-bold text-black shadow-lg shadow-amber-500/20 hover:from-amber-400 hover:to-amber-500 transition-all cursor-pointer"
             >
-              <Plus className="h-4 w-4 stroke-[3]" />
-              <span>Add Property</span>
+              <Calendar className="h-4 w-4" />
+              <span>🚗 Book Free Site Visit</span>
             </button>
           )}
         </div>

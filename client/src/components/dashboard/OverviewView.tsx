@@ -18,6 +18,7 @@ import {
   Download,
   Activity,
   MapPin,
+  Calendar,
   PieChart as PieIcon,
 } from 'lucide-react';
 import {
@@ -33,7 +34,14 @@ import {
 } from 'recharts';
 
 export const OverviewView: React.FC = () => {
-  const { setActiveTab, setIsAddModalOpen, setIsExportModalOpen, setSelectedPropertyId } = useApp();
+  const {
+    setActiveTab,
+    setIsAddModalOpen,
+    setIsExportModalOpen,
+    setSelectedPropertyId,
+    activeRole,
+    openSiteVisitModal,
+  } = useApp();
   const [reportsData, setReportsData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -66,47 +74,70 @@ export const OverviewView: React.FC = () => {
     UPCOMING: '#06B6D4',
   };
 
+  const isStaff = activeRole !== 'VIEWER';
+
   return (
     <div className="space-y-8">
       {/* Top Banner */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-amber-400">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-amber-500 dark:text-amber-400">
             <span>RKS Real Estate Intelligence</span>
             <span>•</span>
-            <span>Inventory Command Center</span>
+            <span>{isStaff ? 'Inventory Command Center' : 'Customer & Buyer Portal'}</span>
           </div>
-          <h1 className="mt-1 text-3xl font-black tracking-tight text-white font-sans">
-            Executive Inventory Overview
+          <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-900 dark:text-white font-sans">
+            {isStaff ? 'Executive Inventory Overview' : 'Explore RKS Prime Properties'}
           </h1>
-          <p className="mt-1 text-xs text-zinc-400">
-            Real-time multi-project property portfolio metrics connected to PostgreSQL.
+          <p className="mt-1 text-xs text-slate-500 dark:text-zinc-400">
+            {isStaff
+              ? 'Real-time multi-project property portfolio metrics connected to PostgreSQL.'
+              : 'Browse 58 surveyed plots, transparent sq.ft rates, clear patta titles, and book free cab inspections.'}
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setIsExportModalOpen(true)}
-            className="flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800/80 px-4 py-2.5 text-xs font-semibold text-zinc-200 hover:bg-zinc-700 hover:text-white transition-colors"
-          >
-            <Download className="h-4 w-4 text-cyan-400" />
-            <span>Export Report</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('import')}
-            className="flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-xs font-semibold text-amber-400 hover:bg-amber-500/20 transition-colors"
-          >
-            <FileSpreadsheet className="h-4 w-4" />
-            <span>Import Excel</span>
-          </button>
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-5 py-2.5 text-xs font-bold text-black shadow-lg shadow-amber-500/20 hover:from-amber-400 hover:to-amber-500 transition-all"
-          >
-            <Plus className="h-4 w-4 stroke-[3]" />
-            <span>+ Add Property</span>
-          </button>
-        </div>
+        {isStaff ? (
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsExportModalOpen(true)}
+              className="flex items-center gap-2 rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-700 hover:text-slate-900 dark:hover:text-white transition-colors shadow-sm"
+            >
+              <Download className="h-4 w-4 text-cyan-500 dark:text-cyan-400" />
+              <span>Export Report</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('import')}
+              className="flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-xs font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-colors"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              <span>Import Excel</span>
+            </button>
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-5 py-2.5 text-xs font-bold text-black shadow-lg shadow-amber-500/20 hover:from-amber-400 hover:to-amber-500 transition-all cursor-pointer"
+            >
+              <Plus className="h-4 w-4 stroke-[3]" />
+              <span>+ Add Property</span>
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => openSiteVisitModal()}
+              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-5 py-2.5 text-xs font-bold text-black shadow-lg shadow-amber-500/20 hover:from-amber-400 hover:to-amber-500 transition-all cursor-pointer"
+            >
+              <Calendar className="h-4 w-4" />
+              <span>🚗 Book Free Site Visit</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('properties')}
+              className="flex items-center gap-2 rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-[#12161F] px-4 py-2.5 text-xs font-bold text-slate-800 dark:text-zinc-200 hover:border-amber-500 transition-all cursor-pointer shadow-sm"
+            >
+              <Building2 className="h-4 w-4 text-amber-500" />
+              <span>Explore 58 Plots</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* 6 MASTER KPI CARDS (Drawn dynamically from DB) */}

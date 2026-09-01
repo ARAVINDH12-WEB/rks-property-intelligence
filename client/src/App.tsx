@@ -75,7 +75,7 @@ const MainLayout: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#0A0C10] text-zinc-100 font-sans">
+    <div className="flex min-h-screen bg-[#F8FAFC] dark:bg-[#0A0C10] text-slate-900 dark:text-zinc-100 font-sans transition-colors duration-200">
       {/* Sidebar Navigation */}
       <Sidebar />
 
