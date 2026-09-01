@@ -1,0 +1,2 @@
+property_code,title,description,property_type,listing_type,status,price,location,address,city,district,state,pincode,bedrooms,bathrooms,built_up_area,land_area,parking,floor,total_floors,facing,age,amenities
+RKS-TEST-001,RKS Test Villa,Premium test property,VILLA,SALE,AVAILABLE,9000000,OMR,"OMR Road, Chennai",Chennai,Chennai,Tamil Nadu,600001,3,3,1850,2400,2,2,3,East,2,"Swimming Pool, Gym, Parking, Security"
