@@ -22,33 +22,19 @@ export function authenticate(req: Request, res: Response, next: NextFunction): v
   const authHeader = req.headers.authorization;
   const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
 
-  // Check demo header for seamless UI role testing
-  const overrideRole = req.headers['x-demo-role'] as string | undefined;
-
-  if (token) {
-    try {
-      const decoded = jwt.verify(token, JWT_SECRET) as AuthUser;
-      if (overrideRole && ['ADMIN', 'MANAGER', 'EMPLOYEE', 'VIEWER'].includes(overrideRole)) {
-        decoded.role = overrideRole as any;
-      }
-      req.user = decoded;
-      return next();
-    } catch (err) {
-      // Invalid token, fall through to fallback demo user if in local dev
-    }
+  if (!token) {
+    res.status(401).json({ error: 'Authentication required. Please log in.' });
+    return;
   }
 
-  // Local development / demo fallback user
-  req.user = {
-    id: 1,
-    name: 'Rajesh Kumar S (Director)',
-    email: 'admin@rks.com',
-    role: (overrideRole && ['ADMIN', 'MANAGER', 'EMPLOYEE', 'VIEWER'].includes(overrideRole))
-      ? (overrideRole as any)
-      : 'ADMIN',
-  };
-
-  next();
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as AuthUser;
+    req.user = decoded;
+    return next();
+  } catch (err) {
+    res.status(401).json({ error: 'Invalid or expired session. Please log in again.' });
+    return;
+  }
 }
 
 export function requireRole(allowedRoles: ('ADMIN' | 'MANAGER' | 'EMPLOYEE' | 'VIEWER')[]) {
