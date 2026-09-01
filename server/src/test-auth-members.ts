@@ -1,4 +1,5 @@
-import { query } from './db/index.js';
+import { query, getDb } from './db/index.js';
+import { seedDatabase } from './db/seed.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
@@ -6,6 +7,11 @@ const JWT_SECRET = process.env.JWT_SECRET || 'rks_property_intelligence_super_se
 
 async function testAuthAndMembers() {
   console.log('🧪 Testing Authentication, Sign-Up & Member Onboarding...\n');
+  await getDb();
+  const preCheck = await query('SELECT count(*)::int as count FROM users');
+  if (preCheck.rows[0]?.count === 0) {
+    await seedDatabase();
+  }
 
   let passed = 0;
   let failed = 0;

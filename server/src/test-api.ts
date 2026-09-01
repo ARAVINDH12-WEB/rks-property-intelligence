@@ -1,9 +1,14 @@
 import { getDb, query } from './db/index.js';
+import { seedDatabase } from './db/seed.js';
 import { calculateTotalPrice, calculateAreaConversions } from './utils/calculations.js';
 
 async function runAcceptanceTests() {
   console.log('🧪 Starting Acceptance & Verification Tests for RKS Property Intelligence...\n');
   await getDb();
+  const preCheck = await query('SELECT count(*)::int as count FROM properties');
+  if (preCheck.rows[0]?.count === 0) {
+    await seedDatabase();
+  }
 
   let passed = 0;
   let failed = 0;
