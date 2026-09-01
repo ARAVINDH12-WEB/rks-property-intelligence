@@ -1,17 +1,14 @@
-import React, { ReactNode } from 'react';
+import React from 'react';
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 interface MetricCardProps {
   title: string;
   value: string | number;
   subtitle?: string;
-  icon: ReactNode;
-  trend?: {
-    value: string;
-    isPositive?: boolean;
-  };
-  accentColor?: string;
+  icon?: React.ReactNode;
+  trend?: { value: number; label: string };
+  gradient?: string;
   onClick?: () => void;
-  className?: string;
 }
 
 export const MetricCard: React.FC<MetricCardProps> = ({
@@ -20,48 +17,44 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   subtitle,
   icon,
   trend,
-  accentColor = 'from-amber-500/20 to-transparent',
+  gradient = 'from-violet-500 to-indigo-600',
   onClick,
-  className = '',
 }) => {
   return (
     <div
       onClick={onClick}
-      className={`relative overflow-hidden rounded-2xl border border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#12161F]/90 p-5 shadow-sm dark:shadow-lg backdrop-blur-md transition-all duration-200 hover:border-amber-500/40 hover:shadow-md ${
-        onClick ? 'cursor-pointer hover:-translate-y-0.5' : ''
-      } ${className}`}
+      className={`relative overflow-hidden rounded-3xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#12161F] p-6 shadow-sm transition-all ${onClick ? 'cursor-pointer hover:scale-[1.02] hover:shadow-lg hover:border-violet-300 dark:hover:border-violet-700/60' : ''}`}
     >
-      <div className={`absolute top-0 right-0 h-28 w-28 rounded-full bg-gradient-to-bl ${accentColor} blur-2xl pointer-events-none opacity-40`} />
+      <div className={`absolute -top-6 -right-6 h-28 w-28 rounded-full bg-gradient-to-br ${gradient} opacity-10 blur-2xl`} />
+      
+      <div className="relative flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 truncate">{title}</p>
+          <p className={`mt-2 text-3xl font-black leading-none bg-gradient-to-br ${gradient} bg-clip-text text-transparent`}>
+            {value}
+          </p>
+          {subtitle && <p className="mt-1.5 text-xs text-slate-500 dark:text-zinc-400 truncate">{subtitle}</p>}
 
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold tracking-wider text-slate-500 dark:text-zinc-400 uppercase">
-          {title}
-        </span>
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-zinc-700/60 bg-slate-50 dark:bg-zinc-800/60 text-amber-500 dark:text-amber-400 shadow-inner">
-          {icon}
+          {trend && (
+            <div className={`mt-3 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${
+              trend.value > 0
+                ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
+                : trend.value < 0
+                ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400'
+                : 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400'
+            }`}>
+              {trend.value > 0 ? <TrendingUp className="h-3 w-3" /> : trend.value < 0 ? <TrendingDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
+              {trend.value > 0 ? '+' : ''}{trend.value}% {trend.label}
+            </div>
+          )}
         </div>
-      </div>
 
-      <div className="mt-3 flex items-baseline gap-2">
-        <div className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white font-mono">
-          {value}
-        </div>
-        {trend && (
-          <span
-            className={`text-xs font-medium ${
-              trend.isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
-            }`}
-          >
-            {trend.value}
-          </span>
+        {icon && (
+          <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-white shadow-lg bg-gradient-to-br ${gradient} shadow-violet-500/20`}>
+            {icon}
+          </div>
         )}
       </div>
-
-      {subtitle && (
-        <div className="mt-1 text-xs text-slate-500 dark:text-zinc-400 truncate">
-          {subtitle}
-        </div>
-      )}
     </div>
   );
 };

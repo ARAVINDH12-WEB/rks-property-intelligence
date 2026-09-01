@@ -129,28 +129,28 @@ export const SiteVisitsManagementView: React.FC = () => {
           title="Total Inquiries"
           value={stats.total_bookings || 0}
           subtitle="All-time Site Visits"
-          icon={<Calendar className="h-5 w-5 text-amber-400" />}
+          icon={<Calendar className="h-5 w-5 text-white" />}
         />
         <MetricCard
           title="Scheduled Today"
           value={stats.today_count || 0}
           subtitle="Visits happening today"
-          icon={<Clock className="h-5 w-5 text-emerald-400" />}
-          accentColor="from-emerald-500/20 to-transparent"
+          icon={<Clock className="h-5 w-5 text-white" />}
+          gradient="from-rose-500 to-red-600"
         />
         <MetricCard
           title="Pending Requests"
           value={stats.requested_count || 0}
           subtitle="Requires Confirmation"
-          icon={<Clock3 className="h-5 w-5 text-amber-400" />}
-          accentColor="from-amber-500/20 to-transparent"
+          icon={<Clock3 className="h-5 w-5 text-white" />}
+          gradient="from-cyan-500 to-blue-600"
         />
         <MetricCard
           title="Confirmed Tours"
           value={stats.confirmed_count || 0}
           subtitle="Ready for tour guide"
-          icon={<CheckCircle2 className="h-5 w-5 text-cyan-400" />}
-          accentColor="from-cyan-500/20 to-transparent"
+          icon={<CheckCircle2 className="h-5 w-5 text-white" />}
+          gradient="from-pink-500 to-fuchsia-600"
         />
       </div>
 

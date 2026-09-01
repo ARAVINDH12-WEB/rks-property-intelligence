@@ -146,7 +146,8 @@ export const OverviewView: React.FC = () => {
           title="Total Properties"
           value={Number(kpis.total_properties || 0).toLocaleString('en-IN')}
           subtitle="Master Portfolio Units"
-          icon={<Building2 className="h-5 w-5 text-amber-400" />}
+          icon={<Building2 className="h-5 w-5 text-white" />}
+          gradient="from-violet-500 to-indigo-600"
           onClick={() => setActiveTab('properties')}
         />
 
@@ -154,17 +155,17 @@ export const OverviewView: React.FC = () => {
           title="Available"
           value={Number(kpis.available_count || 0).toLocaleString('en-IN')}
           subtitle="Ready for Allocation"
-          icon={<CheckCircle2 className="h-5 w-5 text-emerald-400" />}
-          accentColor="from-emerald-500/20 to-transparent"
+          icon={<CheckCircle2 className="h-5 w-5 text-white" />}
+          gradient="from-emerald-500 to-teal-600"
           onClick={() => setActiveTab('available')}
         />
 
         <MetricCard
           title="Reserved"
           value={Number(kpis.reserved_count || 0).toLocaleString('en-IN')}
-          subtitle="Under Negotiation / Advance"
-          icon={<Clock className="h-5 w-5 text-amber-400" />}
-          accentColor="from-amber-500/20 to-transparent"
+          subtitle="Under Negotiation"
+          icon={<Clock className="h-5 w-5 text-white" />}
+          gradient="from-amber-500 to-orange-600"
           onClick={() => setActiveTab('reserved')}
         />
 
@@ -172,8 +173,8 @@ export const OverviewView: React.FC = () => {
           title="Sold"
           value={Number(kpis.sold_count || 0).toLocaleString('en-IN')}
           subtitle="Registered & Closed"
-          icon={<CheckCheck className="h-5 w-5 text-rose-400" />}
-          accentColor="from-rose-500/20 to-transparent"
+          icon={<CheckCheck className="h-5 w-5 text-white" />}
+          gradient="from-rose-500 to-red-600"
           onClick={() => setActiveTab('sold')}
         />
 
@@ -181,18 +182,19 @@ export const OverviewView: React.FC = () => {
           title="Total Value"
           value={formatCurrencyINR(kpis.total_inventory_value, true)}
           subtitle={formatCurrencyINR(kpis.total_inventory_value)}
-          icon={<DollarSign className="h-5 w-5 text-emerald-400" />}
-          accentColor="from-emerald-500/20 to-transparent"
+          icon={<DollarSign className="h-5 w-5 text-white" />}
+          gradient="from-cyan-500 to-blue-600"
         />
 
         <MetricCard
-          title="Average Rate"
+          title="Avg Rate"
           value={`₹${Number(kpis.avg_rate_per_sqft || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`}
-          subtitle="Per Sq.Ft Inventory Rate"
-          icon={<TrendingUp className="h-5 w-5 text-cyan-400" />}
-          accentColor="from-cyan-500/20 to-transparent"
+          subtitle="Per Sq.Ft Rate"
+          icon={<TrendingUp className="h-5 w-5 text-white" />}
+          gradient="from-pink-500 to-fuchsia-600"
         />
       </div>
+
 
       {/* MID SECTION: PORTFOLIO BREAKDOWN & CHARTS */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">

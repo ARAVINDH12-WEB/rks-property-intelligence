@@ -9,7 +9,7 @@ interface ChatMessage {
   content: string;
 }
 
-// POST /api/ai-chat - Conversational Real Estate AI Concierge
+// POST /api/ai-chat - Conversational Real Estate AI Concierge (no auth required — open to all visitors)
 router.post('/', async (req: Request, res: Response): Promise<void> => {
   try {
     const {

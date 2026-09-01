@@ -2,18 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../../context/AppContext.js';
 import { api } from '../../services/api.js';
 import {
-  Bot,
-  Send,
-  X,
-  Sparkles,
-  User,
-  CheckCircle2,
-  Calendar,
-  PhoneCall,
-  MessageCircle,
-  Minimize2,
-  Maximize2,
-  ArrowRight,
+  Bot, Send, X, Sparkles, User, CheckCircle2,
+  Calendar, PhoneCall, MessageCircle, Minimize2, Maximize2,
 } from 'lucide-react';
 
 interface ChatMessage {
@@ -49,235 +39,206 @@ export const AiConciergeChat: React.FC = () => {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
   useEffect(() => {
-    if (isOpen) {
-      scrollToBottom();
-    }
+    if (isOpen) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isOpen]);
 
   const handleSend = async (textToSend?: string) => {
     const text = (textToSend || inputMsg).trim();
     if (!text || isLoading) return;
 
-    const userMessage: ChatMessage = {
-      id: `msg-${Date.now()}`,
+    const userMsg: ChatMessage = {
+      id: 'msg-' + Date.now(),
       sender: 'user',
       text,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
-
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages(prev => [...prev, userMsg]);
     setInputMsg('');
     setIsLoading(true);
 
     try {
       const res = await api.sendAiChatMessage({
         message: text,
-        history: messages.slice(-6).map((m) => ({ role: m.sender, content: m.text })),
+        history: messages.slice(-6).map(m => ({ role: m.sender, content: m.text })),
       });
 
-      const assistantMessage: ChatMessage = {
-        id: `msg-${Date.now() + 1}`,
+      const aiMsg: ChatMessage = {
+        id: 'msg-ai-' + Date.now(),
         sender: 'assistant',
         text: res.reply,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        suggestedActions: res.suggestedActions,
+        suggestedActions: res.suggestedActions || [],
         requiresHuman: res.requiresHuman,
         whatsappAlertSent: res.whatsappAlertSent,
       };
-
-      setMessages((prev) => [...prev, assistantMessage]);
+      setMessages(prev => [...prev, aiMsg]);
     } catch (err: any) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `msg-${Date.now() + 1}`,
-          sender: 'assistant',
-          text: 'I apologize, I am temporarily having trouble accessing the property network. You can book a site visit directly using the button below or contact our sales hotline.',
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          suggestedActions: ['Book a free site visit'],
-        },
-      ]);
+      const errMsg: ChatMessage = {
+        id: 'msg-err-' + Date.now(),
+        sender: 'assistant',
+        text: 'I apologize, I am temporarily unavailable. Please try again shortly or call us directly.',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        suggestedActions: ['Book a Site Visit', 'Call Sales Team'],
+      };
+      setMessages(prev => [...prev, errMsg]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleActionClick = (action: string) => {
-    if (action.toLowerCase().includes('site visit') || action.toLowerCase().includes('tour')) {
-      openSiteVisitModal();
-    } else if (action.toLowerCase().includes('available plots') || action.toLowerCase().includes('browse')) {
-      setActiveTab('properties');
-    } else {
-      handleSend(action);
-    }
+  const renderText = (text: string) => {
+    return text
+      .split('\n')
+      .map((line, i) => {
+        const formatted = line
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*(.*?)\*/g, '<em>$1</em>');
+        return <p key={i} className="text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: formatted }} />;
+      });
   };
 
+  if (!isOpen) {
+    return (
+      <button
+        onClick={() => setIsOpen(true)}
+        className="fixed bottom-6 right-6 z-50 flex h-16 w-16 items-center justify-center rounded-full shadow-2xl transition-all hover:scale-110 active:scale-95"
+        style={{ background: 'linear-gradient(135deg, #8b5cf6, #ec4899)' }}
+        title="Chat with AI Concierge"
+      >
+        <MessageCircle className="h-7 w-7 text-white" />
+        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-black text-white animate-bounce">
+          AI
+        </span>
+      </button>
+    );
+  }
+
   return (
-    <>
-      {/* Floating Chat Trigger Button */}
-      {!isOpen && (
-        <div className="fixed bottom-6 right-6 z-40">
-          <button
-            onClick={() => setIsOpen(true)}
-            className="group flex items-center gap-3 rounded-full border border-amber-500/40 bg-gradient-to-r from-amber-500 via-[#181B24] to-[#12161F] p-1.5 pr-5 shadow-2xl transition-all duration-300 hover:scale-105 hover:border-amber-400 hover:shadow-amber-500/20"
-          >
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-500 text-black shadow-md shadow-amber-500/40 animate-pulse">
-              <Bot className="h-6 w-6" />
-            </div>
-            <div className="text-left">
-              <div className="flex items-center gap-1.5">
-                <span className="font-bold text-white text-xs tracking-wide">RKS AI Concierge</span>
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-              </div>
-              <span className="text-[10px] text-amber-300 font-medium">Ask rates, plots & book visits</span>
-            </div>
+    <div className={`fixed bottom-6 right-6 z-50 flex flex-col rounded-3xl shadow-2xl transition-all ${isMinimized ? 'h-16 w-80' : 'h-[580px] w-96'}`}
+      style={{ background: 'linear-gradient(180deg, #0f0a1e 0%, #0d1117 100%)', border: '1px solid rgba(139,92,246,0.3)' }}>
+      
+      {/* Header */}
+      <div className="flex items-center gap-3 px-4 py-3 rounded-t-3xl" style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.3), rgba(236,72,153,0.2))', borderBottom: '1px solid rgba(139,92,246,0.2)' }}>
+        <div className="flex h-9 w-9 items-center justify-center rounded-2xl text-white" style={{ background: 'linear-gradient(135deg, #8b5cf6, #ec4899)' }}>
+          <Bot className="h-5 w-5" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-white">RKS AI Concierge</p>
+          <div className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-[10px] text-emerald-400 font-semibold">Online · Replies instantly</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-1">
+          <button onClick={() => setIsMinimized(!isMinimized)} className="flex h-7 w-7 items-center justify-center rounded-xl text-zinc-400 hover:text-white hover:bg-white/10 transition-colors">
+            {isMinimized ? <Maximize2 className="h-3.5 w-3.5" /> : <Minimize2 className="h-3.5 w-3.5" />}
+          </button>
+          <button onClick={() => setIsOpen(false)} className="flex h-7 w-7 items-center justify-center rounded-xl text-zinc-400 hover:text-white hover:bg-white/10 transition-colors">
+            <X className="h-3.5 w-3.5" />
           </button>
         </div>
-      )}
+      </div>
 
-      {/* Chat Window */}
-      {isOpen && (
-        <div
-          className={`fixed bottom-6 right-6 z-50 flex flex-col overflow-hidden rounded-3xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0D1017] shadow-2xl backdrop-blur-2xl transition-all duration-300 ${
-            isMinimized ? 'h-16 w-80' : 'h-[580px] w-96 sm:w-[420px]'
-          }`}
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-[#12161F] px-5 py-3.5">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-black shadow-inner">
-                <Bot className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <h3 className="text-xs font-bold text-slate-900 dark:text-white font-sans">RKS Property Concierge</h3>
-                  <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/80 px-1.5 py-0.2 text-[9px] font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                    LIVE
-                  </span>
+      {!isMinimized && (
+        <>
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-zinc-700">
+            {messages.map(msg => (
+              <div key={msg.id} className={`flex gap-2.5 ${msg.sender === 'user' ? 'flex-row-reverse' : ''}`}>
+                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl text-white text-xs font-bold ${
+                  msg.sender === 'user'
+                    ? 'bg-gradient-to-br from-violet-500 to-indigo-600'
+                    : 'bg-gradient-to-br from-fuchsia-500 to-violet-600'
+                }`}>
+                  {msg.sender === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
                 </div>
-                <p className="text-[10px] text-slate-500 dark:text-zinc-400">Grounded in verified RKS inventory</p>
-              </div>
-            </div>
 
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setIsMinimized((prev) => !prev)}
-                className="rounded-lg p-1.5 text-slate-400 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-white cursor-pointer"
-                title={isMinimized ? 'Expand' : 'Minimize'}
-              >
-                {isMinimized ? <Maximize2 className="h-3.5 w-3.5" /> : <Minimize2 className="h-3.5 w-3.5" />}
-              </button>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="rounded-lg p-1.5 text-slate-400 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-white cursor-pointer"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
+                <div className={`max-w-[75%] space-y-2 ${msg.sender === 'user' ? 'items-end' : 'items-start'} flex flex-col`}>
+                  <div className={`rounded-2xl px-4 py-3 text-sm ${
+                    msg.sender === 'user'
+                      ? 'text-white'
+                      : 'bg-zinc-800/80 text-zinc-100 border border-zinc-700/50'
+                  }`} style={msg.sender === 'user' ? { background: 'linear-gradient(135deg, #8b5cf6, #6366f1)' } : {}}>
+                    <div className="space-y-1">{renderText(msg.text)}</div>
+                  </div>
+
+                  {msg.whatsappAlertSent && (
+                    <div className="flex items-center gap-1.5 text-[10px] text-emerald-400 font-semibold">
+                      <CheckCircle2 className="h-3 w-3" />
+                      WhatsApp alert sent to Sales Team
+                    </div>
+                  )}
+
+                  {msg.suggestedActions && msg.suggestedActions.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {msg.suggestedActions.map((action, i) => (
+                        <button
+                          key={i}
+                          onClick={() => {
+                            if (action.toLowerCase().includes('site visit') || action.toLowerCase().includes('visit')) {
+                              openSiteVisitModal?.();
+                            } else if (action.toLowerCase().includes('properties') || action.toLowerCase().includes('plots')) {
+                              setActiveTab('properties');
+                            } else {
+                              handleSend(action);
+                            }
+                          }}
+                          className="rounded-xl px-3 py-1.5 text-[11px] font-semibold text-violet-300 border border-violet-500/40 hover:bg-violet-500/20 transition-colors"
+                        >
+                          {action}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  <span className="text-[10px] text-zinc-600">{msg.timestamp}</span>
+                </div>
+              </div>
+            ))}
+
+            {isLoading && (
+              <div className="flex gap-2.5">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl text-white" style={{ background: 'linear-gradient(135deg, #ec4899, #8b5cf6)' }}>
+                  <Bot className="h-4 w-4" />
+                </div>
+                <div className="rounded-2xl bg-zinc-800/80 border border-zinc-700/50 px-4 py-3">
+                  <div className="flex items-center gap-1.5">
+                    {[0, 1, 2].map(i => (
+                      <span key={i} className="h-2 w-2 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: i * 150 + 'ms' }} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
           </div>
 
-          {/* Messages Body */}
-          {!isMinimized && (
-            <>
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-slate-50/50 dark:bg-[#0A0C10]/60 text-xs">
-                {messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
-                  >
-                    <div
-                      className={`max-w-[85%] rounded-2xl p-3.5 shadow-sm dark:shadow-md ${
-                        msg.sender === 'user'
-                          ? 'bg-amber-500 text-black font-medium rounded-tr-none'
-                          : 'bg-white dark:bg-[#12161F] text-slate-800 dark:text-zinc-200 border border-slate-200 dark:border-zinc-800 rounded-tl-none leading-relaxed'
-                      }`}
-                    >
-                      <div className="whitespace-pre-line">{msg.text}</div>
-
-                      {/* WhatsApp Notification Alert Banner inside Chat */}
-                      {msg.whatsappAlertSent && (
-                        <div className="mt-3 flex items-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-50 dark:bg-emerald-950/60 p-2.5 text-[11px] text-emerald-800 dark:text-emerald-300">
-                          <MessageCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                          <div>
-                            <span className="font-bold">Sales Advisor Alerted on WhatsApp</span>
-                            <div className="text-[10px] text-emerald-700 dark:text-emerald-400/80">An executive has been dispatched for direct follow-up.</div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <span className="mt-1 text-[9px] font-mono text-slate-400 dark:text-zinc-500 px-1">
-                      {msg.timestamp}
-                    </span>
-
-                    {/* Action Chips */}
-                    {msg.suggestedActions && msg.suggestedActions.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1.5 max-w-[90%]">
-                        {msg.suggestedActions.map((action, idx) => (
-                          <button
-                            key={idx}
-                            onClick={() => handleActionClick(action)}
-                            className="flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-[10px] font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-500 hover:text-black transition-all cursor-pointer"
-                          >
-                            <Sparkles className="h-2.5 w-2.5" />
-                            <span>{action}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-
-                {isLoading && (
-                  <div className="flex items-center gap-2 text-slate-400 dark:text-zinc-400">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-amber-500/10 text-amber-500">
-                      <Bot className="h-4 w-4" />
-                    </div>
-                    <div className="flex items-center gap-1 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#12161F] px-3 py-2">
-                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-bounce" />
-                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-bounce [animation-delay:0.2s]" />
-                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-bounce [animation-delay:0.4s]" />
-                    </div>
-                  </div>
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-
-              {/* Input Footer */}
-              <div className="border-t border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#12161F] p-3">
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleSend();
-                  }}
-                  className="flex items-center gap-2"
-                >
-                  <input
-                    type="text"
-                    value={inputMsg}
-                    onChange={(e) => setInputMsg(e.target.value)}
-                    placeholder="Ask about plot prices, rates, or book a visit..."
-                    className="flex-1 rounded-xl border border-slate-300 dark:border-zinc-800 bg-slate-50 dark:bg-[#0A0C10] px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 outline-none focus:border-amber-500"
-                  />
-
-                  <button
-                    type="submit"
-                    disabled={!inputMsg.trim() || isLoading}
-                    className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500 text-black hover:bg-amber-400 transition-colors disabled:opacity-40 cursor-pointer"
-                  >
-                    <Send className="h-4 w-4" />
-                  </button>
-                </form>
-              </div>
-            </>
-          )}
-        </div>
+          {/* Input */}
+          <div className="p-4 border-t border-zinc-800/60">
+            <div className="flex items-center gap-2 rounded-2xl border border-zinc-700/60 bg-zinc-800/60 px-4 py-2.5 focus-within:border-violet-500/60 transition-colors">
+              <input
+                type="text"
+                value={inputMsg}
+                onChange={(e) => setInputMsg(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                placeholder="Ask about plots, pricing, site visits..."
+                disabled={isLoading}
+                className="flex-1 bg-transparent text-sm text-zinc-100 placeholder-zinc-500 outline-none"
+              />
+              <button
+                onClick={() => handleSend()}
+                disabled={!inputMsg.trim() || isLoading}
+                className="flex h-8 w-8 items-center justify-center rounded-xl text-white disabled:opacity-30 transition-all hover:scale-110"
+                style={{ background: 'linear-gradient(135deg, #8b5cf6, #ec4899)' }}
+              >
+                <Send className="h-4 w-4" />
+              </button>
+            </div>
+            <p className="mt-2 text-center text-[10px] text-zinc-600">RKS AI · Powered by real property database</p>
+          </div>
+        </>
       )}
-    </>
+    </div>
   );
 };

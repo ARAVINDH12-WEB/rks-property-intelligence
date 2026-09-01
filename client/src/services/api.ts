@@ -179,16 +179,22 @@ export const api = {
   },
 
   // Import
-  async uploadSpreadsheet(file: File): Promise<any> {
+  async parseAndValidateSpreadsheet(file: File, mapping?: Record<string, string>): Promise<any> {
     const formData = new FormData();
     formData.append('file', file);
+    if (mapping && Object.keys(mapping).length > 0) {
+      formData.append('mapping', JSON.stringify(mapping));
+    }
 
-    const activeRole = localStorage.getItem('rks_active_role') || 'ADMIN';
-    const res = await fetch(`${API_BASE}/import/parse`, {
+    const activeRole = sessionStorage.getItem('rks_active_role') || localStorage.getItem('rks_active_role') || 'ADMIN';
+    const token = sessionStorage.getItem('rks_auth_token') || localStorage.getItem('rks_auth_token');
+
+    const headers: Record<string, string> = { 'x-demo-role': activeRole };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch(`${API_BASE}/import/parse-and-validate`, {
       method: 'POST',
-      headers: {
-        'x-demo-role': activeRole,
-      },
+      headers,
       body: formData,
     });
 
@@ -198,6 +204,11 @@ export const api = {
     }
 
     return res.json();
+  },
+
+  // Legacy alias kept for compat
+  async uploadSpreadsheet(file: File): Promise<any> {
+    return this.parseAndValidateSpreadsheet(file);
   },
 
   async validateImport(fileKey: string, mapping: any): Promise<any> {

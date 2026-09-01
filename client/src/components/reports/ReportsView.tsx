@@ -79,28 +79,28 @@ export const ReportsView: React.FC = () => {
           title="Total Land Extent"
           value={formatSqFt(kpis.total_area_sqft)}
           subtitle={`≈ ${(Number(kpis.total_area_sqft || 0) / 43560).toFixed(2)} Total Acres`}
-          icon={<Layers className="h-5 w-5 text-amber-400" />}
+          icon={<Layers className="h-5 w-5 text-white" />}
         />
         <MetricCard
           title="Available Area"
           value={formatSqFt(kpis.available_area_sqft)}
           subtitle="Ready for Development / Sale"
-          icon={<Building2 className="h-5 w-5 text-emerald-400" />}
-          accentColor="from-emerald-500/20 to-transparent"
+          icon={<Building2 className="h-5 w-5 text-white" />}
+          gradient="from-violet-500 to-indigo-600"
         />
         <MetricCard
           title="Available Valuation"
           value={formatCurrencyINR(kpis.available_inventory_value, true)}
           subtitle={formatCurrencyINR(kpis.available_inventory_value)}
-          icon={<DollarSign className="h-5 w-5 text-emerald-400" />}
-          accentColor="from-emerald-500/20 to-transparent"
+          icon={<DollarSign className="h-5 w-5 text-white" />}
+          gradient="from-emerald-500 to-teal-600"
         />
         <MetricCard
           title="Sold Realization"
           value={formatCurrencyINR(kpis.sold_inventory_value, true)}
           subtitle={formatCurrencyINR(kpis.sold_inventory_value)}
-          icon={<TrendingUp className="h-5 w-5 text-rose-400" />}
-          accentColor="from-rose-500/20 to-transparent"
+          icon={<TrendingUp className="h-5 w-5 text-white" />}
+          gradient="from-amber-500 to-orange-600"
         />
       </div>
 

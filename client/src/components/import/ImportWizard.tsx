@@ -8,15 +8,16 @@ import {
   UploadCloud,
   FileSpreadsheet,
   CheckCircle2,
-  AlertTriangle,
   XCircle,
   ArrowRight,
-  ArrowLeft,
   RotateCcw,
   Check,
   Download,
-  Building,
-  HelpCircle,
+  AlertTriangle,
+  ChevronRight,
+  Sparkles,
+  Database,
+  Zap,
 } from 'lucide-react';
 
 export const ImportWizard: React.FC = () => {
@@ -24,28 +25,29 @@ export const ImportWizard: React.FC = () => {
 
   const [step, setStep] = useState<number>(1);
   const [file, setFile] = useState<File | null>(null);
-  const [fileKey, setFileKey] = useState<string>('');
+  const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isCommitting, setIsCommitting] = useState(false);
+
   const [headers, setHeaders] = useState<string[]>([]);
   const [mapping, setMapping] = useState<Record<string, string>>({});
+  const [sampleRows, setSampleRows] = useState<any[]>([]);
+
   const [validationSummary, setValidationSummary] = useState<any>(null);
   const [previewRows, setPreviewRows] = useState<any[]>([]);
   const [allValidatedRows, setAllValidatedRows] = useState<any[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
-  const [isValidating, setIsValidating] = useState(false);
-  const [isCommitting, setIsCommitting] = useState(false);
   const [importResult, setImportResult] = useState<any>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Target schema fields for mapping
   const targetFields = [
     { key: 'property_code', label: 'Property ID / Code', required: true },
     { key: 'project_name', label: 'Project Name', required: true },
     { key: 'location_name', label: 'Location / City', required: true },
-    { key: 'property_type', label: 'Property Type', required: true },
+    { key: 'property_type', label: 'Property Type', required: false },
     { key: 'area_sqft', label: 'Area in Sq.Ft', required: true },
-    { key: 'rate_per_sqft', label: 'Rate per Sq.Ft (₹)', required: true },
-    { key: 'total_price', label: 'Total Price (₹)', required: false },
+    { key: 'rate_per_sqft', label: 'Rate per Sq.Ft', required: true },
+    { key: 'total_price', label: 'Total Price', required: false },
     { key: 'status', label: 'Availability Status', required: false },
     { key: 'plot_number', label: 'Plot / Unit Number', required: false },
     { key: 'survey_number', label: 'Survey Number', required: false },
@@ -54,349 +56,291 @@ export const ImportWizard: React.FC = () => {
     { key: 'description', label: 'Description', required: false },
   ];
 
-  // Step 1: File selection & upload
-  const handleFileChange = async (selectedFile: File) => {
+  const handleFileSelect = async (selectedFile: File) => {
     setFile(selectedFile);
     setIsUploading(true);
     try {
-      const res = await api.uploadSpreadsheet(selectedFile);
-      setFileKey(res.fileKey);
-      setHeaders(res.headers);
+      const res = await api.parseAndValidateSpreadsheet(selectedFile);
+      setHeaders(res.headers || []);
       setMapping(res.suggestedMapping || {});
-      setStep(3); // Go straight to mapping step after auto-parsing
-      showToast('Spreadsheet parsed successfully', `Detected ${res.totalRows} rows and ${res.headers.length} columns`, 'success');
+      setSampleRows(res.sampleRows || []);
+      if (res.stage === 'validated') {
+        setValidationSummary(res.summary);
+        setPreviewRows(res.previewRows || []);
+        setAllValidatedRows(res.allValidatedRows || []);
+        setStep(3);
+        showToast('Parsed & validated!', `${res.summary.totalRows} rows, ${res.summary.validRows} valid`, 'success');
+      } else {
+        setStep(2);
+        showToast('Review column mapping', `${res.totalRows} rows detected`, 'info');
+      }
     } catch (err: any) {
-      showToast('Spreadsheet upload failed', err.message, 'error');
+      showToast('Upload Failed', err.message, 'error');
     } finally {
       setIsUploading(false);
     }
   };
 
-  // Step 4: Validate Mappings
-  const handleValidate = async () => {
-    setIsValidating(true);
+  const handleValidateWithMapping = async () => {
+    if (!file) return;
+    setIsUploading(true);
     try {
-      const res = await api.validateImport(fileKey, mapping);
+      const res = await api.parseAndValidateSpreadsheet(file, mapping);
       setValidationSummary(res.summary);
-      setPreviewRows(res.previewRows);
-      setAllValidatedRows(res.allValidatedRows);
-      setStep(4);
+      setPreviewRows(res.previewRows || []);
+      setAllValidatedRows(res.allValidatedRows || []);
+      setStep(3);
+      showToast('Validation complete!', `${res.summary.validRows} valid rows ready`, 'success');
     } catch (err: any) {
-      showToast('Validation failed', err.message, 'error');
+      showToast('Validation Failed', err.message, 'error');
     } finally {
-      setIsValidating(false);
+      setIsUploading(false);
     }
   };
 
-  // Step 6: Commit Import to DB
   const handleCommit = async () => {
     setIsCommitting(true);
     try {
       const res = await api.commitImport(allValidatedRows, file?.name || 'spreadsheet.xlsx');
       setImportResult(res);
-      setStep(6);
-      confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+      setStep(4);
+      confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 }, colors: ['#8b5cf6', '#06b6d4', '#10b981', '#f59e0b'] });
       showToast('Import Complete!', res.message, 'success');
       refreshInventory();
     } catch (err: any) {
-      showToast('Import Commit Failed', err.message, 'error');
+      showToast('Import Failed', err.message, 'error');
     } finally {
       setIsCommitting(false);
     }
   };
 
-  // Reset Wizard
   const handleReset = () => {
-    setStep(1);
-    setFile(null);
-    setFileKey('');
-    setHeaders([]);
-    setMapping({});
-    setValidationSummary(null);
-    setPreviewRows([]);
-    setAllValidatedRows([]);
-    setImportResult(null);
+    setStep(1); setFile(null); setHeaders([]); setMapping({});
+    setSampleRows([]); setValidationSummary(null);
+    setPreviewRows([]); setAllValidatedRows([]); setImportResult(null);
   };
 
-  // Sample Template CSV download
   const handleDownloadSample = () => {
-    const sampleCsv = `Property ID,Project,City,Type,Area SqFt,Rate per SqFt,Status,Plot No,Facing,Survey No
+    const csv = `Property ID,Project,City,Type,Area SqFt,Rate per SqFt,Status,Plot No,Facing,Survey No
 RKS-00901,RKS Green Valley,Chennai,Residential Plot,2400,5200,AVAILABLE,Plot 901,East,144/1
-RKS-00902,RKS Grandeur City,Bangalore,Villa,3400,9800,AVAILABLE,Villa G-12,North,86/2
-RKS-00903,RKS Silicon Meadows,Hyderabad,Commercial Plot,4800,11000,RESERVED,Tech CP-04,North-East,115/1`;
-
-    const blob = new Blob([sampleCsv], { type: 'text/csv' });
+RKS-00902,RKS Grandeur City,Bangalore,Villa,3400,9800,AVAILABLE,Villa G-12,North,86/2`;
+    const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = 'RKS_Property_Import_Template.csv';
-    a.click();
+    a.href = url; a.download = 'RKS_Import_Template.csv'; a.click();
     URL.revokeObjectURL(url);
   };
 
   const steps = [
-    { num: 1, label: 'Upload Spreadsheet' },
-    { num: 2, label: 'Inspect Columns' },
-    { num: 3, label: 'Map Columns' },
-    { num: 4, label: 'Validate Data' },
-    { num: 5, label: 'Preview' },
-    { num: 6, label: 'Commit' },
+    { num: 1, label: 'Upload File', icon: UploadCloud },
+    { num: 2, label: 'Map Columns', icon: FileSpreadsheet },
+    { num: 3, label: 'Review', icon: Zap },
+    { num: 4, label: 'Done!', icon: CheckCircle2 },
   ];
+
+  const requiredMapped = targetFields.filter(f => f.required).every(f => mapping[f.key]);
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-white font-sans flex items-center gap-3">
-            <span>Import Property Inventory</span>
-            <span className="rounded-lg bg-amber-500/10 px-2.5 py-0.5 text-xs font-mono font-bold text-amber-400 border border-amber-500/20">
-              6-Step Wizard
+          <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-lg">
+              <Database className="h-5 w-5" />
             </span>
+            Import Property Inventory
+            <span className="rounded-xl bg-violet-500/10 border border-violet-400/30 px-3 py-0.5 text-xs font-bold text-violet-600 dark:text-violet-400">Smart Wizard</span>
           </h1>
-          <p className="text-xs text-zinc-400 mt-1">
-            Import Excel (.xlsx, .xls) or CSV spreadsheets directly into the RKS PostgreSQL database with automated validation.
-          </p>
+          <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">Import Excel or CSV — auto-mapped, validated, and committed in seconds.</p>
         </div>
-
-        <button
-          onClick={handleDownloadSample}
-          className="flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800/80 px-4 py-2 text-xs font-semibold text-zinc-200 hover:bg-zinc-700 hover:text-white transition-colors"
-        >
-          <Download className="h-4 w-4 text-amber-400" />
-          <span>Download Sample CSV Template</span>
+        <button onClick={handleDownloadSample} className="flex items-center gap-2 rounded-xl border border-indigo-200 dark:border-indigo-700/60 bg-indigo-50 dark:bg-indigo-900/20 px-4 py-2.5 text-xs font-semibold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors">
+          <Download className="h-4 w-4" /> Download Sample CSV
         </button>
       </div>
 
-      {/* Step Indicator Progress Bar */}
-      <div className="rounded-2xl border border-zinc-800 bg-[#12161F]/90 p-5 shadow-lg backdrop-blur-md">
-        <div className="grid grid-cols-6 gap-2">
-          {steps.map((s) => {
+      <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#12161F]/90 p-5 shadow-sm">
+        <div className="flex items-center">
+          {steps.map((s, idx) => {
             const isCompleted = step > s.num;
             const isCurrent = step === s.num;
+            const Icon = s.icon;
             return (
-              <div key={s.num} className="flex flex-col items-center text-center">
-                <div
-                  className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold font-mono transition-all ${
-                    isCompleted
-                      ? 'bg-emerald-500 text-black shadow-md shadow-emerald-500/20'
-                      : isCurrent
-                      ? 'bg-amber-500 text-black ring-4 ring-amber-500/20 shadow-md shadow-amber-500/20'
-                      : 'bg-zinc-800 text-zinc-500 border border-zinc-700'
-                  }`}
-                >
-                  {isCompleted ? <Check className="h-4 w-4 stroke-[3]" /> : s.num}
+              <React.Fragment key={s.num}>
+                <div className="flex flex-col items-center gap-1.5 min-w-[80px]">
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-2xl transition-all ${
+                    isCompleted ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg'
+                    : isCurrent ? 'bg-gradient-to-br from-violet-500 to-indigo-600 text-white ring-4 ring-violet-400/25 shadow-lg'
+                    : 'bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500'
+                  }`}>
+                    {isCompleted ? <Check className="h-5 w-5 stroke-[2.5]" /> : <Icon className="h-4 w-4" />}
+                  </div>
+                  <span className={`text-[10px] font-bold text-center ${
+                    isCurrent ? 'text-violet-600 dark:text-violet-400'
+                    : isCompleted ? 'text-emerald-600 dark:text-emerald-400'
+                    : 'text-slate-400 dark:text-zinc-500'
+                  }`}>{s.label}</span>
                 </div>
-                <span
-                  className={`mt-2 text-[11px] font-semibold truncate max-w-full ${
-                    isCurrent ? 'text-amber-400' : isCompleted ? 'text-zinc-200' : 'text-zinc-500'
-                  }`}
-                >
-                  {s.label}
-                </span>
-              </div>
+                {idx < steps.length - 1 && (
+                  <div className={`h-0.5 flex-1 mx-2 rounded-full ${step > s.num ? 'bg-gradient-to-r from-emerald-400 to-teal-500' : 'bg-slate-200 dark:bg-zinc-700'}`} />
+                )}
+              </React.Fragment>
             );
           })}
         </div>
       </div>
 
-      {/* STEP 1: UPLOAD FILE */}
       {step === 1 && (
-        <div className="rounded-2xl border border-zinc-800 bg-[#12161F] p-12 text-center shadow-xl">
-          <div
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => {
-              e.preventDefault();
-              if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                handleFileChange(e.dataTransfer.files[0]);
-              }
-            }}
-            onClick={() => fileInputRef.current?.click()}
-            className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-700 bg-[#0A0C10]/60 p-12 cursor-pointer hover:border-amber-500/60 hover:bg-amber-500/5 transition-all group"
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".xlsx,.xls,.csv"
-              className="hidden"
-              onChange={(e) => {
-                if (e.target.files && e.target.files[0]) {
-                  handleFileChange(e.target.files[0]);
-                }
-              }}
-            />
-
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-400 group-hover:scale-110 transition-transform">
-              <UploadCloud className="h-8 w-8" />
+        <div
+          onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={(e) => { e.preventDefault(); setIsDragging(false); if (e.dataTransfer.files[0]) handleFileSelect(e.dataTransfer.files[0]); }}
+          onClick={() => !isUploading && fileInputRef.current?.click()}
+          className={`cursor-pointer rounded-3xl border-2 border-dashed p-16 text-center transition-all ${
+            isDragging ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/10'
+            : 'border-slate-300 dark:border-zinc-700 bg-white dark:bg-[#12161F] hover:border-violet-400 hover:bg-violet-50/30 dark:hover:bg-violet-900/5'
+          }`}>
+          <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden"
+            onChange={(e) => { if (e.target.files?.[0]) handleFileSelect(e.target.files[0]); }} />
+          <div className="flex flex-col items-center gap-4">
+            <div className={`flex h-20 w-20 items-center justify-center rounded-3xl ${isUploading
+              ? 'bg-amber-100 dark:bg-amber-900/20 text-amber-500'
+              : 'bg-gradient-to-br from-violet-100 to-indigo-100 dark:from-violet-900/20 dark:to-indigo-900/20 text-violet-600 dark:text-violet-400'}`}>
+              {isUploading ? <Sparkles className="h-9 w-9 animate-spin" /> : <UploadCloud className="h-9 w-9" />}
             </div>
-
-            <h3 className="mt-4 text-base font-bold text-white">
-              {isUploading ? 'Parsing Spreadsheet...' : 'Drag & Drop your inventory file here'}
-            </h3>
-            <p className="mt-1 text-xs text-zinc-400">
-              Supports Excel (.xlsx, .xls) and CSV (.csv) formats up to 25MB
-            </p>
-
-            <button
-              type="button"
-              className="mt-5 rounded-xl bg-amber-500 px-5 py-2.5 text-xs font-bold text-black shadow-lg shadow-amber-500/20 group-hover:bg-amber-400"
-            >
-              Browse Computer
-            </button>
+            <div>
+              <h3 className="text-xl font-black text-slate-900 dark:text-white">
+                {isUploading ? 'Analysing spreadsheet...' : 'Drop your inventory file here'}
+              </h3>
+              <p className="mt-1.5 text-sm text-slate-500 dark:text-zinc-400">
+                {isUploading ? 'Auto-detecting columns and validating rows...' : 'Excel (.xlsx, .xls) or CSV (.csv) up to 25 MB'}
+              </p>
+            </div>
+            {!isUploading && (
+              <button type="button" className="rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 px-8 py-3 text-sm font-bold text-white shadow-lg shadow-violet-500/30 hover:from-violet-500 hover:to-indigo-500 transition-all">
+                Browse Computer
+              </button>
+            )}
+            {!isUploading && (
+              <div className="flex items-center gap-6 flex-wrap justify-center">
+                {['Auto column mapping', 'Duplicate detection', 'Price cross-check', 'Instant DB commit'].map(f => (
+                  <span key={f} className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-zinc-500">
+                    <Check className="h-3.5 w-3.5 text-emerald-500" /> {f}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* STEP 3: COLUMN MAPPING */}
-      {step === 3 && (
-        <div className="rounded-2xl border border-zinc-800 bg-[#12161F] p-8 shadow-xl space-y-6">
-          <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
+      {step === 2 && (
+        <div className="rounded-3xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#12161F] p-8 shadow-sm space-y-6">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-4">
             <div>
-              <h3 className="text-lg font-bold text-white">Map Spreadsheet Columns</h3>
-              <p className="text-xs text-zinc-400">
-                Match columns in <span className="text-amber-400 font-semibold">{file?.name}</span> to RKS Property Intelligence fields.
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <FileSpreadsheet className="h-5 w-5 text-violet-500" /> Map Spreadsheet Columns
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+                Match columns from <span className="font-bold text-violet-600 dark:text-violet-400">{file?.name}</span> to RKS property fields.
               </p>
             </div>
-            <button
-              onClick={handleReset}
-              className="flex items-center gap-1 text-xs text-zinc-400 hover:text-white"
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-              <span>Change File</span>
+            <button onClick={handleReset} className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-rose-500 transition-colors">
+              <RotateCcw className="h-3.5 w-3.5" /> Change File
             </button>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {targetFields.map((field) => (
-              <div key={field.key} className="rounded-xl border border-zinc-800 bg-[#0A0C10] p-4">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-white flex items-center gap-1">
-                    <span>{field.label}</span>
-                    {field.required && <span className="text-amber-400 font-bold">*</span>}
-                  </label>
-                  {mapping[field.key] && (
-                    <span className="rounded bg-emerald-950/60 px-1.5 py-0.5 text-[10px] font-mono text-emerald-400 border border-emerald-500/30">
-                      Mapped
-                    </span>
-                  )}
-                </div>
+          {sampleRows.length > 0 && (
+            <div className="rounded-2xl bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 p-4 overflow-x-auto">
+              <p className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase mb-2">Sample Data Preview</p>
+              <table className="text-xs">
+                <thead><tr>{headers.map(h => <th key={h} className="px-2 py-1 text-left text-slate-600 dark:text-zinc-400 font-semibold whitespace-nowrap">{h}</th>)}</tr></thead>
+                <tbody>{sampleRows.slice(0, 3).map((row, i) => (<tr key={i}>{headers.map(h => <td key={h} className="px-2 py-1 text-slate-700 dark:text-zinc-300 whitespace-nowrap">{String(row[h] ?? '')}</td>)}</tr>))}</tbody>
+              </table>
+            </div>
+          )}
 
-                <select
-                  value={mapping[field.key] || ''}
-                  onChange={(e) => setMapping({ ...mapping, [field.key]: e.target.value })}
-                  className="mt-2 w-full rounded-xl border border-zinc-700 bg-[#12161F] px-3 py-2 text-xs text-white outline-none focus:border-amber-500"
-                >
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {targetFields.map((field) => (
+              <div key={field.key} className={`rounded-2xl border p-4 transition-all ${
+                mapping[field.key] ? 'border-emerald-300 dark:border-emerald-700/60 bg-emerald-50 dark:bg-emerald-900/10'
+                : field.required ? 'border-amber-200 dark:border-amber-700/40 bg-amber-50/60 dark:bg-amber-900/5'
+                : 'border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/20'
+              }`}>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-bold text-slate-800 dark:text-zinc-200">
+                    {field.label} {field.required && <span className="text-rose-500">*</span>}
+                  </label>
+                  {mapping[field.key] && <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white"><Check className="h-2.5 w-2.5" /></span>}
+                </div>
+                <select value={mapping[field.key] || ''} onChange={(e) => setMapping({ ...mapping, [field.key]: e.target.value })}
+                  className="w-full rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-xs text-slate-800 dark:text-zinc-200 outline-none focus:ring-2 focus:ring-violet-400/40 focus:border-violet-500 transition-all">
                   <option value="">— Not Mapped —</option>
-                  {headers.map((h) => (
-                    <option key={h} value={h}>
-                      {h}
-                    </option>
-                  ))}
+                  {headers.map(h => <option key={h} value={h}>{h}</option>)}
                 </select>
               </div>
             ))}
           </div>
 
-          <div className="flex items-center justify-end gap-3 border-t border-zinc-800 pt-6">
-            <button
-              onClick={() => setStep(1)}
-              className="rounded-xl border border-zinc-700 bg-zinc-800 px-5 py-2.5 text-xs font-semibold text-zinc-300 hover:bg-zinc-700"
-            >
-              Back
-            </button>
-            <button
-              onClick={handleValidate}
-              disabled={isValidating}
-              className="flex items-center gap-2 rounded-xl bg-amber-500 px-6 py-2.5 text-xs font-bold text-black shadow-lg shadow-amber-500/20 hover:bg-amber-400 disabled:opacity-50"
-            >
-              <span>{isValidating ? 'Validating...' : 'Validate Spreadsheet'}</span>
-              <ArrowRight className="h-4 w-4" />
+          <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-zinc-800">
+            <button onClick={handleReset} className="rounded-xl border border-slate-300 dark:border-zinc-700 px-5 py-2.5 text-xs font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors">Back</button>
+            <button onClick={handleValidateWithMapping} disabled={!requiredMapped || isUploading}
+              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-7 py-2.5 text-xs font-bold text-white shadow-lg disabled:opacity-40 transition-all hover:from-violet-500 hover:to-indigo-500">
+              {isUploading ? 'Validating...' : 'Validate Data'} <ArrowRight className="h-4 w-4" />
             </button>
           </div>
         </div>
       )}
 
-      {/* STEP 4 & 5: VALIDATION SUMMARY & PREVIEW */}
-      {(step === 4 || step === 5) && validationSummary && (
-        <div className="space-y-6">
-          {/* Validation Metrics */}
+      {step === 3 && validationSummary && (
+        <div className="space-y-5">
           <div className="grid grid-cols-4 gap-4">
-            <div className="rounded-2xl border border-zinc-800 bg-[#12161F] p-4 text-center">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Total Rows</span>
-              <div className="mt-1 font-mono text-2xl font-black text-white">{validationSummary.totalRows}</div>
-            </div>
-
-            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-950/20 p-4 text-center">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Valid Rows</span>
-              <div className="mt-1 font-mono text-2xl font-black text-emerald-400">{validationSummary.validRows}</div>
-            </div>
-
-            <div className="rounded-2xl border border-rose-500/30 bg-rose-950/20 p-4 text-center">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-rose-400">Error Rows</span>
-              <div className="mt-1 font-mono text-2xl font-black text-rose-400">{validationSummary.errorRows}</div>
-            </div>
-
-            <div className="rounded-2xl border border-amber-500/30 bg-amber-950/20 p-4 text-center">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">Warnings</span>
-              <div className="mt-1 font-mono text-2xl font-black text-amber-400">{validationSummary.warningRows}</div>
-            </div>
+            {[
+              { label: 'Total Rows', value: validationSummary.totalRows, grad: 'from-slate-600 to-slate-700', border: 'border-slate-200 dark:border-zinc-700', bg: 'bg-slate-50 dark:bg-zinc-900/50' },
+              { label: 'Valid Rows', value: validationSummary.validRows, grad: 'from-emerald-500 to-teal-600', border: 'border-emerald-200 dark:border-emerald-700/50', bg: 'bg-emerald-50 dark:bg-emerald-900/10' },
+              { label: 'Error Rows', value: validationSummary.errorRows, grad: 'from-rose-500 to-red-600', border: 'border-rose-200 dark:border-rose-700/50', bg: 'bg-rose-50 dark:bg-rose-900/10' },
+              { label: 'Warnings', value: validationSummary.warningRows, grad: 'from-amber-500 to-orange-500', border: 'border-amber-200 dark:border-amber-700/50', bg: 'bg-amber-50 dark:bg-amber-900/10' },
+            ].map(({ label, value, grad, border, bg }) => (
+              <div key={label} className={`rounded-2xl border ${border} ${bg} p-5 text-center shadow-sm`}>
+                <div className={`text-3xl font-black bg-gradient-to-br ${grad} bg-clip-text text-transparent`}>{value}</div>
+                <div className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">{label}</div>
+              </div>
+            ))}
           </div>
 
-          {/* Validation Table Preview */}
-          <div className="rounded-2xl border border-zinc-800 bg-[#12161F] shadow-xl overflow-hidden">
-            <div className="p-4 border-b border-zinc-800 flex items-center justify-between">
-              <h3 className="font-bold text-sm text-white">Import Preview & Diagnostics</h3>
-              <span className="text-xs text-zinc-400">Showing first 50 rows</span>
+          <div className="rounded-3xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#12161F] overflow-hidden shadow-sm">
+            <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-zinc-800 bg-gradient-to-r from-violet-50/80 to-indigo-50/80 dark:from-violet-900/10 dark:to-indigo-900/10">
+              <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2"><Zap className="h-4 w-4 text-violet-500" /> Import Preview & Diagnostics</h3>
+              <span className="text-xs text-slate-500 dark:text-zinc-400">First 50 rows</span>
             </div>
-
-            <div className="overflow-x-auto max-h-96 custom-scrollbar">
-              <table className="w-full text-left text-xs text-zinc-300 font-sans">
-                <thead className="sticky top-0 border-b border-zinc-800 bg-[#0A0C10] font-bold uppercase text-[10px] text-zinc-400">
-                  <tr>
-                    <th className="px-4 py-3">Row</th>
-                    <th className="px-4 py-3">Validation Status</th>
-                    <th className="px-4 py-3">Property ID</th>
-                    <th className="px-4 py-3">Project</th>
-                    <th className="px-4 py-3">Location</th>
-                    <th className="px-4 py-3 text-right">Area (Sq.Ft)</th>
-                    <th className="px-4 py-3 text-right">Rate (/Sq.Ft)</th>
-                    <th className="px-4 py-3 text-right">Total Price</th>
-                    <th className="px-4 py-3">Status</th>
-                  </tr>
+            <div className="overflow-x-auto max-h-[400px]">
+              <table className="w-full text-left text-xs">
+                <thead className="sticky top-0 bg-slate-50 dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800">
+                  <tr>{['Row', 'Status', 'Property ID', 'Project', 'Location', 'Area', 'Rate', 'Total Price', 'Avail.'].map(h => (
+                    <th key={h} className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 whitespace-nowrap">{h}</th>
+                  ))}</tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-800/60">
+                <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/50">
                   {previewRows.map((row, i) => (
-                    <tr key={i} className={`hover:bg-zinc-800/40 ${!row.isValid ? 'bg-rose-950/10' : ''}`}>
-                      <td className="px-4 py-2.5 font-mono text-zinc-500">{row.rowIndex}</td>
+                    <tr key={i} className={`hover:bg-slate-50 dark:hover:bg-zinc-800/30 transition-colors ${!row.isValid ? 'bg-rose-50/40 dark:bg-rose-900/5' : ''}`}>
+                      <td className="px-4 py-2.5 font-mono text-slate-400 dark:text-zinc-500 text-[11px]">{row.rowIndex}</td>
                       <td className="px-4 py-2.5">
-                        {row.isValid ? (
-                          <span className="inline-flex items-center gap-1 rounded bg-emerald-950/60 px-2 py-0.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/30">
-                            <Check className="h-3 w-3" /> Valid
-                          </span>
-                        ) : (
-                          <div className="space-y-1">
-                            {row.errors.map((err: string, errIdx: number) => (
-                              <span
-                                key={errIdx}
-                                className="inline-flex items-center gap-1 rounded bg-rose-950/60 px-2 py-0.5 text-[10px] font-semibold text-rose-300 border border-rose-500/30 truncate max-w-xs"
-                              >
-                                <XCircle className="h-3 w-3 shrink-0" /> {err}
-                              </span>
-                            ))}
-                          </div>
-                        )}
+                        {row.isValid
+                          ? <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-900/40 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-400"><Check className="h-3 w-3" /> Valid</span>
+                          : <div className="space-y-0.5">{row.errors.map((err: string, ei: number) => (
+                              <span key={ei} className="flex items-center gap-1 text-[10px] font-semibold text-rose-600 dark:text-rose-400"><XCircle className="h-3 w-3 shrink-0" /> {err}</span>
+                            ))}</div>
+                        }
+                        {row.warnings?.length > 0 && row.warnings.map((w: string, wi: number) => (
+                          <span key={wi} className="flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 mt-0.5"><AlertTriangle className="h-3 w-3 shrink-0" /> {w}</span>
+                        ))}
                       </td>
-                      <td className="px-4 py-2.5 font-mono font-bold text-white">{row.property_code}</td>
-                      <td className="px-4 py-2.5 truncate max-w-[120px]">{row.project_name}</td>
-                      <td className="px-4 py-2.5 truncate max-w-[100px]">{row.location_name}</td>
-                      <td className="px-4 py-2.5 text-right font-mono">{formatSqFt(row.area_sqft)}</td>
-                      <td className="px-4 py-2.5 text-right font-mono text-amber-400">₹{row.rate_per_sqft}</td>
-                      <td className="px-4 py-2.5 text-right font-mono font-bold text-emerald-400">
-                        {formatCurrencyINR(row.total_price, true)}
-                      </td>
-                      <td className="px-4 py-2.5">
-                        <StatusBadge status={row.status} size="sm" showDot={false} />
-                      </td>
+                      <td className="px-4 py-2.5 font-mono font-bold text-slate-900 dark:text-white text-[11px]">{row.property_code}</td>
+                      <td className="px-4 py-2.5 text-slate-700 dark:text-zinc-300 max-w-[110px] truncate">{row.project_name}</td>
+                      <td className="px-4 py-2.5 text-slate-600 dark:text-zinc-400 max-w-[90px] truncate">{row.location_name}</td>
+                      <td className="px-4 py-2.5 text-right font-mono text-slate-700 dark:text-zinc-300">{formatSqFt(row.area_sqft)}</td>
+                      <td className="px-4 py-2.5 text-right font-mono font-bold text-amber-600 dark:text-amber-400">Rs.{row.rate_per_sqft?.toLocaleString('en-IN')}</td>
+                      <td className="px-4 py-2.5 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">{formatCurrencyINR(row.total_price, true)}</td>
+                      <td className="px-4 py-2.5"><StatusBadge status={row.status} size="sm" showDot={false} /></td>
                     </tr>
                   ))}
                 </tbody>
@@ -404,52 +348,42 @@ RKS-00903,RKS Silicon Meadows,Hyderabad,Commercial Plot,4800,11000,RESERVED,Tech
             </div>
           </div>
 
-          {/* Action Footer */}
-          <div className="flex items-center justify-between rounded-2xl border border-zinc-800 bg-[#12161F] p-5">
-            <button
-              onClick={() => setStep(3)}
-              className="rounded-xl border border-zinc-700 bg-zinc-800 px-5 py-2 text-xs font-semibold text-zinc-300 hover:bg-zinc-700"
-            >
-              Adjust Column Mapping
-            </button>
-
-            <button
-              onClick={handleCommit}
-              disabled={isCommitting || validationSummary.validRows === 0}
-              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-8 py-3 text-sm font-bold text-black shadow-lg shadow-emerald-500/20 hover:from-emerald-400 hover:to-emerald-500 transition-all disabled:opacity-50"
-            >
-              <span>{isCommitting ? 'Importing to PostgreSQL...' : `Commit ${validationSummary.validRows} Valid Properties to Database`}</span>
-              <ArrowRight className="h-4 w-4" />
+          <div className="flex items-center justify-between rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#12161F] p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <button onClick={() => setStep(2)} className="rounded-xl border border-slate-300 dark:border-zinc-700 px-5 py-2.5 text-xs font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors">Adjust Mapping</button>
+              {validationSummary.errorRows > 0 && (
+                <span className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+                  <AlertTriangle className="h-4 w-4" /> {validationSummary.errorRows} error rows will be skipped
+                </span>
+              )}
+            </div>
+            <button onClick={handleCommit} disabled={isCommitting || validationSummary.validRows === 0}
+              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 px-8 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/30 hover:from-emerald-400 hover:to-teal-500 disabled:opacity-40 transition-all">
+              <Database className="h-4 w-4" />
+              {isCommitting ? 'Importing...' : `Commit ${validationSummary.validRows} Properties`}
+              <ChevronRight className="h-4 w-4" />
             </button>
           </div>
         </div>
       )}
 
-      {/* STEP 6: COMPLETION SUMMARY */}
-      {step === 6 && importResult && (
-        <div className="rounded-2xl border border-emerald-500/40 bg-[#12161F] p-12 text-center shadow-2xl space-y-6">
-          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-            <CheckCircle2 className="h-10 w-10" />
+      {step === 4 && importResult && (
+        <div className="rounded-3xl border border-emerald-200 dark:border-emerald-700/40 bg-gradient-to-b from-emerald-50 to-white dark:from-emerald-900/10 dark:to-[#12161F] p-16 text-center shadow-xl space-y-6">
+          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 shadow-xl shadow-emerald-500/40">
+            <CheckCircle2 className="h-12 w-12 text-white" />
           </div>
-
           <div>
-            <h3 className="text-2xl font-black text-white">Import Successfully Completed!</h3>
-            <p className="mt-2 text-sm text-zinc-400 max-w-md mx-auto">
-              {importResult.message} Every record is now persisted to the RKS PostgreSQL database.
-            </p>
+            <h3 className="text-3xl font-black text-slate-900 dark:text-white">Import Complete!</h3>
+            <p className="mt-2 text-base text-slate-600 dark:text-zinc-400 max-w-md mx-auto">{importResult.message}</p>
+            <p className="mt-1 text-sm text-slate-500 dark:text-zinc-500">All records are now persisted to the RKS PostgreSQL database.</p>
           </div>
-
-          <div className="flex items-center justify-center gap-4 pt-4">
-            <button
-              onClick={() => setActiveTab('properties')}
-              className="rounded-xl bg-amber-500 px-6 py-2.5 text-xs font-bold text-black shadow-lg shadow-amber-500/20 hover:bg-amber-400"
-            >
-              View in Property Inventory
+          <div className="flex items-center justify-center gap-4">
+            <button onClick={() => setActiveTab('properties')}
+              className="rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 px-8 py-3 text-sm font-bold text-white shadow-lg shadow-violet-500/30 hover:from-violet-500 hover:to-indigo-500 transition-all">
+              View Imported Properties
             </button>
-            <button
-              onClick={handleReset}
-              className="rounded-xl border border-zinc-700 bg-zinc-800 px-5 py-2.5 text-xs font-semibold text-zinc-300 hover:bg-zinc-700"
-            >
+            <button onClick={handleReset}
+              className="rounded-2xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-6 py-3 text-sm font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-700 transition-colors">
               Import Another File
             </button>
           </div>

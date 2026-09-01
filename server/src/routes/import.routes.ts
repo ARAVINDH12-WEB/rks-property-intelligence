@@ -8,8 +8,8 @@ import { calculateTotalPrice } from '../utils/calculations.js';
 
 const router = Router();
 
-// STEP 1 & 2: Parse Uploaded Excel / CSV
-router.post('/parse', authenticate, upload.single('file'), async (req: Request, res: Response): Promise<void> => {
+// SINGLE ENDPOINT: Parse + Validate in one request (Vercel-safe, no temp file between steps)
+router.post('/parse-and-validate', authenticate, upload.single('file'), async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.file) {
       res.status(400).json({ error: 'No spreadsheet file uploaded' });
@@ -17,24 +17,32 @@ router.post('/parse', authenticate, upload.single('file'), async (req: Request, 
     }
 
     const filePath = req.file.path;
-    const workbook = xlsx.readFile(filePath);
+
+    let workbook: xlsx.WorkBook;
+    try {
+      workbook = xlsx.readFile(filePath);
+    } catch (parseErr: any) {
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      res.status(400).json({ error: 'Could not read file. Make sure it is a valid .xlsx, .xls, or .csv file.' });
+      return;
+    }
+
     const firstSheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[firstSheetName];
-
     const rawRows: any[] = xlsx.utils.sheet_to_json(worksheet, { defval: '' });
 
+    // Clean up uploaded file immediately (Vercel-safe)
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+
     if (rawRows.length === 0) {
-      fs.unlinkSync(filePath);
       res.status(400).json({ error: 'The uploaded spreadsheet is empty.' });
       return;
     }
 
-    // Extract headers
     const headers = Object.keys(rawRows[0]);
 
     // Intelligent auto-mapping heuristics
     const suggestedMapping: Record<string, string> = {};
-
     const mappingHeuristics: Record<string, RegExp[]> = {
       property_code: [/prop(erty)?[\s_-]?(id|code|no|num)/i, /plot[\s_-]?(no|num|id)/i, /^code$/i, /^id$/i],
       project_name: [/project[\s_-]?(name|title)?/i, /^scheme$/i, /^layout$/i],
@@ -60,22 +68,142 @@ router.post('/parse', authenticate, upload.single('file'), async (req: Request, 
       }
     }
 
-    // Keep file stored temporarily for commit step
+    // Parse the user-provided mapping (if sent alongside the file as JSON field)
+    let userMapping: Record<string, string> = {};
+    try {
+      if (req.body.mapping) {
+        userMapping = typeof req.body.mapping === 'string' ? JSON.parse(req.body.mapping) : req.body.mapping;
+      }
+    } catch {}
+
+    const activeMapping = Object.keys(userMapping).length > 0 ? userMapping : suggestedMapping;
+
+    // If no mapping is available, return headers and suggested mapping for Step 2 (user maps columns)
+    if (Object.keys(activeMapping).length === 0) {
+      res.json({
+        stage: 'mapping_required',
+        originalName: req.file.originalname,
+        totalRows: rawRows.length,
+        headers,
+        suggestedMapping,
+        sampleRows: rawRows.slice(0, 5),
+        rawRows, // carry all rows for re-validation after user maps
+      });
+      return;
+    }
+
+    // --- RUN VALIDATION INLINE ---
+    const existingProps = await query('SELECT property_code FROM properties');
+    const existingCodeSet = new Set(existingProps.rows.map((r: any) => String(r.property_code).trim().toUpperCase()));
+
+    const seenCodesInFile = new Set<string>();
+    const validatedRows: any[] = [];
+    let validCount = 0;
+    let errorCount = 0;
+    let warningCount = 0;
+
+    for (let idx = 0; idx < rawRows.length; idx++) {
+      const raw = rawRows[idx];
+      const errors: string[] = [];
+      const warnings: string[] = [];
+
+      const rawCode = String(raw[activeMapping.property_code] || '').trim();
+      const rawProj = String(raw[activeMapping.project_name] || 'General Inventory').trim();
+      const rawLoc = String(raw[activeMapping.location_name] || 'Chennai').trim();
+      const rawType = String(raw[activeMapping.property_type] || 'Residential Plot').trim();
+      const rawArea = parseFloat(String(raw[activeMapping.area_sqft] || '').replace(/,/g, ''));
+      const rawRate = parseFloat(String(raw[activeMapping.rate_per_sqft] || '').replace(/,/g, ''));
+      const rawPrice = parseFloat(String(raw[activeMapping.total_price] || '').replace(/,/g, ''));
+      const rawStatus = String(raw[activeMapping.status] || 'AVAILABLE').trim().toUpperCase();
+
+      if (!rawCode) {
+        errors.push('Missing Property ID / Code');
+      } else {
+        const codeUpper = rawCode.toUpperCase();
+        if (existingCodeSet.has(codeUpper)) errors.push(`Duplicate: '${codeUpper}' already in database`);
+        if (seenCodesInFile.has(codeUpper)) errors.push(`Duplicate: '${codeUpper}' repeats in spreadsheet`);
+        seenCodesInFile.add(codeUpper);
+      }
+
+      if (isNaN(rawArea) || rawArea <= 0) errors.push('Invalid Area (must be positive number)');
+      if (isNaN(rawRate) || rawRate <= 0) errors.push('Invalid Rate per Sq.Ft (must be positive number)');
+
+      let computedPrice = 0;
+      if (!isNaN(rawArea) && !isNaN(rawRate)) computedPrice = calculateTotalPrice(rawArea, rawRate);
+
+      if (!isNaN(rawPrice) && rawPrice > 0 && Math.abs(rawPrice - computedPrice) > 100) {
+        warnings.push(`Price mismatch: Provided ₹${rawPrice.toLocaleString('en-IN')} vs calculated ₹${computedPrice.toLocaleString('en-IN')}`);
+      }
+
+      const validStatuses = ['AVAILABLE', 'RESERVED', 'SOLD', 'BLOCKED', 'HOLD', 'UPCOMING', 'DRAFT'];
+      const normalizedStatus = validStatuses.includes(rawStatus) ? rawStatus : 'AVAILABLE';
+      if (!validStatuses.includes(rawStatus) && rawStatus) warnings.push(`Status '${rawStatus}' defaulted to AVAILABLE`);
+
+      const isValid = errors.length === 0;
+      if (isValid) validCount++; else errorCount++;
+      if (warnings.length > 0) warningCount++;
+
+      validatedRows.push({
+        rowIndex: idx + 1,
+        property_code: rawCode ? rawCode.toUpperCase() : `ROW-${idx + 1}`,
+        project_name: rawProj,
+        location_name: rawLoc,
+        property_type: rawType,
+        area_sqft: isNaN(rawArea) ? 0 : rawArea,
+        rate_per_sqft: isNaN(rawRate) ? 0 : rawRate,
+        total_price: computedPrice || rawPrice || 0,
+        status: normalizedStatus,
+        plot_number: activeMapping.plot_number ? String(raw[activeMapping.plot_number] || '') : '',
+        survey_number: activeMapping.survey_number ? String(raw[activeMapping.survey_number] || '') : '',
+        facing: activeMapping.facing ? String(raw[activeMapping.facing] || '') : '',
+        road_width: activeMapping.road_width ? String(raw[activeMapping.road_width] || '') : '',
+        description: activeMapping.description ? String(raw[activeMapping.description] || '') : '',
+        isValid,
+        errors,
+        warnings,
+      });
+    }
+
     res.json({
-      fileKey: req.file.filename,
+      stage: 'validated',
       originalName: req.file.originalname,
-      totalRows: rawRows.length,
       headers,
-      suggestedMapping,
-      sampleRows: rawRows.slice(0, 10),
+      suggestedMapping: activeMapping,
+      summary: {
+        totalRows: rawRows.length,
+        validRows: validCount,
+        errorRows: errorCount,
+        warningRows: warningCount,
+      },
+      previewRows: validatedRows.slice(0, 50),
+      allValidatedRows: validatedRows,
+      sampleRows: rawRows.slice(0, 5),
     });
   } catch (error: any) {
-    console.error('Error parsing spreadsheet:', error);
-    res.status(500).json({ error: error.message || 'Failed to parse spreadsheet' });
+    console.error('Error in parse-and-validate:', error);
+    res.status(500).json({ error: error.message || 'Failed to parse and validate spreadsheet' });
   }
 });
 
-// STEP 3 & 4: Validate Mapped Data
+// LEGACY: Keep /parse for backward compat — redirects to parse-and-validate behavior
+router.post('/parse', authenticate, upload.single('file'), async (req: Request, res: Response): Promise<void> => {
+  try {
+    if (!req.file) { res.status(400).json({ error: 'No file uploaded' }); return; }
+    const filePath = req.file.path;
+    const workbook = xlsx.readFile(filePath);
+    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rawRows: any[] = xlsx.utils.sheet_to_json(worksheet, { defval: '' });
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    if (rawRows.length === 0) { res.status(400).json({ error: 'Spreadsheet is empty.' }); return; }
+    const headers = Object.keys(rawRows[0]);
+    res.json({ fileKey: req.file.filename, originalName: req.file.originalname, totalRows: rawRows.length, headers, suggestedMapping: {}, sampleRows: rawRows.slice(0, 10) });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Parse failed' });
+  }
+});
+
+
+// STEP 3 & 4: Validate Mapped Data (kept for legacy fallback)
 router.post('/validate', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
     const { fileKey, mapping } = req.body;
