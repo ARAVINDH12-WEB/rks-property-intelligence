@@ -19,6 +19,7 @@ import { PropertyFormModal } from './components/inventory/PropertyFormModal.js';
 import { ExportModal } from './components/inventory/ExportModal.js';
 import { ConfirmationModal } from './components/common/ConfirmationModal.js';
 import { ToastContainer } from './components/common/Toast.js';
+import { AuthGatewayView } from './components/auth/AuthGatewayView.js';
 import { api } from './services/api.js';
 import { Property, Project, Location } from './types/index.js';
 
@@ -175,10 +176,30 @@ const MainLayout: React.FC = () => {
   );
 };
 
+const AppContent: React.FC = () => {
+  const { isLoggedIn, setIsLoggedIn, setActiveRole } = useApp();
+
+  if (!isLoggedIn) {
+    return (
+      <>
+        <AuthGatewayView
+          onLoginSuccess={(role) => {
+            setActiveRole(role);
+            setIsLoggedIn(true);
+          }}
+        />
+        <ToastContainer />
+      </>
+    );
+  }
+
+  return <MainLayout />;
+};
+
 export default function App() {
   return (
     <AppProvider>
-      <MainLayout />
+      <AppContent />
     </AppProvider>
   );
 }

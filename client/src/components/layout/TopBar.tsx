@@ -30,6 +30,7 @@ export const TopBar: React.FC = () => {
     openSiteVisitModal,
     activeRole,
     setActiveRole,
+    logoutToGateway,
     theme,
     toggleTheme,
     currentUser,
@@ -84,8 +85,7 @@ export const TopBar: React.FC = () => {
   }, []);
 
   const handleLogout = () => {
-    setActiveRole('VIEWER');
-    showToast('Logged out of Staff Mode', 'Switched to Public Viewer mode', 'info');
+    logoutToGateway();
   };
 
   const isStaff = activeRole !== 'VIEWER';
@@ -198,13 +198,23 @@ export const TopBar: React.FC = () => {
 
           {/* Staff Login OR Logged-in Role Badge */}
           {!isStaff ? (
-            <button
-              onClick={() => setIsLoginModalOpen(true)}
-              className="flex items-center gap-1.5 rounded-xl border border-amber-500/50 bg-amber-500/10 px-3.5 py-2 text-xs font-bold text-amber-300 hover:bg-amber-500 hover:text-black transition-all shadow-md"
-            >
-              <Lock className="h-3.5 w-3.5" />
-              <span>Staff Login</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsLoginModalOpen(true)}
+                className="flex items-center gap-1.5 rounded-xl border border-cyan-500/40 bg-cyan-500/10 px-3 py-2 text-xs font-bold text-cyan-300 hover:bg-cyan-500 hover:text-black transition-all shadow-md cursor-pointer"
+              >
+                <Lock className="h-3.5 w-3.5" />
+                <span>Staff Login</span>
+              </button>
+
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-1 rounded-xl border border-zinc-800 bg-[#12161F] p-2 text-xs text-zinc-400 hover:bg-rose-500/10 hover:text-rose-400 hover:border-rose-500/30 transition-colors cursor-pointer"
+                title="Return to Main Login Gateway"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
+            </div>
           ) : (
             <div className="flex items-center gap-2">
               <span className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs font-mono font-bold text-amber-400">
@@ -212,10 +222,11 @@ export const TopBar: React.FC = () => {
               </span>
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-1 rounded-xl border border-zinc-800 bg-[#12161F] p-2 text-xs text-zinc-400 hover:bg-rose-500/10 hover:text-rose-400 hover:border-rose-500/30 transition-colors"
-                title="Exit Staff Mode"
+                className="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-[#12161F] px-3 py-1.5 text-xs text-zinc-400 hover:bg-rose-500/10 hover:text-rose-400 hover:border-rose-500/30 transition-colors cursor-pointer"
+                title="Log Out to Login Gateway"
               >
-                <LogOut className="h-4 w-4" />
+                <LogOut className="h-3.5 w-3.5" />
+                <span>Log Out</span>
               </button>
             </div>
           )}

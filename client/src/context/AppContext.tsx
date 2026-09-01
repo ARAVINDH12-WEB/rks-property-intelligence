@@ -45,6 +45,9 @@ interface AppContextType {
   setIsSiteVisitModalOpen: (open: boolean) => void;
   siteVisitProperty: Property | null;
   openSiteVisitModal: (prop?: Property | null) => void;
+  isLoggedIn: boolean;
+  setIsLoggedIn: (logged: boolean) => void;
+  logoutToGateway: () => void;
   activeRole: UserRole;
   setActiveRole: (role: UserRole) => void;
   currentUser: User;
@@ -126,9 +129,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     localStorage.setItem('rks_view_mode', mode);
   };
 
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
+    return !!localStorage.getItem('rks_auth_session');
+  });
+
   // Role Management
   const [activeRole, setActiveRoleState] = useState<UserRole>(() => {
-    return (localStorage.getItem('rks_active_role') as UserRole) || 'ADMIN';
+    return (localStorage.getItem('rks_active_role') as UserRole) || 'VIEWER';
   });
 
   const setActiveRole = (role: UserRole) => {
@@ -138,13 +145,31 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     refreshInventory();
   };
 
+  const logoutToGateway = () => {
+    localStorage.removeItem('rks_auth_session');
+    localStorage.removeItem('rks_auth_token');
+    localStorage.setItem('rks_active_role', 'VIEWER');
+    setActiveRoleState('VIEWER');
+    setIsLoggedIn(false);
+    showToast('Logged Out', 'Returned to Portal Login Gateway', 'info');
+  };
+
+  const [savedUser, setSavedUser] = useState<any>(() => {
+    try {
+      const stored = localStorage.getItem('rks_auth_session');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+
   const currentUser: User = {
-    id: 1,
-    name: 'Rajesh Kumar S (Director)',
-    email: 'admin@rks.com',
+    id: savedUser?.id || (activeRole === 'ADMIN' ? 1 : 999),
+    name: savedUser?.name || (activeRole === 'ADMIN' ? 'Rajesh Kumar S (Director)' : 'Guest Customer'),
+    email: savedUser?.email || (activeRole === 'ADMIN' ? 'admin@rks.com' : 'customer@rks.com'),
     role: activeRole,
-    phone: '+91 98400 11223',
-    avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    phone: savedUser?.phone || '+91 98400 11223',
+    avatar_url: savedUser?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
   };
 
   // Filters State
@@ -256,6 +281,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setIsSiteVisitModalOpen,
         siteVisitProperty,
         openSiteVisitModal,
+        isLoggedIn,
+        setIsLoggedIn,
+        logoutToGateway,
         activeRole,
         setActiveRole,
         currentUser,
