@@ -16,13 +16,11 @@ router.post('/parse-and-validate', authenticate, upload.single('file'), async (r
       return;
     }
 
-    const filePath = req.file.path;
-
     let workbook: xlsx.WorkBook;
     try {
-      workbook = xlsx.readFile(filePath);
+      // Memory storage: file is in req.file.buffer, no disk path needed
+      workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
     } catch (parseErr: any) {
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
       res.status(400).json({ error: 'Could not read file. Make sure it is a valid .xlsx, .xls, or .csv file.' });
       return;
     }
@@ -30,9 +28,6 @@ router.post('/parse-and-validate', authenticate, upload.single('file'), async (r
     const firstSheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[firstSheetName];
     const rawRows: any[] = xlsx.utils.sheet_to_json(worksheet, { defval: '' });
-
-    // Clean up uploaded file immediately (Vercel-safe)
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
     if (rawRows.length === 0) {
       res.status(400).json({ error: 'The uploaded spreadsheet is empty.' });

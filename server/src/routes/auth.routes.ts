@@ -61,6 +61,56 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
   }
 });
 
+// POST /api/auth/customer-login - Record Customer Visit (stores name & phone)
+router.post('/customer-login', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { name, phone, email } = req.body;
+
+    const customerName = (name || '').trim() || 'Guest Customer';
+    const customerPhone = (phone || '').trim() || null;
+    const customerEmail = (email || '').trim() || null;
+
+    // If phone is provided, upsert (update visit_count if returning customer)
+    if (customerPhone) {
+      const existing = await query(
+        'SELECT id, visit_count FROM customer_visitors WHERE phone = $1',
+        [customerPhone]
+      );
+
+      if (existing.rowCount > 0) {
+        // Returning customer — increment visit count and update name/last_visited
+        await query(
+          `UPDATE customer_visitors SET name = $1, email = COALESCE($2, email), visit_count = visit_count + 1, last_visited_at = CURRENT_TIMESTAMP WHERE phone = $3`,
+          [customerName, customerEmail, customerPhone]
+        );
+        res.json({
+          message: 'Welcome back!',
+          customer: { id: existing.rows[0].id, name: customerName, phone: customerPhone, visit_count: existing.rows[0].visit_count + 1 },
+        });
+        return;
+      }
+    }
+
+    // New customer — insert
+    const result = await query(
+      `INSERT INTO customer_visitors (name, phone, email) VALUES ($1, $2, $3) RETURNING id, name, phone, visit_count`,
+      [customerName, customerPhone, customerEmail]
+    );
+
+    res.status(201).json({
+      message: 'Welcome to RKS Property Intelligence!',
+      customer: result.rows[0],
+    });
+  } catch (error: any) {
+    console.error('Customer login error:', error);
+    // Don't block customer — still let them in even if DB write fails
+    res.json({
+      message: 'Welcome!',
+      customer: { id: 0, name: req.body.name || 'Guest', phone: req.body.phone || '' },
+    });
+  }
+});
+
 // POST /api/auth/register - Sign Up / Register New Public Member
 router.post('/register', async (req: Request, res: Response): Promise<void> => {
   try {

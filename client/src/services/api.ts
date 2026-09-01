@@ -49,6 +49,18 @@ export const api = {
     return res;
   },
 
+  async customerLogin(name: string, phone: string): Promise<{ message: string; customer: any }> {
+    try {
+      return await request<{ message: string; customer: any }>('/auth/customer-login', {
+        method: 'POST',
+        body: JSON.stringify({ name, phone }),
+      });
+    } catch {
+      // Non-blocking — if server fails, still allow customer in
+      return { message: 'Welcome!', customer: { id: 0, name, phone } };
+    }
+  },
+
   async register(data: { name: string; email: string; password: string; phone?: string }): Promise<{ token: string; user: any; message: string }> {
     const res = await request<{ token: string; user: any; message: string }>('/auth/register', {
       method: 'POST',

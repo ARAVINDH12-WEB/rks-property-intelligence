@@ -113,31 +113,64 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     const suggestedActions: string[] = [];
 
     if (isSiteVisitIntent) {
-      reply = `I would be delighted to help you experience RKS properties in person! 🏡\n\nWe provide **complimentary site visits with free cab pickup and drop** across Chennai, Bangalore, Hyderabad, and Coimbatore.\n\nYou can click the **"🚗 Book Site Visit"** button on any plot card or click the button below to schedule your preferred date and time slot. Our tour guide will meet you on site with layout blueprints and legal approval files.`;
-      suggestedActions.push('Schedule Site Visit', 'View Available Plots', 'Ask About Pricing');
+      reply = `I'd be delighted to help you visit RKS properties in person! 🏡\n\n**Complimentary Site Visit Perks:**\n• Free cab pickup & drop from your location\n• Guided tour with blueprint & legal docs\n• Available 7 days a week, 9 AM – 6 PM\n• All 58 plots walk-through option\n\nClick the **"Book Site Visit"** button below or on any plot card to choose your preferred date and time.`;
+      suggestedActions.push('Book Free Site Visit', 'View Available Plots', 'Ask About Pricing');
+
     } else if (isNegotiation) {
-      reply = `Thank you for your interest! While our standard rates are fixed at **₹850 / sq.ft** (and **₹900 / sq.ft** for premium frontage Plots 2 & 3), we offer customized payment schedules and special developer terms for serious buyers.\n\n📲 **I have instantly alerted our Senior RKS Portfolio Manager on WhatsApp.** An executive will review your enquiry and get in touch with you shortly.`;
-      suggestedActions.push('Schedule Site Visit', 'View Plot Pricing List', 'Calculate EMI');
+      reply = `Thank you for your interest! 🤝\n\nOur standard rates are:\n• **Standard Plots:** ₹850 / sq.ft\n• **Premium Frontage (Plots 2 & 3):** ₹900 / sq.ft\n\nFor serious buyers we offer **flexible payment plans** and **developer terms**. 📲 I've instantly alerted our Senior Portfolio Manager on WhatsApp — an executive will contact you shortly with a customized offer.`;
+      suggestedActions.push('Book Site Visit', 'View Plot Pricing', 'Calculate Total');
+
     } else if (isLegalOrLoan) {
-      reply = `All RKS properties come with **100% clear freehold titles, approved DTCP/RERA/CMDA plans, and immediate Patta transfer readiness**.\n\n🏦 **Bank Loan Support:** Our projects are pre-approved by major nationalized banks (SBI, HDFC, ICICI, Axis Bank) for up to **80% land and construction financing**.\n\n📲 **I have notified our RKS Legal & Banking Advisor on WhatsApp** to share the document kit and loan eligibility assistance with you.`;
-      suggestedActions.push('Request Document Kit', 'Book Free Site Visit', 'Speak to Executive');
-    } else if (lowerMsg.includes('rate') || lowerMsg.includes('price') || lowerMsg.includes('cost') || lowerMsg.includes('sqft')) {
-      reply = `Here is our current pricing structure for **RKS Prime Plotted Inventory**:\n\n• **Standard Plots (Plots 1, 4 to 58):** **₹850 / sq.ft**\n• **Premium Highway Frontage (Plots 2 & 3):** **₹900 / sq.ft**\n\n**Sample Plot Estimates:**\n- **Plot 1** (2,177 sq.ft / 5.00 Cents) = **₹18.50 Lakhs**\n- **Plot 2** (2,537 sq.ft / 5.82 Cents) = **₹22.83 Lakhs**\n- **Plot 47** (544 sq.ft / 1.25 Cents) = **₹4.62 Lakhs**\n\nAll prices are calculated transparently as: **Area (Sq.Ft) × Rate / Sq.Ft**. Would you like to inspect a specific plot?`;
-      suggestedActions.push('Show Plots under ₹15 Lakhs', 'Show Plots 2 & 3', 'Book Site Visit');
-    } else if (lowerMsg.includes('plot 2') || lowerMsg.includes('plot 3')) {
-      const p2 = properties.find((p: any) => p.plot_number?.includes('2') || p.property_code?.includes('002'));
-      reply = `**Plot 2 & Plot 3 (Prime Commercial / Luxury Frontage):**\n\n• **Rate:** **₹900 / sq.ft**\n• **Plot 2:** 2,537.61 sq.ft (5.82 Cents) — **Total Price: ₹22,83,849**\n• **Plot 3:** 2,229.33 sq.ft (5.12 Cents) — **Total Price: ₹20,06,397**\n\nThese are wide-road East/North-East facing corner plots with maximum appreciation potential.`;
-      suggestedActions.push('Book Visit for Plot 2', 'Book Visit for Plot 3', 'View All 58 Plots');
-    } else if (lowerMsg.includes('under') || lowerMsg.includes('budget') || lowerMsg.includes('10 lakh') || lowerMsg.includes('15 lakh')) {
-      reply = `We have fantastic plotted options across various budget tiers:\n\n• **Budget Compact Plots (₹3.5L to ₹6.0L):** Plots 42–45 (623 sq.ft @ ₹5.30L), Plot 47 (544 sq.ft @ ₹4.62L), Plot 57 (413 sq.ft @ ₹3.51L)\n• **Standard Family Villa Plots (₹12L to ₹14L):** Plots 8–15 (1,475 sq.ft @ ₹12.54L), Plots 23–25 (1,501 sq.ft @ ₹12.76L)\n• **Grand Estates (₹17L to ₹22.8L):** Plot 1 (2,177 sq.ft @ ₹18.50L), Plot 2 (2,537 sq.ft @ ₹22.83L)\n\nWhich budget bracket matches your dream home plan?`;
-      suggestedActions.push('Show Affordable Plots', 'Show Villa Plots', 'Schedule Tour');
+      reply = `All RKS properties come with **100% clear freehold titles**. ✅\n\n**Legal Status:**\n• DTCP / CMDA / RERA approved layouts\n• Immediate Patta transfer ready\n• Encumbrance certificate available\n\n**Bank Loans:**\n• Pre-approved by SBI, HDFC, ICICI, Axis Bank\n• Up to 80% financing on land + construction\n• EMI calculators available on request\n\n📲 I've notified our Legal & Banking Advisor on WhatsApp to send you the full document kit.`;
+      suggestedActions.push('Request Documents', 'Book Site Visit', 'Speak to Executive');
+
+    } else if (lowerMsg.includes('rate') || lowerMsg.includes('price') || lowerMsg.includes('cost') || lowerMsg.includes('sqft') || lowerMsg.includes('sq ft') || lowerMsg.includes('per sq')) {
+      const avgRate = properties.length > 0 ? Math.round(properties.reduce((s: number, p: any) => s + Number(p.rate_per_sqft || 0), 0) / properties.length) : 875;
+      reply = `Here is the **RKS Pricing Structure** 💰\n\n• **Standard Plots:** ₹850 / sq.ft\n• **Premium Frontage (Plots 2 & 3):** ₹900 / sq.ft\n• **Current Portfolio Avg:** ₹${avgRate.toLocaleString('en-IN')} / sq.ft\n\n**Example Estimates:**\n- 2,000 sq.ft plot @ ₹850 = **₹17.00 Lakhs**\n- 2,537 sq.ft plot @ ₹900 = **₹22.83 Lakhs** (Premium)\n- 1,500 sq.ft plot @ ₹850 = **₹12.75 Lakhs**\n\nTotal price = Area (Sq.Ft) × Rate. All pricing is transparent — no hidden charges.`;
+      suggestedActions.push('Show Plots Under ₹15 Lakhs', 'Show Premium Plots', 'Book Site Visit');
+
+    } else if (lowerMsg.includes('available') || lowerMsg.includes('for sale') || lowerMsg.includes('which plot') || lowerMsg.includes('any plot')) {
+      const avail = properties.filter((p: any) => p.status === 'AVAILABLE').slice(0, 5);
+      const availStr = avail.map((p: any) => `• **${p.property_code}** — ${p.area_sqft} sq.ft @ ₹${Number(p.rate_per_sqft).toLocaleString('en-IN')}/sqft = **₹${Number(p.total_price / 100000).toFixed(2)}L**`).join('\n');
+      reply = `We currently have **${availableCount} plots available** for immediate purchase! 🟢\n\n${availStr || 'Contact us for the latest availability.'}\n\n...and ${Math.max(0, availableCount - 5)} more available plots. Would you like to browse all of them?`;
+      suggestedActions.push('Browse All Available Plots', 'Book Site Visit', 'Check Pricing');
+
+    } else if (lowerMsg.includes('under') || lowerMsg.includes('budget') || lowerMsg.includes('lakh') || lowerMsg.includes('affordable') || lowerMsg.includes('cheap')) {
+      reply = `We have options across all budget tiers! 💼\n\n**Budget Compact Plots (₹3.5L – ₹6L):**\n• Plot 47 — 544 sq.ft @ ₹4.62 Lakhs\n• Plot 57 — 413 sq.ft @ ₹3.51 Lakhs\n• Plots 42–45 — 623 sq.ft @ ₹5.30 Lakhs\n\n**Mid-Range Family Plots (₹10L – ₹14L):**\n• Plots 8–15 — 1,475 sq.ft @ ₹12.54 Lakhs\n• Plots 23–25 — 1,501 sq.ft @ ₹12.76 Lakhs\n\n**Grand Estates (₹17L – ₹23L):**\n• Plot 1 — 2,177 sq.ft @ ₹18.50 Lakhs\n• Plot 2 — 2,537 sq.ft @ ₹22.83 Lakhs (Premium)\n\nWhich budget range suits you?`;
+      suggestedActions.push('Show ₹5L–₹10L Plots', 'Show ₹10L–₹15L Plots', 'Show ₹15L+ Plots');
+
+    } else if (lowerMsg.includes('location') || lowerMsg.includes('city') || lowerMsg.includes('where') || lowerMsg.includes('chennai') || lowerMsg.includes('bangalore') || lowerMsg.includes('hyderabad') || lowerMsg.includes('coimbatore') || lowerMsg.includes('tamil')) {
+      const cities = [...new Set(properties.map((p: any) => p.city).filter(Boolean))];
+      reply = `RKS Prime Properties are located across major growth corridors in South India 🗺️\n\n**Our Locations:**\n${cities.length > 0 ? cities.map(c => `• ${c}`).join('\n') : '• Chennai\n• Coimbatore\n• Bangalore\n• Hyderabad'}\n\n**Chennai Zones:** ECR, OMR, GST Road, Poonamallee\n**Key Advantage:** All locations are within 30 km of major IT hubs, NH highways, and metro stations. Excellent appreciation potential with 15–25% YoY growth seen in our portfolio.`;
+      suggestedActions.push('Show Properties in Chennai', 'Book Site Visit', 'View All Locations');
+
+    } else if (lowerMsg.includes('project') || lowerMsg.includes('layout') || lowerMsg.includes('scheme') || lowerMsg.includes('phase') || lowerMsg.includes('which project')) {
+      const projects = [...new Set(properties.map((p: any) => p.project_name).filter(Boolean))];
+      reply = `RKS Group currently manages **${projects.length > 0 ? projects.length : 'multiple'} premium plotted development projects**: 🏗️\n\n${projects.length > 0 ? projects.map(n => `• **${n}**`).join('\n') : '• RKS Prime Layout\n• RKS Green Valley\n• RKS Grandeur City'}\n\nAll projects are gated communities with:\n✅ 24/7 security\n✅ Black-top internal roads\n✅ Underground drainage\n✅ Streetlights & water supply\n✅ Clear demarcated plot boundaries`;
+      suggestedActions.push('View All Plots', 'Book Site Visit', 'Check Pricing');
+
+    } else if (lowerMsg.includes('area') || lowerMsg.includes('size') || lowerMsg.includes('dimension') || lowerMsg.includes('sqft') || lowerMsg.includes('cent') || lowerMsg.includes('ground')) {
+      reply = `Our plot sizes cater to every need 📐\n\n**Available Size Ranges:**\n• **Compact (400–700 sq.ft / 0.9–1.6 Cents):** Ideal for investment\n• **Standard (1,200–1,800 sq.ft / 2.75–4.1 Cents):** Perfect for a family villa\n• **Large (2,000–2,600 sq.ft / 4.6–6.0 Cents):** Grand estate living\n\n**Conversion Reference:**\n• 1 Ground = 2,400 sq.ft\n• 1 Cent = 435.6 sq.ft\n• All plots have registered survey boundaries\n\nWould you like dimensions for a specific plot number?`;
+      suggestedActions.push('Show Plots by Size', 'View All 58 Plots', 'Book Site Visit');
+
     } else if (isHumanRequest) {
-      reply = `Understood! 📲 **I have triggered an urgent WhatsApp notification to our Senior Sales Advisor.**\n\nAn executive has received your request and will reach out to you immediately. If you have any questions in the meantime, feel free to ask me anything about plot dimensions, micro-markets, or site visits!`;
-      suggestedActions.push('Schedule Site Visit', 'Browse All Properties', 'View Pricing');
+      reply = `Understood! 📲 I've sent an **urgent WhatsApp alert** to our Senior Sales Advisor.\n\nAn executive will reach out to you immediately. In the meantime, feel free to ask me anything about plot sizes, pricing, or site visits!`;
+      suggestedActions.push('Book Site Visit', 'Browse Plots', 'View Pricing');
+
+    } else if (lowerMsg.includes('rks') || lowerMsg.includes('about') || lowerMsg.includes('company') || lowerMsg.includes('developer') || lowerMsg.includes('who are') || lowerMsg.includes('tell me')) {
+      reply = `**About RKS Prime Properties** 🏛️\n\nRKS Group is a trusted real estate developer with **${properties.length || 58} surveyed plots** across South India's fastest-growing residential and commercial corridors.\n\n**Why Choose RKS?**\n✅ 100% clear Patta freehold titles\n✅ DTCP / CMDA / RERA approved layouts\n✅ Transparent ₹850–₹900/sq.ft pricing\n✅ Free site visits with cab pickup & drop\n✅ Pre-approved bank loans (SBI, HDFC, ICICI)\n✅ ${availableCount} plots currently available\n\nWith a proven track record and 100% legal compliance, RKS ensures your investment is safe and appreciating.`;
+      suggestedActions.push('View Available Plots', 'Check Pricing', 'Book Site Visit');
+
+    } else if (lowerMsg.includes('contact') || lowerMsg.includes('phone') || lowerMsg.includes('number') || lowerMsg.includes('email') || lowerMsg.includes('office') || lowerMsg.includes('address')) {
+      reply = `You can reach the **RKS Sales Team** through multiple channels 📞\n\n• **WhatsApp:** +91 98400 00000 (instant response)\n• **Email:** sales@rksprime.com\n• **Office:** Available Mon–Sat, 9 AM – 6 PM\n• **Site Visits:** 7 days/week with free cab pickup\n\nOr click below and I'll alert our team immediately on WhatsApp!`;
+      suggestedActions.push('Alert Sales Team Now', 'Book Site Visit', 'View Properties');
+
     } else {
-      reply = `Welcome to **RKS Property Intelligence**! I am your AI Property Concierge. 🌟\n\nI can assist you with:\n1. **Plot Search & Specifications:** Sizing in Sq.Ft, Cents, and Grounds across 58 surveyed plots.\n2. **Transparent Pricing:** Standard rate ₹850/sq.ft & Premium rate ₹900/sq.ft.\n3. **Complimentary Site Visits:** Book an appointment with free cab pickup & drop.\n4. **Approvals & Legal Titles:** DTCP, RERA, CMDA approvals and bank loan assistance.\n\nHow can I help you find your ideal property today?`;
-      suggestedActions.push('Show Available Plots', 'What are the Rates?', 'Book a Site Visit', 'Speak to Sales Team');
+      // Smart fallback: use live property count data to give a helpful general response
+      reply = `Thanks for your message! 😊 I'm the **RKS Property AI Concierge** and I'm here to help.\n\n**Currently in our portfolio:**\n• **${properties.length || 58} total surveyed plots** across South India\n• **${availableCount} plots available** for immediate purchase\n• Rates from **₹850 – ₹900 / sq.ft**\n• Price range: **₹3.5 Lakhs to ₹22.8 Lakhs**\n\n**I can help you with:**\n→ Plot sizes, pricing & budget matching\n→ Location & project details\n→ Legal approvals & bank loan eligibility\n→ Free site visit booking with cab pickup\n→ Connecting you to a sales advisor\n\nWhat would you like to know?`;
+      suggestedActions.push('Show Available Plots', 'Check Pricing & Rates', 'Book Site Visit', 'Talk to Sales Team');
     }
+
 
     res.json({
       reply,

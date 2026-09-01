@@ -164,6 +164,16 @@ CREATE TABLE IF NOT EXISTS site_visits (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS customer_visitors (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(150) NOT NULL,
+  phone VARCHAR(30),
+  email VARCHAR(150),
+  visit_count INTEGER DEFAULT 1,
+  last_visited_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Indexes for ultra-fast search and filtering
 CREATE INDEX IF NOT EXISTS idx_properties_property_code ON properties(property_code);
 CREATE INDEX IF NOT EXISTS idx_properties_status ON properties(status);
@@ -177,3 +187,4 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_property_code ON audit_logs(property_c
 CREATE INDEX IF NOT EXISTS idx_property_history_property_id ON property_history(property_id);
 CREATE INDEX IF NOT EXISTS idx_site_visits_visit_date ON site_visits(visit_date);
 CREATE INDEX IF NOT EXISTS idx_site_visits_status ON site_visits(status);
+CREATE INDEX IF NOT EXISTS idx_customer_visitors_phone ON customer_visitors(phone);

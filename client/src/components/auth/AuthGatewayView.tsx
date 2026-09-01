@@ -17,19 +17,21 @@ export const AuthGatewayView: React.FC<AuthGatewayViewProps> = ({ onLoginSuccess
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
 
-  const [staffEmail, setStaffEmail] = useState('admin@rks.com');
-  const [staffPassword, setStaffPassword] = useState('admin123');
+  const [staffEmail, setStaffEmail] = useState('');
+  const [staffPassword, setStaffPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [staffError, setStaffError] = useState('');
 
-  const handleCustomerLogin = (e?: React.FormEvent) => {
+  const handleCustomerLogin = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    const name = customerName.trim() || 'Guest Customer';
+    const phone = customerPhone.trim() || '';
     const user = {
       id: 999,
-      name: customerName.trim() || 'Guest Customer',
+      name,
       email: 'customer@rks.com',
-      phone: customerPhone.trim() || '+91 98400 00000',
+      phone: phone || '+91 98400 00000',
       role: 'VIEWER',
     };
     sessionStorage.setItem('rks_active_role', 'VIEWER');
@@ -38,6 +40,8 @@ export const AuthGatewayView: React.FC<AuthGatewayViewProps> = ({ onLoginSuccess
     localStorage.setItem('rks_auth_session', JSON.stringify(user));
     showToast('Welcome, ' + user.name + '!', 'Browsing as Customer', 'success');
     onLoginSuccess('VIEWER', user);
+    // Fire-and-forget: persist customer name & phone in DB (non-blocking)
+    api.customerLogin(name, phone).catch(() => {/* silent fail — customer is already in */});
   };
 
   const handleStaffLogin = async (e: React.FormEvent) => {
