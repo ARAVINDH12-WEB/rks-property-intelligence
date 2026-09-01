@@ -1,16 +1,28 @@
 {
   "name": "rks-property-intelligence",
   "version": "1.0.0",
+  "private": true,
   "description": "RKS Property Intelligence - Real Estate Inventory Command Center",
+  "workspaces": [
+    "client",
+    "server"
+  ],
   "scripts": {
     "dev:server": "npm --prefix server run dev",
     "dev:client": "npm --prefix client run dev",
     "build:server": "npm --prefix server run build",
     "build:client": "npm --prefix client run build",
+    "build": "npm --prefix server install && npm --prefix client install && npm --prefix server run build && npm --prefix client run build",
     "vercel-build": "npm --prefix server install && npm --prefix client install && npm --prefix server run build && npm --prefix client run build",
-    "build": "npm run build:server && npm run build:client",
     "seed": "npm --prefix server run seed",
     "start": "npm --prefix server start"
   },
-  "keywords": ["real-estate", "property-inventory", "rks", "postgresql", "react", "typescript"]
+  "keywords": [
+    "real-estate",
+    "property-inventory",
+    "rks",
+    "postgresql",
+    "react",
+    "typescript"
+  ]
 }
