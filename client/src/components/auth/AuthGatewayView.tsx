@@ -39,6 +39,24 @@ export const AuthGatewayView: React.FC<AuthGatewayViewProps> = ({ onLoginSuccess
     if (staffError) setStaffError(null);
   };
 
+  // Settings State for dynamic landing stats
+  const [siteSettings, setSiteSettings] = useState<Record<string, string>>({
+    stat_total_plots: '58+',
+    stat_base_rate: '₹850',
+    stat_total_acreage: '120+ Acres',
+  });
+
+  React.useEffect(() => {
+    api
+      .getSettings()
+      .then((res) => {
+        if (res.settings) {
+          setSiteSettings((prev) => ({ ...prev, ...res.settings }));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
   };
@@ -206,8 +224,8 @@ export const AuthGatewayView: React.FC<AuthGatewayViewProps> = ({ onLoginSuccess
 
           <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5 pt-2">
             {[
-              { value: '58+', label: 'Verified Plots', color: 'text-emerald-700 dark:text-emerald-400', border: 'border-emerald-200 dark:border-emerald-800/50', bg: 'bg-emerald-50/70 dark:bg-emerald-950/20' },
-              { value: '₹850', label: 'Base Rate / Sq.Ft', color: 'text-teal-700 dark:text-teal-400', border: 'border-teal-200 dark:border-teal-800/50', bg: 'bg-teal-50/70 dark:bg-teal-950/20' },
+              { value: siteSettings.stat_total_plots || '58+', label: 'Verified Plots', color: 'text-emerald-700 dark:text-emerald-400', border: 'border-emerald-200 dark:border-emerald-800/50', bg: 'bg-emerald-50/70 dark:bg-emerald-950/20' },
+              { value: siteSettings.stat_base_rate || '₹850', label: 'Base Rate / Sq.Ft', color: 'text-teal-700 dark:text-teal-400', border: 'border-teal-200 dark:border-teal-800/50', bg: 'bg-teal-50/70 dark:bg-teal-950/20' },
               { value: '100%', label: 'RERA & DTCP Clear', color: 'text-cyan-700 dark:text-cyan-400', border: 'border-cyan-200 dark:border-cyan-800/50', bg: 'bg-cyan-50/70 dark:bg-cyan-950/20' },
             ].map(({ value, label, color, border, bg }) => (
               <div key={label} className={`rounded-2xl border ${border} ${bg} p-3 sm:p-4 text-center shadow-sm`}>

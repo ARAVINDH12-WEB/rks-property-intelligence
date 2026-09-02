@@ -321,7 +321,25 @@ export const api = {
     });
   },
 
-  // Site Settings & WhatsApp Connect
+  // Site Settings & Dynamic Configuration
+  async getSettings(): Promise<{ settings: Record<string, string>; timestamp: string }> {
+    return request<{ settings: Record<string, string>; timestamp: string }>('/settings');
+  },
+
+  async updateSettings(settings: Record<string, string>): Promise<{ message: string; updatedKeys: string[] }> {
+    return request<{ message: string; updatedKeys: string[] }>('/settings', {
+      method: 'PUT',
+      body: JSON.stringify({ settings }),
+    });
+  },
+
+  async updateSetting(key: string, value: string): Promise<{ message: string; key: string; value: string }> {
+    return request<{ message: string; key: string; value: string }>(`/settings/${encodeURIComponent(key)}`, {
+      method: 'PUT',
+      body: JSON.stringify({ value }),
+    });
+  },
+
   async getWhatsAppConfig(): Promise<{ whatsapp_number: string; default_message: string }> {
     return request<{ whatsapp_number: string; default_message: string }>('/settings/whatsapp');
   },

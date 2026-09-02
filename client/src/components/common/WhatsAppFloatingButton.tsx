@@ -1,25 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../services/api.js';
-import { MessageCircle, X } from 'lucide-react';
 
 export const WhatsAppFloatingButton: React.FC = () => {
   const [whatsappNumber, setWhatsappNumber] = useState<string>('+919840011223');
   const [defaultMessage, setDefaultMessage] = useState<string>(
     "Hi, I'm interested in learning more about your properties."
   );
+  const [isEnabled, setIsEnabled] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     api
-      .getWhatsAppConfig()
+      .getSettings()
       .then((res) => {
-        if (res.whatsapp_number) setWhatsappNumber(res.whatsapp_number);
-        if (res.default_message) setDefaultMessage(res.default_message);
+        if (res.settings) {
+          if (res.settings.whatsapp_number) setWhatsappNumber(res.settings.whatsapp_number);
+          if (res.settings.toggle_whatsapp_button !== undefined) {
+            setIsEnabled(res.settings.toggle_whatsapp_button !== 'false');
+          }
+        }
       })
       .catch((err) => {
         console.warn('Failed to load WhatsApp configuration:', err);
       });
   }, []);
+
+  if (!isEnabled) return null;
 
   const cleanNumber = whatsappNumber.replace(/[^0-9]/g, '');
   const encodedMsg = encodeURIComponent(defaultMessage);
