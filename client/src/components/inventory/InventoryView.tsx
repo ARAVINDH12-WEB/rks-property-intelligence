@@ -4,7 +4,6 @@ import { api } from '../../services/api.js';
 import { Property, Project, Location } from '../../types/index.js';
 import { PropertyTable } from './PropertyTable.js';
 import { PropertyCards } from './PropertyCards.js';
-import { PropertyMap } from './PropertyMap.js';
 import { PropertyCompact } from './PropertyCompact.js';
 import { FilterDrawer } from './FilterDrawer.js';
 import { BulkActionBar } from './BulkActionBar.js';
@@ -12,7 +11,6 @@ import { ConfirmationModal } from '../common/ConfirmationModal.js';
 import {
   Table as TableIcon,
   LayoutGrid,
-  Map as MapIcon,
   List,
   SlidersHorizontal,
   Plus,
@@ -28,7 +26,7 @@ import {
 
 interface InventoryViewProps {
   forcedStatusFilter?: string;
-  defaultViewMode?: 'table' | 'cards' | 'map' | 'compact';
+  defaultViewMode?: 'table' | 'cards' | 'compact';
 }
 
 export const InventoryView: React.FC<InventoryViewProps> = ({ forcedStatusFilter, defaultViewMode }) => {
@@ -307,18 +305,6 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ forcedStatusFilter
           </button>
 
           <button
-            onClick={() => setViewMode('map')}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
-              viewMode === 'map'
-                ? 'bg-amber-500 text-black shadow-md'
-                : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            <MapIcon className="h-3.5 w-3.5" />
-            <span>Map View</span>
-          </button>
-
-          <button
             onClick={() => setViewMode('compact')}
             className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
               viewMode === 'compact'
@@ -418,8 +404,6 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ forcedStatusFilter
               onToggleSelect={handleToggleSelect}
             />
           )}
-
-          {viewMode === 'map' && <PropertyMap properties={properties} />}
 
           {viewMode === 'compact' && (
             <PropertyCompact

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext.js';
 import { api } from '../../services/api.js';
 import { Property, Offer } from '../../types/index.js';
@@ -36,14 +36,14 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
   onExploreProperties,
   onOpenStaffLogin,
 }) => {
-  const { theme, toggleTheme, openSiteVisitModal, showToast } = useApp();
+  const { theme, toggleTheme, openSiteVisitModal, showToast, refreshTrigger } = useApp();
 
   // Settings State
   const [settings, setSettings] = useState<Record<string, string>>({
     company_name: 'RKS Prime Properties',
     contact_phone: '+91 98400 11223',
     whatsapp_number: '+91 98400 11223',
-    stat_total_plots: '58+',
+    stat_total_plots: '0',
     stat_base_rate: '₹850',
     stat_total_acreage: '120+ Acres',
     toggle_whatsapp_button: 'true',
@@ -56,6 +56,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    setIsLoading(true);
     Promise.all([
       api.getSettings().catch(() => ({ settings: {} })),
       api.getProperties({ limit: 6, status: 'AVAILABLE' }).catch(() => ({ properties: [] })),
@@ -72,7 +73,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
       }
       setIsLoading(false);
     });
-  }, []);
+  }, [refreshTrigger]);
 
   const cleanWhatsappNumber = (settings.whatsapp_number || '+919840011223').replace(/[^0-9]/g, '');
   const whatsappUrl = `https://wa.me/${cleanWhatsappNumber}?text=${encodeURIComponent(

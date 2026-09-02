@@ -54,7 +54,6 @@ export const ImportWizard: React.FC = () => {
     { key: 'facing', label: 'Facing Direction', required: false },
     { key: 'road_width', label: 'Road Width', required: false },
     { key: 'description', label: 'Description', required: false },
-    { key: 'google_maps_url', label: 'Google Maps Link / URL', required: false },
     { key: 'latitude', label: 'Latitude', required: false },
     { key: 'longitude', label: 'Longitude', required: false },
   ];
@@ -124,9 +123,9 @@ export const ImportWizard: React.FC = () => {
   };
 
   const handleDownloadSample = () => {
-    const csv = `Property ID,Project,City,Type,Area SqFt,Rate per SqFt,Status,Plot No,Facing,Survey No,Google Maps Link
-RKS-00901,RKS Green Valley,Chennai,Residential Plot,2400,5200,AVAILABLE,Plot 901,East,144/1,https://www.google.com/maps/@12.9010,80.2279,15z
-RKS-00902,RKS Grandeur City,Bangalore,Villa,3400,9800,AVAILABLE,Villa G-12,North,86/2,https://www.google.com/maps/@12.9698,77.7500,15z`;
+    const csv = `Property ID,Project,City,Type,Area SqFt,Rate per SqFt,Status,Plot No,Facing,Survey No
+RKS-00901,RKS Green Valley,Chennai,Residential Plot,2400,5200,AVAILABLE,Plot 901,East,144/1
+RKS-00902,RKS Grandeur City,Bangalore,Villa,3400,9800,AVAILABLE,Villa G-12,North,86/2`;
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

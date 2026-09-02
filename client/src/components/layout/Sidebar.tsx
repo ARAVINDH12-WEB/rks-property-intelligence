@@ -19,7 +19,6 @@ import {
   Shield,
   Sparkles,
   Tag,
-  Map as MapIcon,
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -48,11 +47,6 @@ export const Sidebar: React.FC = () => {
       icon: <Building2 className="h-4 w-4" />,
       badge: badgeCounts.total,
       badgeColor: 'bg-zinc-800 text-zinc-300',
-    },
-    {
-      id: 'map',
-      label: 'Interactive Map',
-      icon: <MapIcon className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />,
     },
     {
       id: 'available',

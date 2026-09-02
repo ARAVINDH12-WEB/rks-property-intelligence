@@ -89,6 +89,11 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
   // Permissions Policy
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self)');
 
+  // Prevent stale caching on API responses
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
   // Remove fingerprint headers
   res.removeHeader('X-Powered-By');
 

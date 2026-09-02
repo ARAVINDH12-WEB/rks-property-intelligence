@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 
 export const SettingsView: React.FC = () => {
-  const { activeRole, setActiveRole, theme, showToast } = useApp();
+  const { activeRole, setActiveRole, theme, showToast, refreshInventory } = useApp();
   const isAdmin = activeRole === 'ADMIN';
 
   const [activeTab, setActiveTab] = useState<'general' | 'stats' | 'toggles' | 'roles' | 'system'>('general');
@@ -93,6 +93,7 @@ export const SettingsView: React.FC = () => {
     try {
       const res = await api.updateSettings(settings);
       showToast('Settings Saved', res.message, 'success');
+      refreshInventory();
     } catch (err: any) {
       showToast('Save Failed', err.message, 'error');
     } finally {

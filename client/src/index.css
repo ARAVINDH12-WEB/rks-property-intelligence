@@ -46,15 +46,3 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(15, 118, 110, 0.7);
 }
-
-/* Leaflet Popup Fixes */
-.leaflet-popup-content-wrapper {
-  background: #FFFFFF !important;
-  border-radius: 16px !important;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5) !important;
-  padding: 4px !important;
-}
-
-.leaflet-popup-tip {
-  background: #FFFFFF !important;
-}

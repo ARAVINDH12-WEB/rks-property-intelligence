@@ -94,7 +94,6 @@ const MainLayout: React.FC = () => {
         <main className="flex-1 px-8 py-8 mt-16 max-w-7xl w-full mx-auto animate-in fade-in">
           {activeTab === 'overview' && <OverviewView />}
           {activeTab === 'properties' && <InventoryView />}
-          {activeTab === 'map' && <InventoryView defaultViewMode="map" />}
           {activeTab === 'available' && <InventoryView forcedStatusFilter="AVAILABLE" />}
           {activeTab === 'reserved' && <InventoryView forcedStatusFilter="RESERVED" />}
           {activeTab === 'sold' && <InventoryView forcedStatusFilter="SOLD" />}

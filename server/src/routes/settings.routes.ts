@@ -38,6 +38,13 @@ router.get('/', async (_req: Request, res: Response): Promise<void> => {
       settingsMap[row.key] = row.value;
     }
 
+    // If stat_total_plots is not customized by admin, compute live from DB
+    const propCountRes = await query('SELECT COUNT(*) as count FROM properties WHERE archived = FALSE');
+    const liveCount = parseInt(propCountRes.rows[0]?.count || '0', 10);
+    if (!settingsMap.stat_total_plots || settingsMap.stat_total_plots === '58+') {
+      settingsMap.stat_total_plots = liveCount > 0 ? `${liveCount}+` : '0';
+    }
+
     res.json({
       settings: settingsMap,
       timestamp: new Date().toISOString(),

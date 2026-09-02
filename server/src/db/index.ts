@@ -6,6 +6,12 @@ import { SCHEMA_SQL } from './schema.js';
 
 dotenv.config();
 
+const baseDir = typeof __dirname !== 'undefined' ? __dirname : process.cwd();
+// If running from server/ or server/src or server/dist, resolve root directory
+const projectRootDir = baseDir.includes('server')
+  ? path.resolve(baseDir.split('server')[0])
+  : baseDir;
+
 let db: PGlite | null = null;
 let initPromise: Promise<PGlite> | null = null;
 
@@ -21,7 +27,7 @@ export async function getDb(): Promise<PGlite> {
       if (!dataDir) {
         dataDir = isServerless
           ? path.join('/tmp', 'rks-postgres-data')
-          : path.join(process.cwd(), 'data', 'postgres');
+          : path.join(projectRootDir, 'data', 'postgres');
       }
 
       try {

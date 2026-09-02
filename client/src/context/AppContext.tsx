@@ -5,7 +5,6 @@ import { api } from '../services/api.js';
 export type NavigationTab =
   | 'overview'
   | 'properties'
-  | 'map'
   | 'available'
   | 'reserved'
   | 'sold'
@@ -19,7 +18,7 @@ export type NavigationTab =
   | 'audit'
   | 'settings';
 
-export type ViewMode = 'table' | 'cards' | 'map' | 'compact';
+export type ViewMode = 'table' | 'cards' | 'compact';
 
 export interface ToastMessage {
   id: string;

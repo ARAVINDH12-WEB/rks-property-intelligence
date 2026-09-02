@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 
 export const OffersView: React.FC = () => {
-  const { activeRole, showToast, refreshTrigger, openSiteVisitModal } = useApp();
+  const { activeRole, showToast, refreshTrigger, refreshInventory, openSiteVisitModal } = useApp();
   const [offers, setOffers] = useState<Offer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -116,6 +116,7 @@ export const OffersView: React.FC = () => {
       }
       setIsModalOpen(false);
       fetchOffers();
+      refreshInventory();
     } catch (err: any) {
       showToast('Save Failed', err.message, 'error');
     } finally {
@@ -130,6 +131,7 @@ export const OffersView: React.FC = () => {
       showToast('Offer Deleted', `'${offerToDelete.title}' has been removed.`, 'success');
       setOfferToDelete(null);
       fetchOffers();
+      refreshInventory();
     } catch (err: any) {
       showToast('Delete Failed', err.message, 'error');
     }
@@ -144,6 +146,7 @@ export const OffersView: React.FC = () => {
         'info'
       );
       fetchOffers();
+      refreshInventory();
     } catch (err: any) {
       showToast('Status Update Failed', err.message, 'error');
     }
