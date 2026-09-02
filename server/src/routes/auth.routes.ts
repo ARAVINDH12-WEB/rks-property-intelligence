@@ -252,6 +252,97 @@ router.get('/users', authenticate, async (_req: Request, res: Response): Promise
   }
 });
 
+// PUT /api/auth/users/:id - Edit Team Member Details (Admin Only)
+router.put('/users/:id', authenticate, authorize(['ADMIN']), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = parseInt(req.params.id);
+    const { name, email, phone, role, password } = req.body;
+
+    // 1. Check user exists
+    const existingRes = await query('SELECT * FROM users WHERE id = $1', [id]);
+    if (existingRes.rowCount === 0) {
+      res.status(404).json({ error: 'Team member not found' });
+      return;
+    }
+
+    const current = existingRes.rows[0];
+
+    // 2. Validate role
+    const validRoles = ['ADMIN', 'MANAGER', 'EMPLOYEE', 'VIEWER'];
+    const newRole = role ? String(role).toUpperCase() : current.role;
+    if (!validRoles.includes(newRole)) {
+      res.status(400).json({ error: `Invalid role '${role}'. Must be one of: ${validRoles.join(', ')}` });
+      return;
+    }
+
+    // 3. Safety Check: Prevent demoting the last remaining ADMIN account
+    if (current.role === 'ADMIN' && newRole !== 'ADMIN') {
+      const adminCountRes = await query(`SELECT count(*)::int as admin_count FROM users WHERE role = 'ADMIN' AND id != $1`, [id]);
+      const otherAdmins = adminCountRes.rows[0]?.admin_count || 0;
+      if (otherAdmins === 0) {
+        res.status(400).json({ error: 'Cannot demote the last remaining Administrator account. Assign another admin first.' });
+        return;
+      }
+    }
+
+    // 4. Validate unique email
+    let newEmail = current.email;
+    if (email && email.trim().toLowerCase() !== current.email.toLowerCase()) {
+      newEmail = email.trim().toLowerCase();
+      const duplicateRes = await query('SELECT id FROM users WHERE LOWER(email) = $1 AND id != $2', [newEmail, id]);
+      if (duplicateRes.rowCount > 0) {
+        res.status(409).json({ error: `The email address '${newEmail}' is already in use by another team member.` });
+        return;
+      }
+    }
+
+    const newName = name ? name.trim() : current.name;
+    const newPhone = phone !== undefined ? (phone ? phone.trim() : null) : current.phone;
+
+    // 5. Optional password update
+    let passwordHash = current.password_hash;
+    if (password && password.trim().length > 0) {
+      const salt = await bcrypt.genSalt(10);
+      passwordHash = await bcrypt.hash(password.trim(), salt);
+    }
+
+    const updateRes = await query(
+      `UPDATE users SET
+        name = $1,
+        email = $2,
+        phone = $3,
+        role = $4,
+        password_hash = $5,
+        updated_at = CURRENT_TIMESTAMP
+       WHERE id = $6 RETURNING id, name, email, role, phone, avatar_url, updated_at`,
+      [newName, newEmail, newPhone, newRole, passwordHash, id]
+    );
+
+    const updatedUser = updateRes.rows[0];
+    const adminUser = req.user?.name || 'Administrator';
+
+    // 6. Audit logging
+    await query(
+      `INSERT INTO audit_logs (user_id, user_name, entity_type, entity_id, action, details)
+       VALUES ($1, $2, 'USER', $3, 'UPDATE_STAFF', $4)`,
+      [
+        req.user?.id || 1,
+        adminUser,
+        id,
+        `Updated member ${updatedUser.name} (${updatedUser.email}). Role: ${updatedUser.role}${current.role !== updatedUser.role ? ` (Changed from ${current.role})` : ''}`
+      ]
+    );
+
+    res.json({
+      message: `Team member ${updatedUser.name} updated successfully!`,
+      user: updatedUser,
+    });
+  } catch (error: any) {
+    console.error('Error updating team member:', error);
+    res.status(500).json({ error: error?.message || 'Failed to update team member' });
+  }
+});
+
 // DELETE /api/auth/users/:id - Delete / Deactivate User (Admin Only)
 router.delete('/users/:id', authenticate, authorize(['ADMIN']), async (req: Request, res: Response): Promise<void> => {
   try {
@@ -261,7 +352,29 @@ router.delete('/users/:id', authenticate, authorize(['ADMIN']), async (req: Requ
       return;
     }
 
+    const existingRes = await query('SELECT * FROM users WHERE id = $1', [id]);
+    if (existingRes.rowCount === 0) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    const current = existingRes.rows[0];
+    if (current.role === 'ADMIN') {
+      const adminCountRes = await query(`SELECT count(*)::int as admin_count FROM users WHERE role = 'ADMIN' AND id != $1`, [id]);
+      if ((adminCountRes.rows[0]?.admin_count || 0) === 0) {
+        res.status(400).json({ error: 'Cannot remove the last remaining Administrator account' });
+        return;
+      }
+    }
+
     await query('DELETE FROM users WHERE id = $1', [id]);
+
+    await query(
+      `INSERT INTO audit_logs (user_id, user_name, entity_type, entity_id, action, details)
+       VALUES ($1, $2, 'USER', $3, 'DELETE_STAFF', $4)`,
+      [req.user?.id || 1, req.user?.name || 'Admin', id, `Removed team member ${current.name} (${current.email})`]
+    );
+
     res.json({ message: 'User account removed successfully' });
   } catch (error: any) {
     res.status(500).json({ error: 'Failed to delete user' });

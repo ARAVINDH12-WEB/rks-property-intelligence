@@ -8,6 +8,7 @@ export type NavigationTab =
   | 'available'
   | 'reserved'
   | 'sold'
+  | 'offers'
   | 'site-visits'
   | 'team'
   | 'projects'

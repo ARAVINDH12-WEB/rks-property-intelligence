@@ -229,3 +229,23 @@ export interface PaginationMeta {
   limit: number;
   totalPages: number;
 }
+
+export interface Offer {
+  id: number;
+  title: string;
+  description: string;
+  discount_type: 'PERCENTAGE' | 'FIXED_AMOUNT' | 'SPECIAL_RATE' | 'PACKAGE';
+  discount_value: string;
+  start_date: string;
+  end_date: string;
+  is_active: boolean;
+  applicable_properties?: string;
+  banner_image_url?: string;
+  terms_conditions?: string;
+  created_by?: number;
+  created_by_name?: string;
+  calculated_status?: 'ACTIVE' | 'INACTIVE' | 'EXPIRED' | 'SCHEDULED';
+  created_at: string;
+  updated_at: string;
+}
+

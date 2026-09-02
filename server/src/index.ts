@@ -17,6 +17,7 @@ import reportsRoutes from './routes/reports.routes.js';
 import auditRoutes from './routes/audit.routes.js';
 import siteVisitsRoutes from './routes/site-visits.routes.js';
 import aiChatRoutes from './routes/ai-chat.routes.js';
+import offersRoutes from './routes/offers.routes.js';
 
 dotenv.config();
 
@@ -47,6 +48,7 @@ app.use('/api/reports', reportsRoutes);
 app.use('/api/audit-logs', auditRoutes);
 app.use('/api/site-visits', siteVisitsRoutes);
 app.use('/api/ai-chat', aiChatRoutes);
+app.use('/api/offers', offersRoutes);
 
 // Comprehensive Health check endpoint
 app.get('/api/health', async (_req: Request, res: Response) => {

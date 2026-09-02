@@ -12,6 +12,7 @@ import { AuditLogsView } from './components/audit/AuditLogsView.js';
 import { SettingsView } from './components/settings/SettingsView.js';
 import { TeamMembersView } from './components/team/TeamMembersView.js';
 import { SiteVisitsManagementView } from './components/site-visits/SiteVisitsManagementView.js';
+import { OffersView } from './components/offers/OffersView.js';
 import { SiteVisitBookingModal } from './components/site-visits/SiteVisitBookingModal.js';
 import { AiConciergeChat } from './components/chat/AiConciergeChat.js';
 import { PropertyDetailsModal } from './components/inventory/PropertyDetailsModal.js';
@@ -95,6 +96,7 @@ const MainLayout: React.FC = () => {
           {activeTab === 'available' && <InventoryView forcedStatusFilter="AVAILABLE" />}
           {activeTab === 'reserved' && <InventoryView forcedStatusFilter="RESERVED" />}
           {activeTab === 'sold' && <InventoryView forcedStatusFilter="SOLD" />}
+          {activeTab === 'offers' && <OffersView />}
           {activeTab === 'site-visits' && <SiteVisitsManagementView />}
           {activeTab === 'team' && <TeamMembersView />}
           {activeTab === 'projects' && <ProjectsView />}

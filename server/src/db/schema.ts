@@ -2,6 +2,12 @@
 // This ensures 100% reliability in serverless/Vercel environments without filesystem path dependency.
 
 export const SCHEMA_SQL = `
+CREATE TABLE IF NOT EXISTS system_meta (
+  key VARCHAR(50) PRIMARY KEY,
+  value TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
@@ -176,10 +182,28 @@ CREATE TABLE IF NOT EXISTS customer_visitors (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS offers (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(200) NOT NULL,
+  description TEXT NOT NULL,
+  discount_type VARCHAR(50) DEFAULT 'PERCENTAGE',
+  discount_value VARCHAR(100) NOT NULL,
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  is_active BOOLEAN DEFAULT true,
+  applicable_properties TEXT DEFAULT 'ALL',
+  banner_image_url TEXT,
+  terms_conditions TEXT,
+  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE INDEX IF NOT EXISTS idx_properties_property_code ON properties(property_code);
 CREATE INDEX IF NOT EXISTS idx_properties_status ON properties(status);
-CREATE INDEX IF NOT EXISTS idx_properties_project_id ON properties(project_id);
-CREATE INDEX IF NOT EXISTS idx_properties_location_id ON properties(location_id);
+CREATE INDEX IF NOT EXISTS idx_properties_project_id ON projects(id);
+CREATE INDEX IF NOT EXISTS idx_properties_location_id ON locations(id);
 CREATE INDEX IF NOT EXISTS idx_properties_property_type ON properties(property_type);
 CREATE INDEX IF NOT EXISTS idx_properties_price ON properties(total_price);
 CREATE INDEX IF NOT EXISTS idx_properties_area ON properties(area_sqft);
@@ -189,4 +213,5 @@ CREATE INDEX IF NOT EXISTS idx_property_history_property_id ON property_history(
 CREATE INDEX IF NOT EXISTS idx_site_visits_visit_date ON site_visits(visit_date);
 CREATE INDEX IF NOT EXISTS idx_site_visits_status ON site_visits(status);
 CREATE INDEX IF NOT EXISTS idx_customer_visitors_phone ON customer_visitors(phone);
+CREATE INDEX IF NOT EXISTS idx_offers_dates ON offers(start_date, end_date, is_active);
 `;

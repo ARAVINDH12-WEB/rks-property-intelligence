@@ -17,6 +17,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Shield,
+  Sparkles,
+  Tag,
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -75,6 +77,11 @@ export const Sidebar: React.FC = () => {
       icon: <Calendar className="h-4 w-4 text-cyan-400" />,
       badge: activeRole !== 'VIEWER' ? badgeCounts.siteVisits : undefined,
       badgeColor: 'bg-cyan-950/60 text-cyan-300 border border-cyan-500/30',
+    },
+    {
+      id: 'offers',
+      label: activeRole === 'VIEWER' ? 'Special Offers' : 'Offers & Deals',
+      icon: <Sparkles className="h-4 w-4 text-pink-400" />,
     },
     { id: 'projects', label: 'Projects', icon: <FolderKanban className="h-4 w-4" /> },
     { id: 'locations', label: 'Micro-Markets', icon: <MapPin className="h-4 w-4" /> },

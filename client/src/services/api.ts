@@ -90,6 +90,13 @@ export const api = {
     });
   },
 
+  async updateUser(id: number, data: { name?: string; email?: string; phone?: string; role?: string; password?: string }): Promise<{ user: any; message: string }> {
+    return request<{ user: any; message: string }>(`/auth/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
   async getMe(): Promise<{ user: any }> {
     return request<{ user: any }>('/auth/me');
   },
@@ -282,6 +289,35 @@ export const api = {
     return request('/ai-chat', {
       method: 'POST',
       body: JSON.stringify(data),
+    });
+  },
+
+  // Offers & Promotions
+  async getOffers(): Promise<{ offers: any[]; viewRole: string; count: number }> {
+    return request<{ offers: any[]; viewRole: string; count: number }>('/offers');
+  },
+
+  async getOffer(id: number): Promise<{ offer: any }> {
+    return request<{ offer: any }>(`/offers/${id}`);
+  },
+
+  async createOffer(data: any): Promise<{ message: string; offer: any }> {
+    return request<{ message: string; offer: any }>('/offers', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async updateOffer(id: number, data: any): Promise<{ message: string; offer: any }> {
+    return request<{ message: string; offer: any }>(`/offers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async deleteOffer(id: number): Promise<{ message: string }> {
+    return request<{ message: string }>(`/offers/${id}`, {
+      method: 'DELETE',
     });
   },
 

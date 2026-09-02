@@ -1,9 +1,23 @@
 import bcrypt from 'bcryptjs';
 import { getDb, query } from './index.js';
 
-export async function seedDatabase() {
-  console.log('🌱 Starting database seeding for RKS Property Intelligence...');
+export async function seedDatabase(force: boolean = false) {
   await getDb();
+
+  // Check if initial seeding already completed to prevent overwriting user deletes/edits
+  if (!force) {
+    try {
+      const metaCheck = await query("SELECT value FROM system_meta WHERE key = 'seed_completed'");
+      if (metaCheck.rowCount > 0 && metaCheck.rows[0]?.value === 'true') {
+        console.log('ℹ️ Database already seeded. Skipping re-seed to preserve user edits & deletions.');
+        return;
+      }
+    } catch {
+      // Table might not exist yet, proceed with seed
+    }
+  }
+
+  console.log('🌱 Starting database seeding for RKS Property Intelligence...');
 
   // 1. Create Users
   const passwordHash = await bcrypt.hash('admin123', 10);
@@ -19,6 +33,8 @@ export async function seedDatabase() {
   await query('DELETE FROM projects');
   await query('DELETE FROM locations');
   await query('DELETE FROM users');
+  await query('DELETE FROM site_visits');
+  await query('DELETE FROM offers');
 
   const userAdmin = await query(
     `INSERT INTO users (name, email, password_hash, role, phone)
@@ -907,7 +923,62 @@ export async function seedDatabase() {
     [p1?.id, p1?.property_code, empId, p2?.id, p2?.property_code, p3?.id, p3?.property_code]
   );
 
-  console.log(`✅ Successfully seeded ${rawProperties.length} realistic properties, 6 projects, 6 locations, 4 role accounts, and sample site visits into PostgreSQL!`);
+  // 6. Seed Sample Promotional Offers
+  await query(
+    `INSERT INTO offers (
+      title, description, discount_type, discount_value, start_date, end_date,
+      is_active, applicable_properties, banner_image_url, terms_conditions, created_by
+    ) VALUES
+    (
+      'Festival Monsoon Bonanza 2026',
+      'Exclusive 10% instant price waiver on all premium villa & residential plots in OMR and ECR corridors. Includes complimentary legal documentation.',
+      'PERCENTAGE',
+      '10% OFF',
+      CURRENT_DATE - INTERVAL '5 days',
+      CURRENT_DATE + INTERVAL '25 days',
+      true,
+      'OMR-IT Corridor, ECR-Kovalam',
+      'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&auto=format&fit=crop&q=80',
+      'Valid for bookings confirmed before the expiry date with minimum 20% advance token.',
+      $1
+    ),
+    (
+      'Early Bird Township Launch Special',
+      'Zero Registration Charges & Free Patta Transfer on new layout phase releases in Guduvanchery & Tambaram West.',
+      'FIXED_AMOUNT',
+      'Free Registration (Save ₹1,50,000)',
+      CURRENT_DATE - INTERVAL '2 days',
+      CURRENT_DATE + INTERVAL '15 days',
+      true,
+      'Guduvanchery Township, Tambaram West',
+      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80',
+      'Applicable on first 10 unit bookings per project layout.',
+      $1
+    ),
+    (
+      'New Year Grand Preview Discount',
+      'Flat cash discount on East-facing corner plots across all Chennai locations.',
+      'FIXED_AMOUNT',
+      '₹1,00,000 Flat Rebate',
+      CURRENT_DATE - INTERVAL '40 days',
+      CURRENT_DATE - INTERVAL '10 days',
+      true,
+      'ALL',
+      'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&auto=format&fit=crop&q=80',
+      'Campaign concluded successfully. Kept for internal performance review.',
+      $1
+    )`,
+    [adminId]
+  );
+
+  // 7. Mark seed as completed in system_meta
+  await query(
+    `INSERT INTO system_meta (key, value)
+     VALUES ('seed_completed', 'true')
+     ON CONFLICT (key) DO UPDATE SET value = 'true'`
+  );
+
+  console.log(`✅ Successfully seeded ${rawProperties.length} realistic properties, 6 projects, 6 locations, 4 role accounts, 3 promotional offers, and sample site visits into PostgreSQL!`);
 }
 
 if (process.argv[1] && process.argv[1].endsWith('seed.ts')) {

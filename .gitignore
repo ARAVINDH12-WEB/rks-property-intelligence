@@ -25,3 +25,7 @@ yarn-error.log*
 # OS generated
 .DS_Store
 Thumbs.db
+
+# Database storage
+server/data/
+data/
