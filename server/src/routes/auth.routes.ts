@@ -3,12 +3,13 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { query } from '../db/index.js';
 import { authenticate, authorize } from '../middleware/auth.js';
+import { createRateLimiter } from '../middleware/security.js';
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'rks_property_intelligence_super_secret_jwt_key_2026';
 
-// POST /api/auth/login - Sign In
-router.post('/login', async (req: Request, res: Response): Promise<void> => {
+// POST /api/auth/login - Sign In with Brute-Force Rate Limiting
+router.post('/login', createRateLimiter(60000, 15, 'Too many login attempts. Please wait a minute and try again.'), async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
 

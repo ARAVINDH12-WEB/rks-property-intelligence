@@ -19,13 +19,18 @@ import siteVisitsRoutes from './routes/site-visits.routes.js';
 import aiChatRoutes from './routes/ai-chat.routes.js';
 import offersRoutes from './routes/offers.routes.js';
 import settingsRoutes from './routes/settings.routes.js';
+import { securityHeaders, createRateLimiter } from './middleware/security.js';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
+// Security Headers & Rate Limiting
+app.use(securityHeaders);
+app.use('/api', createRateLimiter(60000, 200, 'Rate limit exceeded. Please slow down your requests.'));
+
+// CORS & Parsing Middleware
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
