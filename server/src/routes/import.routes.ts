@@ -211,7 +211,7 @@ router.post('/parse', upload.single('file'), async (req: Request, res: Response)
 });
 
 // COMMIT IMPORT TO POSTGRESQL (Supports UPSERT & Resilient row handling)
-router.post('/commit', async (req: Request, res: Response): Promise<void> => {
+router.post('/commit', authenticate, requireRole(['ADMIN', 'MANAGER', 'EMPLOYEE']), async (req: Request, res: Response): Promise<void> => {
   try {
     const { rows, filename = 'spreadsheet.xlsx' } = req.body;
 
@@ -226,8 +226,19 @@ router.post('/commit', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const userId = req.user?.id || 1;
-    const userName = req.user?.name || 'Authorized Staff';
+    let userId: number | null = req.user?.id || null;
+    let userName: string = req.user?.name || 'Staff Member';
+
+    // Fallback to primary admin user if not present in token
+    if (!userId) {
+      try {
+        const uRes = await query('SELECT id, name FROM users ORDER BY id ASC LIMIT 1');
+        if (uRes.rowCount > 0) {
+          userId = uRes.rows[0].id;
+          userName = uRes.rows[0].name;
+        }
+      } catch {}
+    }
 
     // 1. Resolve or Create Locations and Projects Cache
     const locMap = new Map<string, number>();
@@ -360,6 +371,14 @@ router.post('/commit', async (req: Request, res: Response): Promise<void> => {
         console.error(`Error importing row ${item.property_code}:`, rowErr);
         errorsList.push(`${item.property_code}: ${rowErr.message || 'Insert error'}`);
       }
+    }
+
+    if (importedCount === 0 && errorsList.length > 0) {
+      res.status(400).json({
+        error: `Import failed for all rows. Reason: ${errorsList[0]}`,
+        errors: errorsList,
+      });
+      return;
     }
 
     // Record Batch Summary
