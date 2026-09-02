@@ -44,14 +44,12 @@ export const SettingsTabLayout: React.FC<SettingsTabLayoutProps> = ({
               }`}
             >
               {tab.icon && (
-                <span className="shrink-0">
-                  {typeof tab.icon === 'function' ? (
-                    React.createElement(tab.icon as React.ComponentType<{ className?: string }>, {
-                      className: 'h-4 w-4',
-                    })
-                  ) : (
-                    tab.icon
-                  )}
+                <span className="shrink-0 flex items-center">
+                  {React.isValidElement(tab.icon)
+                    ? tab.icon
+                    : React.createElement(tab.icon as any, {
+                        className: 'h-4 w-4',
+                      })}
                 </span>
               )}
               <span>{tab.label}</span>

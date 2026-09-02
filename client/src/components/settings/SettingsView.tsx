@@ -149,11 +149,11 @@ export const SettingsView: React.FC = () => {
   ];
 
   const tabs = [
-    { id: 'general', label: 'Contact & Social', icon: Globe },
-    { id: 'stats', label: 'Stats & Highlights', icon: BarChart3 },
-    { id: 'toggles', label: 'Feature Toggles', icon: Sliders },
-    { id: 'roles', label: 'Role Permissions', icon: Shield },
-    { id: 'system', label: 'System & Database', icon: Database },
+    { id: 'general', label: 'Contact & Social', icon: <Globe className="h-4 w-4" /> },
+    { id: 'stats', label: 'Stats & Highlights', icon: <BarChart3 className="h-4 w-4" /> },
+    { id: 'toggles', label: 'Feature Toggles', icon: <Sliders className="h-4 w-4" /> },
+    { id: 'roles', label: 'Role Permissions', icon: <Shield className="h-4 w-4" /> },
+    { id: 'system', label: 'System & Database', icon: <Database className="h-4 w-4" /> },
   ];
 
   return (
