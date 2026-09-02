@@ -21,26 +21,53 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
       notes,
     } = req.body;
 
-    if (!customer_name || !customer_phone || !visit_date) {
-      res.status(400).json({ error: 'Customer Name, Phone Number, and Visit Date are required' });
+    console.log('[Site Visits] Received booking request:', {
+      customer_name,
+      customer_phone,
+      visit_date,
+      property_id,
+    });
+
+    if (!customer_name || !String(customer_name).trim()) {
+      res.status(400).json({ error: 'Customer name is required' });
       return;
     }
 
-    // Lookup property code and project name if property_id provided
+    if (!customer_phone || !String(customer_phone).trim()) {
+      res.status(400).json({ error: 'Customer phone number is required' });
+      return;
+    }
+
+    if (!visit_date || !String(visit_date).trim()) {
+      res.status(400).json({ error: 'Visit date is required' });
+      return;
+    }
+
+    // Verify property ID safely if provided
+    let validPropertyId: number | null = null;
     let propertyCode = 'GENERAL';
     let propInfo: any = null;
+
     if (property_id) {
-      const pRes = await query(
-        `SELECT p.property_code, prj.name as project_name, loc.city
-         FROM properties p
-         LEFT JOIN projects prj ON p.project_id = prj.id
-         LEFT JOIN locations loc ON p.location_id = loc.id
-         WHERE p.id = $1`,
-        [property_id]
-      );
-      if (pRes.rowCount > 0) {
-        propertyCode = pRes.rows[0].property_code;
-        propInfo = pRes.rows[0];
+      const parsedId = parseInt(String(property_id), 10);
+      if (!isNaN(parsedId) && parsedId > 0) {
+        try {
+          const pRes = await query(
+            `SELECT p.id, p.property_code, prj.name as project_name, loc.city
+             FROM properties p
+             LEFT JOIN projects prj ON p.project_id = prj.id
+             LEFT JOIN locations loc ON p.location_id = loc.id
+             WHERE p.id = $1`,
+            [parsedId]
+          );
+          if (pRes.rowCount > 0) {
+            validPropertyId = pRes.rows[0].id;
+            propertyCode = pRes.rows[0].property_code || 'GENERAL';
+            propInfo = pRes.rows[0];
+          }
+        } catch (propErr) {
+          console.warn('[Site Visits] Property lookup warning:', propErr);
+        }
       }
     }
 
@@ -55,13 +82,13 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
         'REQUESTED', $11
       ) RETURNING *`,
       [
-        property_id || null,
+        validPropertyId,
         propertyCode,
-        customer_name.trim(),
-        customer_phone.trim(),
-        customer_email ? customer_email.trim() : null,
+        String(customer_name).trim(),
+        String(customer_phone).trim(),
+        customer_email ? String(customer_email).trim() : null,
         visit_date,
-        time_slot,
+        time_slot || '10:00 AM - 12:00 PM',
         !!pickup_required,
         pickup_location || null,
         Number(attendees_count) || 1,
@@ -71,38 +98,46 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
 
     const booking = insertResult.rows[0];
 
-    // Log in Audit Trail
-    await query(
-      `INSERT INTO audit_logs (user_id, user_name, entity_type, entity_id, property_code, action, details)
-       VALUES ($1, $2, 'SITE_VISIT', $3, $4, 'BOOK_VISIT', $5)`,
-      [
-        null,
-        customer_name.trim(),
-        booking.id,
-        propertyCode,
-        `Site visit booked by ${customer_name} (${customer_phone}) for ${visit_date} at ${time_slot}. Pickup: ${pickup_required ? 'YES' : 'NO'}`
-      ]
-    );
-
-    // If property linked, log in property history
-    if (property_id) {
+    // Log in Audit Trail safely (non-blocking)
+    try {
       await query(
-        `INSERT INTO property_history (property_id, event_type, old_value, new_value, description)
-         VALUES ($1, 'SITE_VISIT_BOOKED', null, 'REQUESTED', $2)`,
+        `INSERT INTO audit_logs (user_id, user_name, entity_type, entity_id, property_code, action, details)
+         VALUES ($1, $2, 'SITE_VISIT', $3, $4, 'BOOK_VISIT', $5)`,
         [
-          property_id,
-          `Site visit booked by ${customer_name} (${customer_phone}) for ${visit_date}`
+          null,
+          String(customer_name).trim(),
+          booking.id,
+          propertyCode,
+          `Site visit booked by ${customer_name} (${customer_phone}) for ${visit_date} at ${time_slot}. Pickup: ${pickup_required ? 'YES' : 'NO'}`
         ]
       );
+    } catch (auditErr) {
+      console.warn('[Site Visits] Audit logging warning:', auditErr);
     }
 
-    // Dispatch Automated WhatsApp Notification
+    // If property linked, log in property history safely (non-blocking)
+    if (validPropertyId) {
+      try {
+        await query(
+          `INSERT INTO property_history (property_id, event_type, old_value, new_value, description)
+           VALUES ($1, 'SITE_VISIT_BOOKED', null, 'REQUESTED', $2)`,
+          [
+            validPropertyId,
+            `Site visit booked by ${customer_name} (${customer_phone}) for ${visit_date}`
+          ]
+        );
+      } catch (histErr) {
+        console.warn('[Site Visits] Property history warning:', histErr);
+      }
+    }
+
+    // Dispatch Automated WhatsApp Notification safely (non-blocking)
     let waResult: any = null;
     try {
       waResult = await dispatchWhatsAppAlert({
         type: 'SITE_VISIT_BOOKED',
-        customerName: customer_name,
-        customerPhone: customer_phone,
+        customerName: String(customer_name).trim(),
+        customerPhone: String(customer_phone).trim(),
         customerEmail: customer_email,
         propertyCode: propertyCode,
         projectName: propInfo?.project_name,
@@ -113,7 +148,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
         summary: `Site visit for ${propertyCode} booked by ${customer_name}`,
       });
     } catch (err) {
-      console.warn('WhatsApp alert dispatch note:', err);
+      console.warn('[Site Visits] WhatsApp alert dispatch warning:', err);
     }
 
     res.status(201).json({
@@ -124,8 +159,12 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
       whatsappAlert: waResult,
     });
   } catch (error: any) {
-    console.error('Error booking site visit:', error);
-    res.status(500).json({ error: error.message || 'Failed to book site visit' });
+    console.error('[Site Visits Error]:', {
+      message: error?.message,
+      stack: error?.stack,
+      body: req.body,
+    });
+    res.status(500).json({ error: error?.message || 'Failed to book site visit' });
   }
 });
 
@@ -193,7 +232,7 @@ router.get('/', authenticate, async (req: Request, res: Response): Promise<void>
     });
   } catch (error: any) {
     console.error('Error fetching site visits:', error);
-    res.status(500).json({ error: 'Failed to fetch site visits' });
+    res.status(500).json({ error: error?.message || 'Failed to fetch site visits' });
   }
 });
 
@@ -226,17 +265,19 @@ router.patch('/:id/status', authenticate, async (req: Request, res: Response): P
     const updated = updateRes.rows[0];
 
     // Log in Audit Trail
-    await query(
-      `INSERT INTO audit_logs (user_id, user_name, entity_type, entity_id, property_code, action, details)
-       VALUES ($1, $2, 'SITE_VISIT', $3, $4, 'STATUS_CHANGE', $5)`,
-      [
-        req.user?.id || 1,
-        req.user?.name || 'Staff',
-        id,
-        current.property_code,
-        `Site visit for ${current.customer_name} status updated to ${newStatus}${assigned_agent_name ? ` (Assigned to ${assigned_agent_name})` : ''}`
-      ]
-    );
+    try {
+      await query(
+        `INSERT INTO audit_logs (user_id, user_name, entity_type, entity_id, property_code, action, details)
+         VALUES ($1, $2, 'SITE_VISIT', $3, $4, 'STATUS_CHANGE', $5)`,
+        [
+          req.user?.id || 1,
+          req.user?.name || 'Staff',
+          id,
+          current.property_code,
+          `Site visit for ${current.customer_name} status updated to ${newStatus}${assigned_agent_name ? ` (Assigned to ${assigned_agent_name})` : ''}`
+        ]
+      );
+    } catch {}
 
     res.json({
       message: `Site visit status updated to ${newStatus}`,
@@ -254,7 +295,7 @@ router.delete('/:id', authenticate, async (req: Request, res: Response): Promise
     await query('DELETE FROM site_visits WHERE id = $1', [id]);
     res.json({ message: 'Site visit booking removed' });
   } catch (error: any) {
-    res.status(500).json({ error: 'Failed to delete site visit' });
+    res.status(500).json({ error: error?.message || 'Failed to delete site visit' });
   }
 });
 

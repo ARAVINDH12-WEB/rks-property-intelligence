@@ -4,22 +4,39 @@ import { seedDatabase } from '../server/src/db/seed.js';
 import app from '../server/src/index.js';
 
 let dbReady = false;
+let initPromise: Promise<void> | null = null;
 
 async function ensureDb(): Promise<void> {
   if (dbReady) return;
-  try {
-    await getDb(); // boots PGlite, runs schema.sql (CREATE TABLE IF NOT EXISTS)
-    const countRes = await query('SELECT count(*)::int as count FROM properties');
-    if (countRes.rows[0]?.count === 0) {
-      console.log('[Vercel] DB empty — seeding RKS inventory...');
-      await seedDatabase();
+  if (initPromise) return initPromise;
+
+  initPromise = (async () => {
+    try {
+      console.log('[Vercel Serverless] Initializing DB...');
+      await getDb();
+
+      // Check if users table is populated
+      const userCheck = await query('SELECT count(*)::int as count FROM users');
+      const userCount = Number(userCheck.rows[0]?.count || 0);
+
+      const propCheck = await query('SELECT count(*)::int as count FROM properties');
+      const propCount = Number(propCheck.rows[0]?.count || 0);
+
+      if (userCount === 0 || propCount === 0) {
+        console.log(`[Vercel Serverless] DB needs seeding (users: ${userCount}, properties: ${propCount}). Running seed...`);
+        await seedDatabase();
+        console.log('[Vercel Serverless] Seeding completed ✅');
+      }
+
+      dbReady = true;
+      console.log('[Vercel Serverless] DB ready and verified ✅');
+    } catch (err: any) {
+      console.error('[Vercel Serverless] DB init error:', err?.stack || err);
+      dbReady = true;
     }
-    dbReady = true;
-    console.log('[Vercel] DB ready ✅');
-  } catch (err: any) {
-    console.error('[Vercel] DB init error:', err.message);
-    dbReady = true; // Don't retry on every request — let queries fail gracefully
-  }
+  })();
+
+  return initPromise;
 }
 
 export default async function handler(req: Request, res: Response) {

@@ -55,9 +55,13 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
         avatar_url: user.avatar_url,
       },
     });
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Internal server error during login' });
+  } catch (error: any) {
+    console.error('[Auth Login Error]:', {
+      message: error?.message,
+      stack: error?.stack,
+      body: { email: req.body?.email },
+    });
+    res.status(500).json({ error: error?.message || 'Internal server error during login' });
   }
 });
 

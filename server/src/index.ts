@@ -48,19 +48,27 @@ app.use('/api/audit-logs', auditRoutes);
 app.use('/api/site-visits', siteVisitsRoutes);
 app.use('/api/ai-chat', aiChatRoutes);
 
-// Health check endpoint
+// Comprehensive Health check endpoint
 app.get('/api/health', async (_req: Request, res: Response) => {
   try {
     const dbRes = await query('SELECT count(*)::int as count FROM properties');
+    const userRes = await query('SELECT count(*)::int as count FROM users');
     res.json({
       status: 'OK',
       timestamp: new Date().toISOString(),
       service: 'RKS Property Intelligence API',
       database: 'PostgreSQL (PGlite)',
       propertiesCount: dbRes.rows[0]?.count || 0,
+      usersCount: userRes.rows[0]?.count || 0,
+      environment: {
+        nodeEnv: process.env.NODE_ENV || 'production',
+        isServerless: !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NOW_REGION),
+        jwtConfigured: !!(process.env.JWT_SECRET || 'rks_property_intelligence_super_secret_jwt_key_2026'),
+      },
     });
   } catch (err: any) {
-    res.status(500).json({ status: 'ERROR', error: err.message });
+    console.error('[Health Check Error]:', err?.stack || err);
+    res.status(500).json({ status: 'ERROR', error: err?.message || 'Database unavailable' });
   }
 });
 
@@ -76,9 +84,16 @@ if (fs.existsSync(clientDistPath)) {
 }
 
 // Global Error Handler
-app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-  console.error('Unhandled Application Error:', err);
-  res.status(err.status || 500).json({
+app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
+  console.error('[Global Application Error]:', {
+    path: req.path,
+    method: req.method,
+    message: err?.message,
+    stack: err?.stack,
+  });
+
+  const statusCode = err.status || err.statusCode || 500;
+  res.status(statusCode).json({
     error: err.message || 'Internal Server Error',
     ...(process.env.NODE_ENV === 'development' ? { stack: err.stack } : {}),
   });
@@ -87,6 +102,7 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
 // Boot and seed if required
 async function startServer() {
   try {
+    console.log('[Server Startup] Verifying environment & database...');
     await getDb();
     const countCheck = await query('SELECT count(*)::int as count FROM properties');
     if (countCheck.rows[0]?.count === 0) {
@@ -107,8 +123,8 @@ async function startServer() {
   ╚═══════════════════════════════════════════════════════════╝
       `);
     });
-  } catch (error) {
-    console.error('Failed to start server:', error);
+  } catch (error: any) {
+    console.error('Failed to start server:', error?.stack || error);
     process.exit(1);
   }
 }
