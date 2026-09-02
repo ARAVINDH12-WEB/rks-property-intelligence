@@ -1,11 +1,11 @@
 import { Router, Request, Response } from 'express';
 import { query } from '../db/index.js';
-import { authenticate, requireRole } from '../middleware/auth.js';
+import { authenticate, optionalAuthenticate, requireRole } from '../middleware/auth.js';
 
 const router = Router();
 
 // GET /api/projects - List projects with live KPI metrics
-router.get('/', authenticate, async (_req: Request, res: Response): Promise<void> => {
+router.get('/', optionalAuthenticate, async (_req: Request, res: Response): Promise<void> => {
   try {
     const projectsResult = await query(`
       SELECT
@@ -35,7 +35,7 @@ router.get('/', authenticate, async (_req: Request, res: Response): Promise<void
 });
 
 // GET /api/projects/:id - Single project with linked properties
-router.get('/:id', authenticate, async (req: Request, res: Response): Promise<void> => {
+router.get('/:id', optionalAuthenticate, async (req: Request, res: Response): Promise<void> => {
   try {
     const id = parseInt(req.params.id);
     const prjResult = await query(

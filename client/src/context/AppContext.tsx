@@ -158,6 +158,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setActiveRoleState('VIEWER');
     setIsLoggedIn(false);
     showToast('Logged Out', 'Returned to Portal Login Gateway', 'info');
+    // Auto-fetch guest token so customer can still browse without auth errors
+    fetch('/api/auth/guest-token')
+      .then(r => r.json())
+      .then(data => {
+        if (data.token) localStorage.setItem('rks_auth_token', data.token);
+      })
+      .catch(() => {});
   };
 
   const [savedUser, setSavedUser] = useState<any>(() => {

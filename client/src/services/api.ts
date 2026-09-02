@@ -4,7 +4,7 @@ const API_BASE = '/api';
 
 function getHeaders(): HeadersInit {
   const token = localStorage.getItem('rks_auth_token');
-  const activeRole = (localStorage.getItem('rks_active_role') || 'ADMIN') as UserRole;
+  const activeRole = (localStorage.getItem('rks_active_role') || 'VIEWER') as UserRole;
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -17,6 +17,31 @@ function getHeaders(): HeadersInit {
 
   return headers;
 }
+
+/**
+ * If no token is stored (customer visiting without login),
+ * auto-fetch the guest VIEWER token so all API calls succeed.
+ */
+async function ensureGuestToken(): Promise<void> {
+  const existingToken = localStorage.getItem('rks_auth_token');
+  if (existingToken) return; // Already have a token
+
+  try {
+    const res = await fetch(`${API_BASE}/auth/guest-token`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.token) {
+        localStorage.setItem('rks_auth_token', data.token);
+        localStorage.setItem('rks_active_role', 'VIEWER');
+      }
+    }
+  } catch {
+    // Silently fail — optionalAuthenticate on server will handle unauthenticated requests anyway
+  }
+}
+
+// Auto-initialize guest token on module load
+ensureGuestToken();
 
 async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`${API_BASE}${url}`, {

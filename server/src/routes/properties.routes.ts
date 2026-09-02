@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { query } from '../db/index.js';
-import { authenticate, requireRole } from '../middleware/auth.js';
+import { authenticate, optionalAuthenticate, requireRole } from '../middleware/auth.js';
 import { calculateAreaConversions, calculateTotalPrice } from '../utils/calculations.js';
 import {
   CreatePropertySchema,
@@ -13,7 +13,7 @@ import {
 const router = Router();
 
 // GET /api/properties - High-Performance Search, Filter, Sort & Paginate
-router.get('/', authenticate, async (req: Request, res: Response): Promise<void> => {
+router.get('/', optionalAuthenticate, async (req: Request, res: Response): Promise<void> => {
   try {
     const page = Math.max(1, parseInt(req.query.page as string) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 25));
@@ -228,7 +228,7 @@ router.get('/', authenticate, async (req: Request, res: Response): Promise<void>
 });
 
 // GET /api/properties/:id - Comprehensive Property Details
-router.get('/:id', authenticate, async (req: Request, res: Response): Promise<void> => {
+router.get('/:id', optionalAuthenticate, async (req: Request, res: Response): Promise<void> => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {

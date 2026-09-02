@@ -2,11 +2,20 @@ import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { query } from '../db/index.js';
-import { authenticate, authorize } from '../middleware/auth.js';
+import { authenticate, authorize, GUEST_TOKEN } from '../middleware/auth.js';
 import { createRateLimiter } from '../middleware/security.js';
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'rks_property_intelligence_super_secret_jwt_key_2026';
+
+// GET /api/auth/guest-token - Returns a pre-signed VIEWER token for unauthenticated customers
+router.get('/guest-token', (_req: Request, res: Response): void => {
+  res.json({
+    token: GUEST_TOKEN,
+    role: 'VIEWER',
+    message: 'Guest access granted. Browse properties freely.',
+  });
+});
 
 // POST /api/auth/login - Sign In with Brute-Force Rate Limiting
 router.post('/login', createRateLimiter(60000, 15, 'Too many login attempts. Please wait a minute and try again.'), async (req: Request, res: Response): Promise<void> => {

@@ -1,11 +1,11 @@
 import { Router, Request, Response } from 'express';
 import { query } from '../db/index.js';
-import { authenticate, requireRole } from '../middleware/auth.js';
+import { authenticate, optionalAuthenticate, requireRole } from '../middleware/auth.js';
 
 const router = Router();
 
 // GET /api/locations - Micro-markets list with property stats
-router.get('/', authenticate, async (_req: Request, res: Response): Promise<void> => {
+router.get('/', optionalAuthenticate, async (_req: Request, res: Response): Promise<void> => {
   try {
     const locationsResult = await query(`
       SELECT
