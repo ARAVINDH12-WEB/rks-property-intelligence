@@ -430,6 +430,24 @@ export const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
 
                         <span className="text-zinc-500">Ownership:</span>
                         <span className="font-semibold text-white">{property.ownership || 'Freehold'}</span>
+
+                        <span className="text-zinc-500">Map Location:</span>
+                        <span className="font-mono text-xs">
+                          {property.latitude && property.longitude ? (
+                            <a
+                              href={`https://www.google.com/maps/dir/?api=1&destination=${property.latitude},${property.longitude}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 hover:underline"
+                            >
+                              <MapPin className="h-3 w-3 shrink-0" />
+                              <span>{Number(property.latitude).toFixed(4)}, {Number(property.longitude).toFixed(4)}</span>
+                              <ExternalLink className="h-2.5 w-2.5 shrink-0" />
+                            </a>
+                          ) : (
+                            <span className="text-zinc-500">Not configured</span>
+                          )}
+                        </span>
                       </div>
                     </div>
 

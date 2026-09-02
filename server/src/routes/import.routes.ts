@@ -63,6 +63,9 @@ router.post('/parse-and-validate', upload.single('file'), async (req: Request, r
       plot_number: [/plot[\s_-]?(no|number|num)/i, /^door[\s_-]?no$/i],
       road_width: [/road[\s_-]?(width|size)?/i, /^street$/i],
       description: [/desc(ription)?/i, /^notes$/i, /^remarks$/i],
+      latitude: [/^lat(itude)?$/i, /^lat$/i],
+      longitude: [/^lon(gitude)?$|^lng$/i, /^long$/i],
+      google_maps_url: [/google[\s_-]?maps[\s_-]?(url|link)?/i, /maps[\s_-]?link/i, /location[\s_-]?(url|link)/i, /^gmap(s)?$/i],
     };
 
     for (const header of headers) {
@@ -126,6 +129,42 @@ router.post('/parse-and-validate', upload.single('file'), async (req: Request, r
         seenCodesInFile.add(codeUpper);
       }
 
+      const rawFacing = activeMapping.facing ? String(raw[activeMapping.facing] || '') : '';
+      const rawPlotNum = activeMapping.plot_number ? String(raw[activeMapping.plot_number] || '') : '';
+      const rawSurvey = activeMapping.survey_number ? String(raw[activeMapping.survey_number] || '') : '';
+      const rawRoadW = activeMapping.road_width ? String(raw[activeMapping.road_width] || '') : '';
+      const rawDesc = activeMapping.description ? String(raw[activeMapping.description] || '') : '';
+
+      // Location coordinates — explicit columns first, then parse from Google Maps URL
+      let rawLat: number | null = null;
+      let rawLng: number | null = null;
+
+      if (activeMapping.latitude && raw[activeMapping.latitude]) {
+        const parsedLat = parseFloat(String(raw[activeMapping.latitude]));
+        if (!isNaN(parsedLat)) rawLat = parsedLat;
+      }
+      if (activeMapping.longitude && raw[activeMapping.longitude]) {
+        const parsedLng = parseFloat(String(raw[activeMapping.longitude]));
+        if (!isNaN(parsedLng)) rawLng = parsedLng;
+      }
+
+      // Parse Google Maps URL if explicit lat/lng not provided
+      if ((rawLat === null || rawLng === null) && activeMapping.google_maps_url) {
+        const mapsUrl = String(raw[activeMapping.google_maps_url] || '').trim();
+        if (mapsUrl) {
+          const atMatch = mapsUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+          const dataMatch = mapsUrl.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+          const qMatch = mapsUrl.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
+          const match = atMatch || dataMatch || qMatch;
+          if (match) {
+            rawLat = parseFloat(match[1]);
+            rawLng = parseFloat(match[2]);
+          } else if (mapsUrl.length > 5) {
+            warnings.push(`Could not extract coordinates from Maps URL — use full Google Maps link, not a short link`);
+          }
+        }
+      }
+
       if (isNaN(rawArea) || rawArea <= 0) {
         errors.push('Invalid Area (must be positive number)');
       }
@@ -163,11 +202,13 @@ router.post('/parse-and-validate', upload.single('file'), async (req: Request, r
         rate_per_sqft: isNaN(rawRate) ? 0 : rawRate,
         total_price: computedPrice || rawPrice || 0,
         status: normalizedStatus,
-        plot_number: activeMapping.plot_number ? String(raw[activeMapping.plot_number] || '') : '',
-        survey_number: activeMapping.survey_number ? String(raw[activeMapping.survey_number] || '') : '',
-        facing: activeMapping.facing ? String(raw[activeMapping.facing] || '') : '',
-        road_width: activeMapping.road_width ? String(raw[activeMapping.road_width] || '') : '',
-        description: activeMapping.description ? String(raw[activeMapping.description] || '') : '',
+        plot_number: rawPlotNum,
+        survey_number: rawSurvey,
+        facing: rawFacing,
+        road_width: rawRoadW,
+        description: rawDesc,
+        latitude: rawLat,
+        longitude: rawLng,
         isValid,
         errors,
         warnings,
@@ -295,16 +336,21 @@ router.post('/commit', authenticate, requireRole(['ADMIN', 'MANAGER', 'EMPLOYEE'
         const areaSqm = Number((areaSqft * 0.092903).toFixed(2));
         const propCode = String(item.property_code || '').trim().toUpperCase();
 
+        const latVal = item.latitude !== null && item.latitude !== undefined && !isNaN(Number(item.latitude)) ? Number(item.latitude) : null;
+        const lngVal = item.longitude !== null && item.longitude !== undefined && !isNaN(Number(item.longitude)) ? Number(item.longitude) : null;
+
         // Resilient UPSERT on conflict with existing property code
         const propResult = await query(
           `INSERT INTO properties (
             property_code, project_id, location_id, property_type, status,
             plot_number, survey_number, area_sqft, area_sqm, rate_per_sqft,
-            total_price, facing, road_width, description, created_by, updated_by
+            total_price, facing, road_width, description, latitude, longitude,
+            created_by, updated_by
           ) VALUES (
             $1, $2, $3, $4, $5,
             $6, $7, $8, $9, $10,
-            $11, $12, $13, $14, $15, $16
+            $11, $12, $13, $14, $15, $16,
+            $17, $18
           )
           ON CONFLICT (property_code) DO UPDATE SET
             project_id = EXCLUDED.project_id,
@@ -320,6 +366,8 @@ router.post('/commit', authenticate, requireRole(['ADMIN', 'MANAGER', 'EMPLOYEE'
             facing = EXCLUDED.facing,
             road_width = EXCLUDED.road_width,
             description = EXCLUDED.description,
+            latitude = COALESCE(EXCLUDED.latitude, properties.latitude),
+            longitude = COALESCE(EXCLUDED.longitude, properties.longitude),
             updated_by = EXCLUDED.updated_by,
             updated_at = CURRENT_TIMESTAMP
           RETURNING id`,
@@ -338,6 +386,8 @@ router.post('/commit', authenticate, requireRole(['ADMIN', 'MANAGER', 'EMPLOYEE'
             item.facing || null,
             item.road_width || null,
             item.description || 'Imported via spreadsheet batch',
+            latVal,
+            lngVal,
             userId,
             userId,
           ]

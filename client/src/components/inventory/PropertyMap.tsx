@@ -17,6 +17,9 @@ import {
   X,
   Compass,
   Building,
+  Link2,
+  AlertCircle,
+  CheckCircle2,
 } from 'lucide-react';
 
 interface PropertyMapProps {
@@ -59,6 +62,8 @@ export const PropertyMap: React.FC<PropertyMapProps> = ({ properties }) => {
   const [editingProp, setEditingProp] = useState<Property | null>(null);
   const [editLat, setEditLat] = useState<string>('');
   const [editLng, setEditLng] = useState<string>('');
+  const [editMapsUrl, setEditMapsUrl] = useState<string>('');
+  const [mapsUrlError, setMapsUrlError] = useState<string>('');
   const [isSavingLoc, setIsSavingLoc] = useState<boolean>(false);
 
   // Filter properties with valid coordinates
@@ -95,6 +100,59 @@ export const PropertyMap: React.FC<PropertyMapProps> = ({ properties }) => {
     setEditingProp(prop);
     setEditLat(String(prop.latitude || '12.9716'));
     setEditLng(String(prop.longitude || '80.2026'));
+    setEditMapsUrl('');
+    setMapsUrlError('');
+  };
+
+  /**
+   * Extracts lat/lng from a Google Maps URL.
+   * Handles formats:
+   *  - https://www.google.com/maps/@12.9716,80.2026,15z
+   *  - https://www.google.com/maps/place/.../data=...!3d12.9716!4d80.2026
+   *  - https://maps.app.goo.gl/shortlink (prompts user — we can't resolve short links client-side)
+   *  - ?q=12.9716,80.2026
+   *  - @12.9716,80.2026
+   */
+  const parseGoogleMapsUrl = (url: string): { lat: string; lng: string } | null => {
+    // Pattern 1: @lat,lng in URL
+    const atPattern = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
+    const atMatch = url.match(atPattern);
+    if (atMatch) return { lat: atMatch[1], lng: atMatch[2] };
+
+    // Pattern 2: !3d<lat>!4d<lng>
+    const dataPattern = /!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/;
+    const dataMatch = url.match(dataPattern);
+    if (dataMatch) return { lat: dataMatch[1], lng: dataMatch[2] };
+
+    // Pattern 3: ?q=lat,lng or &q=lat,lng
+    const qPattern = /[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/;
+    const qMatch = url.match(qPattern);
+    if (qMatch) return { lat: qMatch[1], lng: qMatch[2] };
+
+    // Pattern 4: /place/ with ll=lat,lng param
+    const llPattern = /ll=(-?\d+\.\d+),(-?\d+\.\d+)/;
+    const llMatch = url.match(llPattern);
+    if (llMatch) return { lat: llMatch[1], lng: llMatch[2] };
+
+    return null;
+  };
+
+  const handleMapsUrlChange = (url: string) => {
+    setEditMapsUrl(url);
+    if (!url.trim()) {
+      setMapsUrlError('');
+      return;
+    }
+    const coords = parseGoogleMapsUrl(url.trim());
+    if (coords) {
+      setEditLat(coords.lat);
+      setEditLng(coords.lng);
+      setMapsUrlError('');
+    } else if (url.includes('goo.gl') || url.includes('maps.app')) {
+      setMapsUrlError('Short links (goo.gl) cannot be parsed directly. Open the link in your browser, copy the full URL from the address bar, and paste it here.');
+    } else {
+      setMapsUrlError('Could not extract coordinates. Try opening the location in Google Maps and copying the full URL from the address bar.');
+    }
   };
 
   const handleSaveLocation = async (e: React.FormEvent) => {
@@ -346,6 +404,41 @@ export const PropertyMap: React.FC<PropertyMapProps> = ({ properties }) => {
             </div>
 
             <form onSubmit={handleSaveLocation} className="space-y-4">
+
+              {/* ── Google Maps URL Auto-Extract ── */}
+              <div className="rounded-2xl border border-indigo-200 dark:border-indigo-800/60 bg-indigo-50/60 dark:bg-indigo-900/10 p-3.5 space-y-2">
+                <label className="flex items-center gap-1.5 text-xs font-bold text-indigo-700 dark:text-indigo-300">
+                  <Link2 className="h-3.5 w-3.5" />
+                  Paste Google Maps Link (Auto-fills coordinates)
+                </label>
+                <div className="relative">
+                  <input
+                    type="url"
+                    value={editMapsUrl}
+                    onChange={(e) => handleMapsUrlChange(e.target.value)}
+                    placeholder="https://www.google.com/maps/@12.9716,80.2026,15z"
+                    className="w-full rounded-xl border border-indigo-200 dark:border-indigo-700 bg-white dark:bg-zinc-900 px-3 py-2 pr-8 text-xs font-mono text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/30 placeholder:text-slate-400"
+                  />
+                  {editMapsUrl && !mapsUrlError && (
+                    <CheckCircle2 className="absolute right-2.5 top-2 h-4 w-4 text-emerald-500" />
+                  )}
+                </div>
+                {mapsUrlError ? (
+                  <div className="flex items-start gap-1.5 text-[10px] text-rose-600 dark:text-rose-400">
+                    <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                    <span>{mapsUrlError}</span>
+                  </div>
+                ) : editMapsUrl && !mapsUrlError ? (
+                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                    ✅ Coordinates extracted → Lat: {editLat}, Lng: {editLng}
+                  </p>
+                ) : (
+                  <p className="text-[10px] text-indigo-500/70 dark:text-indigo-400/60">
+                    Open any property in Google Maps → share/copy link → paste here
+                  </p>
+                )}
+              </div>
+
               <div>
                 <span className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1.5">
                   Quick Location Presets (1-Click Fill)

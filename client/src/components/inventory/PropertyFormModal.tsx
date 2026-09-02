@@ -12,6 +12,9 @@ import {
   FileText,
   Check,
   Calculator,
+  Link2,
+  AlertCircle,
+  CheckCircle2,
 } from 'lucide-react';
 
 interface PropertyFormModalProps {
@@ -68,8 +71,34 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
     amenities: ['24x7 Water', 'Gated Security'],
   });
 
+  const [mapsUrl, setMapsUrl] = useState('');
+  const [mapsUrlError, setMapsUrlError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formTab, setFormTab] = useState<'basic' | 'pricing' | 'specs' | 'notes'>('basic');
+
+  const handleMapsUrlChange = (url: string) => {
+    setMapsUrl(url);
+    if (!url.trim()) {
+      setMapsUrlError('');
+      return;
+    }
+    const atMatch = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+    const dataMatch = url.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+    const qMatch = url.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
+    const match = atMatch || dataMatch || qMatch;
+    if (match) {
+      setFormData((prev: any) => ({
+        ...prev,
+        latitude: match[1],
+        longitude: match[2],
+      }));
+      setMapsUrlError('');
+    } else if (url.includes('goo.gl') || url.includes('maps.app')) {
+      setMapsUrlError('Short links cannot be parsed directly. Open the link in a browser, copy the full URL from the address bar, and paste it here.');
+    } else {
+      setMapsUrlError('Could not extract coordinates from this URL. Please enter Latitude and Longitude manually or use a standard Google Maps URL.');
+    }
+  };
 
   useEffect(() => {
     if (property) {
@@ -572,6 +601,39 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
                     placeholder="e.g. DTCP/L/0423/2024"
                     className="mt-1.5 w-full rounded-xl border border-zinc-800 bg-[#12161F] px-3 py-2 text-sm text-white outline-none focus:border-amber-500"
                   />
+                </div>
+
+                <div className="rounded-2xl border border-indigo-500/30 bg-indigo-500/5 p-4 space-y-2">
+                  <label className="flex items-center gap-1.5 text-xs font-bold text-indigo-300">
+                    <Link2 className="h-3.5 w-3.5" />
+                    Paste Google Maps Link (Auto-fills Latitude & Longitude)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="url"
+                      value={mapsUrl}
+                      onChange={(e) => handleMapsUrlChange(e.target.value)}
+                      placeholder="https://www.google.com/maps/@12.9716,80.2026,15z"
+                      className="w-full rounded-xl border border-indigo-500/40 bg-[#0A0C10] px-3 py-2 pr-8 text-xs font-mono text-white outline-none focus:ring-2 focus:ring-indigo-500/40"
+                    />
+                    {mapsUrl && !mapsUrlError && (
+                      <CheckCircle2 className="absolute right-2.5 top-2 h-4 w-4 text-emerald-400" />
+                    )}
+                  </div>
+                  {mapsUrlError ? (
+                    <div className="flex items-start gap-1.5 text-[11px] text-rose-400">
+                      <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                      <span>{mapsUrlError}</span>
+                    </div>
+                  ) : mapsUrl && !mapsUrlError ? (
+                    <p className="text-[11px] text-emerald-400 font-semibold">
+                      ✅ Coordinates extracted: {formData.latitude}, {formData.longitude}
+                    </p>
+                  ) : (
+                    <p className="text-[10px] text-zinc-400">
+                      Open location on Google Maps → Copy URL from address bar → Paste here
+                    </p>
+                  )}
                 </div>
 
                 <div>
