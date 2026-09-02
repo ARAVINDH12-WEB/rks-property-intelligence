@@ -15,14 +15,14 @@ async function ensureDb(): Promise<void> {
       console.log('[Vercel Serverless] Initializing DB...');
       await getDb();
 
-      // Check if DB was already initialized via system_meta flag
-      const metaCheck = await query("SELECT value FROM system_meta WHERE key = 'seed_completed'");
-      const isSeeded = metaCheck.rowCount > 0 && metaCheck.rows[0]?.value === 'true';
+      // Check if users table is populated
+      const userCheck = await query('SELECT count(*)::int as count FROM users');
+      const userCount = Number(userCheck.rows[0]?.count || 0);
 
-      if (!isSeeded && process.env.NODE_ENV === 'development') {
-        console.log('[Vercel Serverless] Initial seed requested for dev...');
-        await seedDatabase();
-        console.log('[Vercel Serverless] Seeding completed ✅');
+      if (userCount === 0) {
+        console.log('[Vercel Serverless] Users table is empty. Initializing accounts (admin@rks.com / admin123)...');
+        await seedDatabase(true);
+        console.log('[Vercel Serverless] Initialization completed ✅');
       }
 
       dbReady = true;

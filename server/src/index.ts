@@ -108,10 +108,10 @@ async function startServer() {
   try {
     console.log('[Server Startup] Verifying environment & database...');
     await getDb();
-    const seedCheck = await query("SELECT value FROM system_meta WHERE key = 'seed_completed'");
-    if (seedCheck.rowCount === 0 && process.env.NODE_ENV === 'development') {
-      console.log('Database uninitialized in development, seeding initial RKS property inventory...');
-      await seedDatabase();
+    const userCheck = await query('SELECT count(*)::int as count FROM users');
+    if ((userCheck.rows[0]?.count || 0) === 0) {
+      console.log('Users table uninitialized, seeding initial RKS accounts and database...');
+      await seedDatabase(true);
     }
 
     const HOST = '0.0.0.0';
