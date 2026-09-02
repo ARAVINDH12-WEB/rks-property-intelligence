@@ -52,6 +52,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
 
   // Featured Properties & Offers
   const [featuredPlots, setFeaturedPlots] = useState<Property[]>([]);
+  const [totalAvailableCount, setTotalAvailableCount] = useState<number>(0);
   const [activeOffers, setActiveOffers] = useState<Offer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -59,7 +60,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
     setIsLoading(true);
     Promise.all([
       api.getSettings().catch(() => ({ settings: {} })),
-      api.getProperties({ limit: 6, status: 'AVAILABLE' }).catch(() => ({ properties: [] })),
+      api.getProperties({ limit: 6, status: 'AVAILABLE' }).catch(() => ({ properties: [], pagination: { total: 0 } })),
       api.getOffers().catch(() => ({ offers: [] })),
     ]).then(([settingsRes, propsRes, offersRes]) => {
       if (settingsRes.settings) {
@@ -67,6 +68,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
       }
       if (propsRes.properties) {
         setFeaturedPlots(propsRes.properties);
+        setTotalAvailableCount(propsRes.pagination?.total || propsRes.properties.length || 0);
       }
       if (offersRes.offers) {
         setActiveOffers(offersRes.offers.filter((o: Offer) => o.is_active));
@@ -74,6 +76,28 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
       setIsLoading(false);
     });
   }, [refreshTrigger]);
+
+  // Dynamic live calculations from imported database inventory
+  const plotCount = totalAvailableCount > 0
+    ? totalAvailableCount
+    : (settings.stat_total_plots && settings.stat_total_plots !== '0' ? settings.stat_total_plots : '58+');
+
+  const lowestPlotRate = featuredPlots.length > 0
+    ? Math.min(...featuredPlots.map((p) => Number(p.rate_per_sqft || 0)).filter((r) => r > 0))
+    : 0;
+
+  const rawRateStr = (settings.stat_base_rate && settings.stat_base_rate !== '0' && settings.stat_base_rate !== '₹0')
+    ? settings.stat_base_rate
+    : (lowestPlotRate > 0 ? `₹${lowestPlotRate}` : '₹850');
+
+  const displayBaseRate = rawRateStr.toLowerCase().includes('sq')
+    ? rawRateStr
+    : `${rawRateStr}/sq.ft`;
+
+  const totalAcreageFromPlots = featuredPlots.reduce((sum, p) => sum + (Number(p.area_sqft || 0) / 43560), 0);
+  const displayAcreage = (settings.stat_total_acreage && settings.stat_total_acreage !== '0' && settings.stat_total_acreage !== '0 Acres')
+    ? settings.stat_total_acreage
+    : (totalAcreageFromPlots > 0 ? `${totalAcreageFromPlots.toFixed(1)}+ Acres` : '120+ Acres');
 
   const cleanWhatsappNumber = (settings.whatsapp_number || '+919840011223').replace(/[^0-9]/g, '');
   const whatsappUrl = `https://wa.me/${cleanWhatsappNumber}?text=${encodeURIComponent(
@@ -166,7 +190,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
               onClick={onExploreProperties}
               className="w-full sm:w-auto flex min-h-[48px] items-center justify-center gap-2.5 rounded-2xl bg-emerald-700 hover:bg-emerald-600 text-white px-8 py-3.5 text-sm font-bold shadow-xl shadow-emerald-700/25 transition-all cursor-pointer"
             >
-              <span>Explore {settings.stat_total_plots || '58+'} Available Plots</span>
+              <span>Explore {plotCount} Available Plots</span>
               <ArrowRight className="h-4 w-4" />
             </button>
 
@@ -183,19 +207,19 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
           {/* 2. Trust Indicators / Dynamic Stats Section */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 max-w-5xl mx-auto pt-6">
             <StatCounter
-              value={settings.stat_total_plots || '58+'}
+              value={String(plotCount)}
               label="Surveyed Plots"
               subtitle="Ready for immediate allocation"
               variant="emerald"
             />
             <StatCounter
-              value={`${settings.stat_base_rate || '₹850'}/sq.ft`}
+              value={displayBaseRate}
               label="Starting Base Rate"
               subtitle="Guaranteed lowest developer rates"
               variant="gold"
             />
             <StatCounter
-              value={settings.stat_total_acreage || '120+ Acres'}
+              value={displayAcreage}
               label="Township Layouts"
               subtitle="Gated communities in TN corridors"
               variant="navy"
@@ -309,7 +333,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
                 onClick={onExploreProperties}
                 className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer"
               >
-                <span>View all {settings.stat_total_plots || '58+'} plots</span>
+                <span>View all {plotCount} plots</span>
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>
