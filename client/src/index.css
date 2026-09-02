@@ -1,11 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --brand-navy: #0B192C;
+    --brand-emerald: #0F766E;
+    --brand-gold: #B48C36;
+    --neutral-bg-light: #F8FAFC;
+    --neutral-card-light: #FFFFFF;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
-    @apply bg-[#0A0C10] text-slate-100 antialiased;
+    @apply bg-[#F8FAFC] dark:bg-[#070A0F] text-slate-900 dark:text-slate-100 antialiased font-sans selection:bg-teal-500 selection:text-white;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Accessible Focus-Visible Global Default */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-emerald-600 dark:ring-emerald-400 ring-offset-2 ring-offset-white dark:ring-offset-[#070A0F];
   }
 }
 
@@ -20,12 +39,12 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(212, 175, 55, 0.25);
+  background: rgba(15, 118, 110, 0.35);
   border-radius: 9999px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(212, 175, 55, 0.5);
+  background: rgba(15, 118, 110, 0.7);
 }
 
 /* Leaflet Popup Fixes */

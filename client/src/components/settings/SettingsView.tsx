@@ -3,6 +3,8 @@ import { useApp } from '../../context/AppContext.js';
 import { UserRole } from '../../types/index.js';
 import { api } from '../../services/api.js';
 import { ImageUploadField } from '../common/ImageUploadField.js';
+import { SettingsTabLayout } from '../common/SettingsTabLayout.js';
+import { ToggleSwitch } from '../common/ToggleSwitch.js';
 import {
   Shield,
   Database,
@@ -179,26 +181,11 @@ export const SettingsView: React.FC = () => {
       </div>
 
       {/* Tabs Navigation */}
-      <div className="flex items-center gap-2 overflow-x-auto border-b border-slate-200 dark:border-zinc-800 pb-2">
-        {tabs.map((t) => {
-          const Icon = t.icon;
-          const isActive = activeTab === t.id;
-          return (
-            <button
-              key={t.id}
-              onClick={() => setActiveTab(t.id as any)}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all whitespace-nowrap ${
-                isActive
-                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md'
-                  : 'text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800'
-              }`}
-            >
-              <Icon className="h-4 w-4" />
-              <span>{t.label}</span>
-            </button>
-          );
-        })}
-      </div>
+      <SettingsTabLayout
+        tabs={tabs}
+        activeTab={activeTab}
+        onTabChange={(id) => setActiveTab(id as any)}
+      />
 
       {/* TAB 1: General & Contact Settings */}
       {activeTab === 'general' && (
@@ -461,135 +448,51 @@ export const SettingsView: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* WhatsApp Button Toggle */}
-            <div
-              onClick={() => isAdmin && handleToggle('toggle_whatsapp_button')}
-              className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${
-                isAdmin ? 'cursor-pointer hover:border-slate-300 dark:hover:border-zinc-700' : 'opacity-70'
-              } ${
-                settings.toggle_whatsapp_button === 'true'
-                  ? 'border-emerald-500/40 bg-emerald-500/5'
-                  : 'border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/30'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#25D366]/10 text-[#25D366]">
-                  <MessageCircle className="h-5 w-5" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-slate-900 dark:text-white">
-                    Customer WhatsApp Concierge Button
-                  </h4>
-                  <p className="text-[11px] text-slate-500 dark:text-zinc-400">
-                    Floating green button on all customer pages
-                  </p>
-                </div>
-              </div>
-              <div>
-                {settings.toggle_whatsapp_button === 'true' ? (
-                  <ToggleRight className="h-7 w-7 text-emerald-500" />
-                ) : (
-                  <ToggleLeft className="h-7 w-7 text-slate-400" />
-                )}
-              </div>
+            <div className="p-4 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0F141E] shadow-sm">
+              <ToggleSwitch
+                label="Customer WhatsApp Concierge Button"
+                description="Floating green button on all customer pages"
+                checked={settings.toggle_whatsapp_button === 'true'}
+                onChange={() => isAdmin && handleToggle('toggle_whatsapp_button')}
+                disabled={!isAdmin}
+                id="toggle-whatsapp"
+              />
             </div>
 
             {/* Offers Section Toggle */}
-            <div
-              onClick={() => isAdmin && handleToggle('toggle_offers_section')}
-              className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${
-                isAdmin ? 'cursor-pointer hover:border-slate-300 dark:hover:border-zinc-700' : 'opacity-70'
-              } ${
-                settings.toggle_offers_section === 'true'
-                  ? 'border-emerald-500/40 bg-emerald-500/5'
-                  : 'border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/30'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-500">
-                  <Tag className="h-5 w-5" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-slate-900 dark:text-white">
-                    Special Promotional Offers Section
-                  </h4>
-                  <p className="text-[11px] text-slate-500 dark:text-zinc-400">
-                    Displays promotional discounts and banners
-                  </p>
-                </div>
-              </div>
-              <div>
-                {settings.toggle_offers_section === 'true' ? (
-                  <ToggleRight className="h-7 w-7 text-emerald-500" />
-                ) : (
-                  <ToggleLeft className="h-7 w-7 text-slate-400" />
-                )}
-              </div>
+            <div className="p-4 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0F141E] shadow-sm">
+              <ToggleSwitch
+                label="Special Promotional Offers Section"
+                description="Displays promotional discounts and banners"
+                checked={settings.toggle_offers_section === 'true'}
+                onChange={() => isAdmin && handleToggle('toggle_offers_section')}
+                disabled={!isAdmin}
+                id="toggle-offers"
+              />
             </div>
 
             {/* Site Visit Booking Toggle */}
-            <div
-              onClick={() => isAdmin && handleToggle('toggle_site_visit_booking')}
-              className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${
-                isAdmin ? 'cursor-pointer hover:border-slate-300 dark:hover:border-zinc-700' : 'opacity-70'
-              } ${
-                settings.toggle_site_visit_booking === 'true'
-                  ? 'border-emerald-500/40 bg-emerald-500/5'
-                  : 'border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/30'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-500">
-                  <Calendar className="h-5 w-5" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-slate-900 dark:text-white">
-                    Site Visit Booking Module
-                  </h4>
-                  <p className="text-[11px] text-slate-500 dark:text-zinc-400">
-                    Allows customers to book cab and property tours
-                  </p>
-                </div>
-              </div>
-              <div>
-                {settings.toggle_site_visit_booking === 'true' ? (
-                  <ToggleRight className="h-7 w-7 text-emerald-500" />
-                ) : (
-                  <ToggleLeft className="h-7 w-7 text-slate-400" />
-                )}
-              </div>
+            <div className="p-4 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0F141E] shadow-sm">
+              <ToggleSwitch
+                label="Site Visit Booking Module"
+                description="Allows customers to book cab and property tours"
+                checked={settings.toggle_site_visit_booking === 'true'}
+                onChange={() => isAdmin && handleToggle('toggle_site_visit_booking')}
+                disabled={!isAdmin}
+                id="toggle-site-visit"
+              />
             </div>
 
             {/* AI Concierge Toggle */}
-            <div
-              onClick={() => isAdmin && handleToggle('toggle_ai_concierge')}
-              className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${
-                isAdmin ? 'cursor-pointer hover:border-slate-300 dark:hover:border-zinc-700' : 'opacity-70'
-              } ${
-                settings.toggle_ai_concierge === 'true'
-                  ? 'border-emerald-500/40 bg-emerald-500/5'
-                  : 'border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/30'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-500">
-                  <Bot className="h-5 w-5" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-slate-900 dark:text-white">
-                    AI Property Concierge Chatbot
-                  </h4>
-                  <p className="text-[11px] text-slate-500 dark:text-zinc-400">
-                    Automated 24x7 intelligent buyer assistant
-                  </p>
-                </div>
-              </div>
-              <div>
-                {settings.toggle_ai_concierge === 'true' ? (
-                  <ToggleRight className="h-7 w-7 text-emerald-500" />
-                ) : (
-                  <ToggleLeft className="h-7 w-7 text-slate-400" />
-                )}
-              </div>
+            <div className="p-4 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0F141E] shadow-sm">
+              <ToggleSwitch
+                label="AI Property Advisor (Floating Bot)"
+                description="Instant multimodal plot intelligence concierge"
+                checked={settings.toggle_ai_concierge === 'true'}
+                onChange={() => isAdmin && handleToggle('toggle_ai_concierge')}
+                disabled={!isAdmin}
+                id="toggle-ai-concierge"
+              />
             </div>
           </div>
         </div>
