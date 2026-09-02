@@ -28,9 +28,10 @@ import {
 
 interface InventoryViewProps {
   forcedStatusFilter?: string;
+  defaultViewMode?: 'table' | 'cards' | 'map' | 'compact';
 }
 
-export const InventoryView: React.FC<InventoryViewProps> = ({ forcedStatusFilter }) => {
+export const InventoryView: React.FC<InventoryViewProps> = ({ forcedStatusFilter, defaultViewMode }) => {
   const {
     viewMode,
     setViewMode,
@@ -47,6 +48,12 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ forcedStatusFilter
     openSiteVisitModal,
     showToast,
   } = useApp();
+
+  useEffect(() => {
+    if (defaultViewMode) {
+      setViewMode(defaultViewMode);
+    }
+  }, [defaultViewMode, setViewMode]);
 
   const [properties, setProperties] = useState<Property[]>([]);
   const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 25, totalPages: 1 });

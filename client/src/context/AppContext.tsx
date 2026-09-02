@@ -5,6 +5,7 @@ import { api } from '../services/api.js';
 export type NavigationTab =
   | 'overview'
   | 'properties'
+  | 'map'
   | 'available'
   | 'reserved'
   | 'sold'
