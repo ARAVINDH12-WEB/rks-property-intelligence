@@ -84,6 +84,9 @@ export interface SiteVisit {
   time_slot: string;
   pickup_required?: boolean;
   pickup_location?: string;
+  cab_required?: boolean;
+  pickup_address?: string;
+  special_requests?: string;
   attendees_count: number;
   status: 'REQUESTED' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'RESCHEDULED';
   notes?: string;

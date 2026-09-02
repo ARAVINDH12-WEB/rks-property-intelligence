@@ -228,7 +228,9 @@ export const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
                 { id: 'details', label: 'Property Intelligence', icon: <Layers className="h-4 w-4" /> },
                 { id: 'media', label: `Media (${property.images?.length || 0})`, icon: <ImageIcon className="h-4 w-4" /> },
                 { id: 'docs', label: `Documents (${property.documents?.length || 0})`, icon: <FileText className="h-4 w-4" /> },
-                { id: 'history', label: `History & Audit (${property.history?.length || 0})`, icon: <History className="h-4 w-4" /> },
+                ...(canEdit
+                  ? [{ id: 'history', label: `History & Audit (${property.history?.length || 0})`, icon: <History className="h-4 w-4" /> }]
+                  : []),
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -297,6 +299,49 @@ export const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
                       </div>
                     </div>
                   </div>
+
+                  {/* CUSTOMER ACTION BANNER — VIEWER only */}
+                  {!canEdit && (
+                    <div className="rounded-2xl border border-cyan-500/20 bg-gradient-to-r from-cyan-500/5 via-transparent to-amber-500/5 p-5 shadow-lg">
+                      <p className="text-xs text-zinc-400 mb-3 font-medium">
+                        Interested in this property? Take your next step:
+                      </p>
+                      <div className="flex flex-wrap gap-3">
+                        <button
+                          onClick={() => openSiteVisitModal(property)}
+                          className="flex items-center gap-2 rounded-xl bg-cyan-500 px-4 py-2.5 text-xs font-bold text-black shadow-lg shadow-cyan-500/20 hover:bg-cyan-400 transition-colors cursor-pointer"
+                        >
+                          <Calendar className="h-4 w-4" />
+                          <span>Book Site Visit (Free Cab Pickup)</span>
+                        </button>
+
+                        <a
+                          href={`https://wa.me/919876543210?text=Hi%2C%20I%20am%20interested%20in%20property%20${encodeURIComponent(property.property_code)}%20-%20${encodeURIComponent(property.project_name || '')}%20in%20${encodeURIComponent(property.city || '')}.`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-xs font-bold text-emerald-400 hover:bg-emerald-500/20 transition-colors cursor-pointer"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          <span>WhatsApp Concierge</span>
+                        </a>
+
+                        <button
+                          onClick={() => {
+                            // Trigger the floating AI chat to open with property context
+                            const event = new CustomEvent('openAiChat', {
+                              detail: { propertyCode: property.property_code, projectName: property.project_name }
+                            });
+                            window.dispatchEvent(event);
+                            onClose();
+                          }}
+                          className="flex items-center gap-2 rounded-xl border border-violet-500/30 bg-violet-500/10 px-4 py-2.5 text-xs font-bold text-violet-400 hover:bg-violet-500/20 transition-colors cursor-pointer"
+                        >
+                          <Shield className="h-4 w-4" />
+                          <span>Ask AI Concierge</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   {/* LAND UNIT CONVERSION MATRIX */}
                   {property.conversions && (
@@ -446,14 +491,16 @@ export const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
                       </p>
                     </div>
 
-                    <div className="rounded-2xl border border-zinc-800 bg-[#12161F] p-6 shadow-lg">
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-amber-400/90 mb-2">
-                        Internal Notes & Audit Log Details
-                      </h4>
-                      <p className="text-xs text-zinc-300 leading-relaxed font-mono whitespace-pre-wrap">
-                        {property.internal_notes || 'All land titles and parent deeds verified by RKS legal panel.'}
-                      </p>
-                    </div>
+                    {canEdit && (
+                      <div className="rounded-2xl border border-zinc-800 bg-[#12161F] p-6 shadow-lg">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-amber-400/90 mb-2">
+                          Internal Notes & Audit Log Details
+                        </h4>
+                        <p className="text-xs text-zinc-300 leading-relaxed font-mono whitespace-pre-wrap">
+                          {property.internal_notes || 'All land titles and parent deeds verified by RKS legal panel.'}
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {/* AMENITIES & TAGS */}

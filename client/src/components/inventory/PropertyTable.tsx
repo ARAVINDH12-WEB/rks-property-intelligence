@@ -105,17 +105,19 @@ export const PropertyTable: React.FC<PropertyTableProps> = ({
       <table className="w-full text-left text-sm text-slate-800 dark:text-zinc-300">
         <thead className="border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-[#0A0C10]/80 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
           <tr>
-            <th className="w-10 px-4 py-3.5">
-              <input
-                type="checkbox"
-                checked={allSelected}
-                ref={(el) => {
-                  if (el) el.indeterminate = someSelected;
-                }}
-                onChange={onToggleSelectAll}
-                className="h-4 w-4 rounded border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-amber-500 focus:ring-amber-500/30 accent-amber-500 cursor-pointer"
-              />
-            </th>
+            {canEdit && (
+              <th className="w-10 px-4 py-3.5">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  ref={(el) => {
+                    if (el) el.indeterminate = someSelected;
+                  }}
+                  onChange={onToggleSelectAll}
+                  className="h-4 w-4 rounded border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-amber-500 focus:ring-amber-500/30 accent-amber-500 cursor-pointer"
+                />
+              </th>
+            )}
 
             <th
               onClick={() => onSort('property_code')}
@@ -197,15 +199,17 @@ export const PropertyTable: React.FC<PropertyTableProps> = ({
                   isSelected ? 'bg-amber-500/5' : ''
                 }`}
               >
-                {/* Selection Checkbox */}
-                <td className="px-4 py-3">
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => onToggleSelect(prop.id)}
-                    className="h-4 w-4 rounded border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-amber-500 focus:ring-amber-500/30 accent-amber-500 cursor-pointer"
-                  />
-                </td>
+                {/* Selection Checkbox — staff only */}
+                {canEdit && (
+                  <td className="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => onToggleSelect(prop.id)}
+                      className="h-4 w-4 rounded border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-amber-500 focus:ring-amber-500/30 accent-amber-500 cursor-pointer"
+                    />
+                  </td>
+                )}
 
                 {/* Property ID */}
                 <td className="px-4 py-3 font-mono font-bold text-slate-900 dark:text-white">
@@ -403,28 +407,28 @@ export const PropertyTable: React.FC<PropertyTableProps> = ({
                       </button>
                     )}
 
-                    <div className="relative">
-                      <button
-                        onClick={() => setActiveMenuId(activeMenuId === prop.id ? null : prop.id)}
-                        className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
-                      >
-                        <MoreVertical className="h-4 w-4" />
-                      </button>
+                    {canEdit && (
+                      <div className="relative">
+                        <button
+                          onClick={() => setActiveMenuId(activeMenuId === prop.id ? null : prop.id)}
+                          className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </button>
 
-                      {activeMenuId === prop.id && (
-                        <div className="absolute right-0 top-8 z-50 w-44 rounded-xl border border-zinc-700 bg-[#12161F] p-1.5 shadow-2xl backdrop-blur-xl animate-in fade-in">
-                          <button
-                            onClick={() => {
-                              setSelectedPropertyId(prop.id);
-                              setActiveMenuId(null);
-                            }}
-                            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
-                          >
-                            <Eye className="h-3.5 w-3.5" />
-                            <span>View Full Details</span>
-                          </button>
+                        {activeMenuId === prop.id && (
+                          <div className="absolute right-0 top-8 z-50 w-44 rounded-xl border border-zinc-700 bg-[#12161F] p-1.5 shadow-2xl backdrop-blur-xl animate-in fade-in">
+                            <button
+                              onClick={() => {
+                                setSelectedPropertyId(prop.id);
+                                setActiveMenuId(null);
+                              }}
+                              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                              <span>View Full Details</span>
+                            </button>
 
-                          {canEdit && (
                             <button
                               onClick={() => {
                                 setEditingProperty(prop);
@@ -435,9 +439,7 @@ export const PropertyTable: React.FC<PropertyTableProps> = ({
                               <Edit2 className="h-3.5 w-3.5" />
                               <span>Edit Workspace</span>
                             </button>
-                          )}
 
-                          {canEdit && (
                             <button
                               onClick={() => handleDuplicate(prop)}
                               className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white"
@@ -445,11 +447,9 @@ export const PropertyTable: React.FC<PropertyTableProps> = ({
                               <Copy className="h-3.5 w-3.5" />
                               <span>Duplicate Property</span>
                             </button>
-                          )}
 
-                          <div className="my-1 border-t border-zinc-800" />
+                            <div className="my-1 border-t border-zinc-800" />
 
-                          {canEdit && (
                             <button
                               onClick={() => {
                                 setActiveMenuId(null);
@@ -460,10 +460,10 @@ export const PropertyTable: React.FC<PropertyTableProps> = ({
                               <Archive className="h-3.5 w-3.5" />
                               <span>Archive / Delete</span>
                             </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </td>
               </tr>

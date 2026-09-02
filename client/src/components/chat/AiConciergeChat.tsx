@@ -43,6 +43,20 @@ export const AiConciergeChat: React.FC = () => {
     if (isOpen) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isOpen]);
 
+  // Listen for openAiChat event fired by PropertyDetailsModal CTA
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { propertyCode: string; projectName: string };
+      setIsOpen(true);
+      setIsMinimized(false);
+      // Pre-populate a prompt about the specific property
+      const propertySuggestion = `Tell me more about ${detail.propertyCode} in ${detail.projectName}`;
+      setInputMsg(propertySuggestion);
+    };
+    window.addEventListener('openAiChat', handler);
+    return () => window.removeEventListener('openAiChat', handler);
+  }, []);
+
   const handleSend = async (textToSend?: string) => {
     const text = (textToSend || inputMsg).trim();
     if (!text || isLoading) return;

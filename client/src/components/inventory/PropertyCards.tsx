@@ -49,15 +49,17 @@ export const PropertyCards: React.FC<PropertyCardsProps> = ({
                 <StatusBadge status={prop.status} size="sm" />
               </div>
 
-              {/* Selection Checkbox */}
-              <div className="absolute top-3 right-3">
-                <input
-                  type="checkbox"
-                  checked={isSelected}
-                  onChange={() => onToggleSelect(prop.id)}
-                  className="h-5 w-5 rounded border-slate-300 dark:border-zinc-700 bg-white/90 dark:bg-zinc-900/80 text-amber-500 focus:ring-amber-500/30 accent-amber-500 cursor-pointer shadow-md"
-                />
-              </div>
+              {/* Selection Checkbox — staff only */}
+              {canEdit && (
+                <div className="absolute top-3 right-3">
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => onToggleSelect(prop.id)}
+                    className="h-5 w-5 rounded border-slate-300 dark:border-zinc-700 bg-white/90 dark:bg-zinc-900/80 text-amber-500 focus:ring-amber-500/30 accent-amber-500 cursor-pointer shadow-md"
+                  />
+                </div>
+              )}
 
               {/* Property ID pill */}
               <div className="absolute bottom-2.5 left-3">

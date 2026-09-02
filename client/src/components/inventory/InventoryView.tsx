@@ -489,13 +489,15 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ forcedStatusFilter
         </div>
       )}
 
-      {/* Floating Bulk Actions Toolbar */}
-      <BulkActionBar
-        selectedIds={selectedIds}
-        onClearSelection={() => setSelectedIds([])}
-        onRefresh={refreshInventory}
-        onOpenExport={() => setIsExportModalOpen(true)}
-      />
+      {/* Floating Bulk Actions Toolbar — staff only */}
+      {(activeRole === 'ADMIN' || activeRole === 'MANAGER' || activeRole === 'EMPLOYEE') && (
+        <BulkActionBar
+          selectedIds={selectedIds}
+          onClearSelection={() => setSelectedIds([])}
+          onRefresh={refreshInventory}
+          onOpenExport={() => setIsExportModalOpen(true)}
+        />
+      )}
 
       {/* Advanced Filter Drawer */}
       <FilterDrawer
