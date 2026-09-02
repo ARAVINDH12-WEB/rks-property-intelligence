@@ -18,6 +18,7 @@ import auditRoutes from './routes/audit.routes.js';
 import siteVisitsRoutes from './routes/site-visits.routes.js';
 import aiChatRoutes from './routes/ai-chat.routes.js';
 import offersRoutes from './routes/offers.routes.js';
+import settingsRoutes from './routes/settings.routes.js';
 
 dotenv.config();
 
@@ -49,6 +50,7 @@ app.use('/api/audit-logs', auditRoutes);
 app.use('/api/site-visits', siteVisitsRoutes);
 app.use('/api/ai-chat', aiChatRoutes);
 app.use('/api/offers', offersRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Comprehensive Health check endpoint
 app.get('/api/health', async (_req: Request, res: Response) => {
@@ -106,9 +108,9 @@ async function startServer() {
   try {
     console.log('[Server Startup] Verifying environment & database...');
     await getDb();
-    const countCheck = await query('SELECT count(*)::int as count FROM properties');
-    if (countCheck.rows[0]?.count === 0) {
-      console.log('Database empty, automatically seeding initial RKS property inventory...');
+    const seedCheck = await query("SELECT value FROM system_meta WHERE key = 'seed_completed'");
+    if (seedCheck.rowCount === 0 && process.env.NODE_ENV === 'development') {
+      console.log('Database uninitialized in development, seeding initial RKS property inventory...');
       await seedDatabase();
     }
 
@@ -131,9 +133,9 @@ async function startServer() {
   }
 }
 
-if (process.env.VERCEL !== '1' && !process.env.NOW_REGION) {
+const isMainModule = process.argv[1] && (process.argv[1].endsWith('index.ts') || process.argv[1].endsWith('index.js'));
+if (isMainModule && !process.env.VERCEL && !process.env.NOW_REGION) {
   startServer();
 }
 
 export default app;
-export { app };

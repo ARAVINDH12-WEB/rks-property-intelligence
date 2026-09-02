@@ -200,6 +200,14 @@ CREATE TABLE IF NOT EXISTS offers (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS system_settings (
+  key VARCHAR(100) PRIMARY KEY,
+  value TEXT NOT NULL,
+  description TEXT,
+  updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE INDEX IF NOT EXISTS idx_properties_property_code ON properties(property_code);
 CREATE INDEX IF NOT EXISTS idx_properties_status ON properties(status);
 CREATE INDEX IF NOT EXISTS idx_properties_project_id ON projects(id);

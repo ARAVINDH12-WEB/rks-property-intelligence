@@ -1,3 +1,4 @@
+process.env.NODE_ENV = 'test';
 import app from './index.js';
 import { getDb, query } from './db/index.js';
 import { seedDatabase } from './db/seed.js';

@@ -321,6 +321,18 @@ export const api = {
     });
   },
 
+  // Site Settings & WhatsApp Connect
+  async getWhatsAppConfig(): Promise<{ whatsapp_number: string; default_message: string }> {
+    return request<{ whatsapp_number: string; default_message: string }>('/settings/whatsapp');
+  },
+
+  async updateWhatsAppNumber(whatsapp_number: string): Promise<{ message: string; whatsapp_number: string }> {
+    return request<{ message: string; whatsapp_number: string }>('/settings/whatsapp', {
+      method: 'PUT',
+      body: JSON.stringify({ whatsapp_number }),
+    });
+  },
+
   // Export helper URL
   getExportUrl(format: 'xlsx' | 'csv' = 'xlsx', ids?: number[], filters?: PropertyFilterParams): string {
     const params = new URLSearchParams();

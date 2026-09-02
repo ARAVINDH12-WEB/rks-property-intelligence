@@ -21,6 +21,7 @@ import { ExportModal } from './components/inventory/ExportModal.js';
 import { ConfirmationModal } from './components/common/ConfirmationModal.js';
 import { ToastContainer } from './components/common/Toast.js';
 import { AuthGatewayView } from './components/auth/AuthGatewayView.js';
+import { WhatsAppFloatingButton } from './components/common/WhatsAppFloatingButton.js';
 import { api } from './services/api.js';
 import { Property, Project, Location } from './types/index.js';
 
@@ -172,6 +173,9 @@ const MainLayout: React.FC = () => {
       {/* AI Property Concierge Floating Chatbot */}
       <AiConciergeChat />
 
+      {/* Customer WhatsApp Connect Floating Action Button */}
+      {activeRole === 'VIEWER' && <WhatsAppFloatingButton />}
+
       {/* Global Toast System */}
       <ToastContainer />
     </div>
@@ -190,6 +194,7 @@ const AppContent: React.FC = () => {
             setIsLoggedIn(true);
           }}
         />
+        <WhatsAppFloatingButton />
         <ToastContainer />
       </>
     );
