@@ -1,6 +1,9 @@
 import { Property, Project, Location, PropertyFilterParams, PaginationMeta, UserRole } from '../types/index.js';
 
-const API_BASE = '/api';
+const envApiUrl = (import.meta as any).env?.VITE_API_URL;
+const API_BASE = envApiUrl
+  ? (envApiUrl.endsWith('/api') ? envApiUrl : `${envApiUrl.replace(/\/$/, '')}/api`)
+  : '/api';
 
 function getHeaders(): HeadersInit {
   const token = localStorage.getItem('rks_auth_token');
