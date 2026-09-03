@@ -114,8 +114,9 @@ async function startServer() {
     console.log('[Server Startup] Verifying environment & database...');
     await getDb();
     const userCheck = await query('SELECT count(*)::int as count FROM users');
-    if ((userCheck.rows[0]?.count || 0) === 0) {
-      console.log('Users table uninitialized, seeding initial RKS accounts and database...');
+    
+    if ((userCheck.rows[0]?.count || 0) === 0 || process.env.FORCE_DB_RESET === 'true') {
+      console.log('Running database cleanup/seed script...');
       await seedDatabase(true);
     }
 
