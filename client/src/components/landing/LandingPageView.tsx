@@ -80,7 +80,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
   // Dynamic live calculations from imported database inventory
   const plotCount = totalAvailableCount > 0
     ? totalAvailableCount
-    : (settings.stat_total_plots && settings.stat_total_plots !== '0' ? settings.stat_total_plots : '58+');
+    : (settings.stat_total_plots && settings.stat_total_plots !== '0' ? settings.stat_total_plots : '0');
 
   const lowestPlotRate = featuredPlots.length > 0
     ? Math.min(...featuredPlots.map((p) => Number(p.rate_per_sqft || 0)).filter((r) => r > 0))
@@ -88,7 +88,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
 
   const rawRateStr = (settings.stat_base_rate && settings.stat_base_rate !== '0' && settings.stat_base_rate !== '₹0')
     ? settings.stat_base_rate
-    : (lowestPlotRate > 0 ? `₹${lowestPlotRate}` : '₹850');
+    : (lowestPlotRate > 0 ? `₹${lowestPlotRate}` : '₹0');
 
   const displayBaseRate = rawRateStr.toLowerCase().includes('sq')
     ? rawRateStr
@@ -97,7 +97,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
   const totalAcreageFromPlots = featuredPlots.reduce((sum, p) => sum + (Number(p.area_sqft || 0) / 43560), 0);
   const displayAcreage = (settings.stat_total_acreage && settings.stat_total_acreage !== '0' && settings.stat_total_acreage !== '0 Acres')
     ? settings.stat_total_acreage
-    : (totalAcreageFromPlots > 0 ? `${totalAcreageFromPlots.toFixed(1)}+ Acres` : '120+ Acres');
+    : (totalAcreageFromPlots > 0 ? `${totalAcreageFromPlots.toFixed(1)}+ Acres` : '0 Acres');
 
   const cleanWhatsappNumber = (settings.whatsapp_number || '+919840011223').replace(/[^0-9]/g, '');
   const whatsappUrl = `https://wa.me/${cleanWhatsappNumber}?text=${encodeURIComponent(
@@ -316,8 +316,9 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
         )}
 
         {/* 5. Featured Plots Showcase */}
-        {featuredPlots.length > 0 && (
-          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {featuredPlots.length > 0 ? (
+            <>
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
@@ -402,9 +403,17 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
                 </div>
               ))}
             </div>
-          </section>
-        )}
-
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center p-12 text-center border border-dashed border-slate-300 dark:border-zinc-800 rounded-3xl bg-slate-50 dark:bg-zinc-900/50">
+              <Building className="h-12 w-12 text-slate-400 mb-4" />
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">No properties yet</h3>
+              <p className="text-sm text-slate-500 mt-2 max-w-sm">
+                We are currently updating our inventory. Please check back soon or contact our sales team for upcoming projects.
+              </p>
+            </div>
+          )}
+        </section>
         {/* 6. WhatsApp & Free Site Tour Conversion Card */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="rounded-3xl border border-slate-200 dark:border-zinc-800 bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950 p-8 sm:p-12 text-white shadow-2xl relative overflow-hidden">

@@ -154,7 +154,7 @@ CREATE TABLE IF NOT EXISTS import_batches (
 
 CREATE TABLE IF NOT EXISTS site_visits (
   id SERIAL PRIMARY KEY,
-  property_id INTEGER REFERENCES properties(id) ON DELETE SET NULL,
+  property_id INTEGER REFERENCES properties(id) ON DELETE CASCADE,
   property_code VARCHAR(50),
   customer_name VARCHAR(150) NOT NULL,
   customer_phone VARCHAR(30) NOT NULL,

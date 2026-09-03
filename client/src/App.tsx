@@ -29,6 +29,7 @@ const MainLayout: React.FC = () => {
   const {
     activeTab,
     sidebarCollapsed,
+    setSidebarCollapsed,
     selectedPropertyId,
     setSelectedPropertyId,
     editingProperty,
@@ -80,18 +81,26 @@ const MainLayout: React.FC = () => {
     <div className="flex min-h-screen bg-[#F8FAFC] dark:bg-[#0A0C10] text-slate-900 dark:text-zinc-100 font-sans transition-colors duration-200">
       {/* Sidebar Navigation */}
       <Sidebar />
+      
+      {/* Mobile Sidebar Overlay */}
+      {!sidebarCollapsed && (
+        <div 
+          className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm md:hidden"
+          onClick={() => setSidebarCollapsed(true)}
+        />
+      )}
 
       {/* Main Content Area */}
       <div
         className={`flex flex-1 flex-col transition-all duration-300 ${
-          sidebarCollapsed ? 'pl-20' : 'pl-64'
+          sidebarCollapsed ? 'pl-0 md:pl-20' : 'pl-0 md:pl-64'
         }`}
       >
         {/* Top Command Bar */}
         <TopBar />
 
         {/* Dynamic Route Content View */}
-        <main className="flex-1 px-8 py-8 mt-16 max-w-7xl w-full mx-auto animate-in fade-in">
+        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-8 mt-16 max-w-7xl w-full mx-auto animate-in fade-in">
           {activeTab === 'overview' && <OverviewView />}
           {activeTab === 'properties' && <InventoryView />}
           {activeTab === 'available' && <InventoryView forcedStatusFilter="AVAILABLE" />}

@@ -96,8 +96,8 @@ export const Sidebar: React.FC = () => {
 
   return (
     <aside
-      className={`fixed top-0 bottom-0 left-0 z-30 flex flex-col border-r border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#0D1017] transition-all duration-300 shadow-sm ${
-        sidebarCollapsed ? 'w-20' : 'w-64'
+      className={`fixed top-0 bottom-0 left-0 z-40 flex flex-col border-r border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#0D1017] transition-all duration-300 shadow-sm ${
+        sidebarCollapsed ? '-translate-x-full md:translate-x-0 w-64 md:w-20' : 'translate-x-0 w-64'
       }`}
     >
       {/* Brand Header */}

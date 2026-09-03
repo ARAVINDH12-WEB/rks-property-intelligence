@@ -29,8 +29,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
   const [authMode, setAuthMode] = useState<'LOGIN' | 'REGISTER'>('LOGIN');
 
   // Login Form
-  const [email, setEmail] = useState('admin@rks.com');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
   // Register Form
@@ -82,14 +82,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleQuickLogin = (demoEmail: string, demoRole: UserRole, demoName: string) => {
-    setEmail(demoEmail);
-    setPassword(demoEmail.split('@')[0] + '123');
-    setActiveRole(demoRole);
-    showToast(`Authenticated as ${demoName}`, `Role: ${demoRole}`, 'success');
-    onClose();
   };
 
   return (
@@ -160,46 +152,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
 
           {authMode === 'LOGIN' ? (
             <>
-              {/* Quick Demo One-Click Sign In */}
-              <div className="space-y-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
-                  <Sparkles className="h-3 w-3" />
-                  <span>1-Click Instant Demo Authentication</span>
-                </span>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleQuickLogin('admin@rks.com', 'ADMIN', 'Rajesh Kumar S (Director)')}
-                    className="flex flex-col items-start rounded-xl border border-amber-500/30 bg-amber-500/10 p-2.5 text-left transition-all hover:bg-amber-500/20 group"
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <span className="text-xs font-bold text-amber-300">Director (Admin)</span>
-                      <Shield className="h-3 w-3 text-amber-400" />
-                    </div>
-                    <span className="text-[10px] text-zinc-400 mt-0.5">admin@rks.com</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleQuickLogin('manager@rks.com', 'MANAGER', 'Priya Sharma (Portfolio Manager)')}
-                    className="flex flex-col items-start rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-2.5 text-left transition-all hover:bg-cyan-500/20 group"
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <span className="text-xs font-bold text-cyan-300">Portfolio Manager</span>
-                      <Shield className="h-3 w-3 text-cyan-400" />
-                    </div>
-                    <span className="text-[10px] text-zinc-400 mt-0.5">manager@rks.com</span>
-                  </button>
-                </div>
-              </div>
-
-              <div className="relative flex items-center justify-center">
-                <div className="w-full border-t border-zinc-800" />
-                <span className="absolute bg-[#0D1017] px-2 text-[10px] font-semibold text-zinc-500 uppercase">
-                  Or Sign In with Email
-                </span>
-              </div>
-
               {/* Login Form */}
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>

@@ -93,11 +93,20 @@ export const TopBar: React.FC = () => {
   return (
     <>
       <header
-        className={`fixed top-0 right-0 z-20 flex h-16 items-center justify-between border-b border-slate-200 dark:border-zinc-800/80 bg-white/95 dark:bg-[#0A0C10]/95 px-6 backdrop-blur-md transition-all duration-300 shadow-sm ${
-          sidebarCollapsed ? 'left-20' : 'left-64'
+        className={`fixed top-0 right-0 z-20 flex h-16 items-center justify-between border-b border-slate-200 dark:border-zinc-800/80 bg-white/95 dark:bg-[#0A0C10]/95 px-4 sm:px-6 backdrop-blur-md transition-all duration-300 shadow-sm left-0 ${
+          sidebarCollapsed ? 'md:left-20' : 'md:left-64'
         }`}
       >
-        {/* Global Omnisearch */}
+        <div className="flex items-center gap-3 w-full max-w-2xl">
+          {/* Mobile Sidebar Toggle */}
+          <button
+            onClick={() => useApp().setSidebarCollapsed((prev) => !prev)}
+            className="md:hidden p-2 -ml-2 text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white"
+          >
+            <Command className="h-5 w-5" />
+          </button>
+          
+          {/* Global Omnisearch */}
         <div ref={searchContainerRef} className="relative w-full max-w-xl">
           <div className="relative flex items-center">
             <Search className="absolute left-3.5 h-4 w-4 text-slate-400 dark:text-zinc-400 pointer-events-none" />
@@ -172,9 +181,10 @@ export const TopBar: React.FC = () => {
             </div>
           )}
         </div>
+        </div>
 
         {/* Top Bar Actions & Profile */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* Book Site Visit CTA for Customers */}
           <button
             onClick={() => openSiteVisitModal()}
