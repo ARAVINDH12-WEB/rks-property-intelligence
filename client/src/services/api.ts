@@ -3,7 +3,11 @@ import { Property, Project, Location, PropertyFilterParams, PaginationMeta, User
 const DEFAULT_PRODUCTION_BACKEND = 'https://rks-property-intelligence-production.up.railway.app';
 const envApiUrl = (import.meta as any).env?.VITE_API_URL;
 const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-const resolvedBackendUrl = envApiUrl || (isLocal ? '' : DEFAULT_PRODUCTION_BACKEND);
+
+// Force production URL if not local, ignoring VITE_API_URL if it is broken/relative.
+const resolvedBackendUrl = isLocal 
+  ? (envApiUrl || '') 
+  : DEFAULT_PRODUCTION_BACKEND;
 
 const API_BASE = resolvedBackendUrl
   ? (resolvedBackendUrl.endsWith('/api') ? resolvedBackendUrl : `${resolvedBackendUrl.replace(/\/$/, '')}/api`)
