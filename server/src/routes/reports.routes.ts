@@ -23,7 +23,9 @@ router.get('/', authenticate, async (_req: Request, res: Response): Promise<void
         COALESCE(AVG(rate_per_sqft), 0)::numeric as avg_rate_per_sqft,
         COALESCE(SUM(area_sqft), 0)::numeric as total_area_sqft,
         COALESCE(SUM(CASE WHEN status = 'AVAILABLE' THEN area_sqft ELSE 0 END), 0)::numeric as available_area_sqft,
-        COALESCE(SUM(CASE WHEN status = 'SOLD' THEN area_sqft ELSE 0 END), 0)::numeric as sold_area_sqft
+        COALESCE(SUM(CASE WHEN status = 'SOLD' THEN area_sqft ELSE 0 END), 0)::numeric as sold_area_sqft,
+        (SELECT COUNT(*)::int FROM site_visits) as site_visits_count,
+        (SELECT COUNT(*)::int FROM site_visits WHERE status = 'PENDING') as pending_leads_count
       FROM properties
       WHERE archived = false
     `);

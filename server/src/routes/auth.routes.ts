@@ -8,6 +8,20 @@ import { createRateLimiter } from '../middleware/security.js';
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'rks_property_intelligence_super_secret_jwt_key_2026';
 
+// Helper to log auth attempts
+async function logAuthAttempt(email: string, success: boolean, ip: string, failureReason?: string) {
+  try {
+    const details = success ? 'Successful login' : `Failed login attempt: ${failureReason || 'Unknown error'}`;
+    await query(
+      `INSERT INTO audit_logs (user_name, entity_type, action, details)
+       VALUES ($1, 'AUTH', $2, $3)`,
+      [email, success ? 'LOGIN_SUCCESS' : 'LOGIN_FAILURE', `${details} (IP: ${ip})`]
+    );
+  } catch (error) {
+    console.error('Failed to log auth attempt:', error);
+  }
+}
+
 // GET /api/auth/guest-token - Returns a pre-signed VIEWER token for unauthenticated customers
 router.get('/guest-token', (_req: Request, res: Response): void => {
   res.json({
@@ -21,8 +35,10 @@ router.get('/guest-token', (_req: Request, res: Response): void => {
 router.post('/login', createRateLimiter(60000, 15, 'Too many login attempts. Please wait a minute and try again.'), async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
+    const clientIp = req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown';
 
     if (!email || !password) {
+      await logAuthAttempt(email || 'missing_email', false, clientIp, 'Missing credentials');
       res.status(400).json({ error: 'Email and password are required' });
       return;
     }
@@ -33,6 +49,7 @@ router.post('/login', createRateLimiter(60000, 15, 'Too many login attempts. Ple
     );
 
     if (userResult.rowCount === 0) {
+      await logAuthAttempt(email, false, clientIp, 'User not found');
       res.status(401).json({ error: 'Invalid email or password' });
       return;
     }
@@ -41,6 +58,7 @@ router.post('/login', createRateLimiter(60000, 15, 'Too many login attempts. Ple
     const passwordValid = await bcrypt.compare(password, user.password_hash);
 
     if (!passwordValid) {
+      await logAuthAttempt(email, false, clientIp, 'Invalid password');
       res.status(401).json({ error: 'Invalid email or password' });
       return;
     }
@@ -53,6 +71,8 @@ router.post('/login', createRateLimiter(60000, 15, 'Too many login attempts. Ple
     };
 
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
+
+    await logAuthAttempt(email, true, clientIp);
 
     res.json({
       token,

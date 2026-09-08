@@ -210,8 +210,8 @@ CREATE TABLE IF NOT EXISTS system_settings (
 
 CREATE INDEX IF NOT EXISTS idx_properties_property_code ON properties(property_code);
 CREATE INDEX IF NOT EXISTS idx_properties_status ON properties(status);
-CREATE INDEX IF NOT EXISTS idx_properties_project_id ON projects(id);
-CREATE INDEX IF NOT EXISTS idx_properties_location_id ON locations(id);
+CREATE INDEX IF NOT EXISTS idx_properties_project_id ON properties(project_id);
+CREATE INDEX IF NOT EXISTS idx_properties_location_id ON properties(location_id);
 CREATE INDEX IF NOT EXISTS idx_properties_property_type ON properties(property_type);
 CREATE INDEX IF NOT EXISTS idx_properties_price ON properties(total_price);
 CREATE INDEX IF NOT EXISTS idx_properties_area ON properties(area_sqft);

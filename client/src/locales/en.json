@@ -1,0 +1,24 @@
+{
+  "nav": {
+    "home": "Home",
+    "projects": "Projects",
+    "contact": "Contact",
+    "dashboard": "Dashboard"
+  },
+  "hero": {
+    "title": "Find Your Perfect Property",
+    "subtitle": "Explore our exclusive collection of premium real estate across top locations.",
+    "cta": "Explore Properties"
+  },
+  "features": {
+    "premium": "Premium Locations",
+    "verified": "Verified Properties",
+    "support": "24/7 Support"
+  },
+  "languagePrompt": {
+    "title": "Choose your language",
+    "subtitle": "You can change this later at any time.",
+    "english": "English",
+    "tamil": "?????"
+  }
+}

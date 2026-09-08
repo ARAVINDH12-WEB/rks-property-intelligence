@@ -131,32 +131,30 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
       }
     }
 
-    // Dispatch Automated WhatsApp Notification safely (non-blocking)
-    let waResult: any = null;
-    try {
-      waResult = await dispatchWhatsAppAlert({
-        type: 'SITE_VISIT_BOOKED',
-        customerName: String(customer_name).trim(),
-        customerPhone: String(customer_phone).trim(),
-        customerEmail: customer_email,
-        propertyCode: propertyCode,
-        projectName: propInfo?.project_name,
-        visitDate: visit_date,
-        timeSlot: time_slot,
-        pickupRequired: !!pickup_required,
-        pickupLocation: pickup_location,
-        summary: `Site visit for ${propertyCode} booked by ${customer_name}`,
-      });
-    } catch (err) {
+    // Dispatch Automated WhatsApp Notification safely (truly non-blocking)
+    // We don't await this so the customer gets an instant response.
+    dispatchWhatsAppAlert({
+      type: 'SITE_VISIT_BOOKED',
+      customerName: String(customer_name).trim(),
+      customerPhone: String(customer_phone).trim(),
+      customerEmail: customer_email,
+      propertyCode: propertyCode,
+      projectName: propInfo?.project_name,
+      visitDate: visit_date,
+      timeSlot: time_slot,
+      pickupRequired: !!pickup_required,
+      pickupLocation: pickup_location,
+      summary: `Site visit for ${propertyCode} booked by ${customer_name}`,
+    }).catch(err => {
       console.warn('[Site Visits] WhatsApp alert dispatch warning:', err);
-    }
+    });
 
     res.status(201).json({
       message: 'Site visit successfully scheduled!',
       bookingReference: `SV-${String(booking.id).padStart(5, '0')}`,
       booking,
       property: propInfo,
-      whatsappAlert: waResult,
+      whatsappAlert: 'dispatched_async',
     });
   } catch (error: any) {
     console.error('[Site Visits Error]:', {

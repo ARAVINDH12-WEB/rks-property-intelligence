@@ -20,6 +20,24 @@ function extractUser(req: Request): AuthUser | null {
   }
 }
 
+// In-memory cache for offers
+let offersCache: {
+  customer: any[] | null;
+  staff: any[] | null;
+  lastUpdated: number;
+} = {
+  customer: null,
+  staff: null,
+  lastUpdated: 0,
+};
+
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+export function invalidateOffersCache() {
+  offersCache.customer = null;
+  offersCache.staff = null;
+}
+
 // GET /api/offers - List Offers (Server-Side Role Filtered)
 // Customers see ONLY active, non-expired offers.
 // Managers & Admins see ALL offers (active, inactive, expired).
@@ -27,6 +45,26 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
   try {
     const user = extractUser(req);
     const isStaff = user && (user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'EMPLOYEE');
+
+    const now = Date.now();
+    
+    // Serve from cache if valid
+    if (isStaff && offersCache.staff && (now - offersCache.lastUpdated < CACHE_TTL)) {
+      res.json({
+        offers: offersCache.staff,
+        viewRole: user?.role,
+        count: offersCache.staff.length,
+      });
+      return;
+    }
+    if (!isStaff && offersCache.customer && (now - offersCache.lastUpdated < CACHE_TTL)) {
+      res.json({
+        offers: offersCache.customer,
+        viewRole: 'CUSTOMER',
+        count: offersCache.customer.length,
+      });
+      return;
+    }
 
     let sql = `
       SELECT
@@ -50,6 +88,14 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
     sql += ` ORDER BY o.is_active DESC, o.end_date DESC, o.id DESC`;
 
     const result = await query(sql);
+
+    // Update cache
+    if (isStaff) {
+      offersCache.staff = result.rows;
+    } else {
+      offersCache.customer = result.rows;
+    }
+    offersCache.lastUpdated = now;
 
     res.json({
       offers: result.rows,
@@ -242,6 +288,7 @@ router.put('/:id', authenticate, requireRole(['ADMIN']), async (req: Request, re
       [userId, userName, id, `Updated promotional offer '${updated.title}'`]
     );
 
+    invalidateOffersCache();
     res.json({
       message: 'Offer updated successfully!',
       offer: updated,
@@ -274,6 +321,7 @@ router.delete('/:id', authenticate, requireRole(['ADMIN']), async (req: Request,
       [userId, userName, id, `Deleted promotional offer '${current.title}'`]
     );
 
+    invalidateOffersCache();
     res.json({ message: 'Offer deleted successfully' });
   } catch (error: any) {
     res.status(500).json({ error: error?.message || 'Failed to delete offer' });

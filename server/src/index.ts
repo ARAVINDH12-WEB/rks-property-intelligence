@@ -108,6 +108,12 @@ app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
   });
 });
 
+// Global Error Handler
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  console.error('[Unhandled Error]', err.stack || err);
+  res.status(500).json({ error: 'An unexpected internal server error occurred.' });
+});
+
 // Boot and seed if required
 async function startServer() {
   try {
@@ -145,3 +151,4 @@ if (isMainModule && !process.env.VERCEL && !process.env.NOW_REGION) {
 }
 
 export default app;
+

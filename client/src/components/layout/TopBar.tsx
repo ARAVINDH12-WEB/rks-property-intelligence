@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useApp } from '../../context/AppContext.js';
 import { api } from '../../services/api.js';
 import { Property, UserRole } from '../../types/index.js';
@@ -21,6 +22,7 @@ import {
 } from 'lucide-react';
 
 export const TopBar: React.FC = () => {
+  const { i18n } = useTranslation();
   const {
     sidebarCollapsed,
     searchQuery,

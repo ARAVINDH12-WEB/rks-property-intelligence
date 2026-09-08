@@ -20,10 +20,12 @@ import { PropertyFormModal } from './components/inventory/PropertyFormModal.js';
 import { ExportModal } from './components/inventory/ExportModal.js';
 import { ConfirmationModal } from './components/common/ConfirmationModal.js';
 import { ToastContainer } from './components/common/Toast.js';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthGatewayView } from './components/auth/AuthGatewayView.js';
 import { WhatsAppFloatingButton } from './components/common/WhatsAppFloatingButton.js';
 import { api } from './services/api.js';
 import { Property, Project, Location } from './types/index.js';
+import { LandingPageView } from './components/landing/LandingPageView.js';
 
 const MainLayout: React.FC = () => {
   const {
@@ -194,22 +196,35 @@ const MainLayout: React.FC = () => {
 const AppContent: React.FC = () => {
   const { isLoggedIn, setIsLoggedIn, setActiveRole } = useApp();
 
-  if (!isLoggedIn) {
-    return (
-      <>
-        <AuthGatewayView
-          onLoginSuccess={(role) => {
-            setActiveRole(role);
-            setIsLoggedIn(true);
-          }}
-        />
-        <WhatsAppFloatingButton />
-        <ToastContainer />
-      </>
-    );
-  }
+  return (
+    <>
+      <Routes>
+        <Route path="/" element={<LandingPageView onExploreProperties={() => {}} onOpenStaffLogin={() => {}} />} />
+        
+        <Route path="/admin" element={
+          !isLoggedIn ? (
+            <AuthGatewayView
+              onLoginSuccess={(role) => {
+                setActiveRole(role);
+                setIsLoggedIn(true);
+              }}
+            />
+          ) : (
+            <Navigate to="/dashboard" replace />
+          )
+        } />
 
-  return <MainLayout />;
+        <Route path="/dashboard/*" element={
+          isLoggedIn ? <MainLayout /> : <Navigate to="/admin" replace />
+        } />
+        
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+
+      <WhatsAppFloatingButton />
+      <ToastContainer />
+    </>
+  );
 };
 
 export default function App() {
@@ -219,3 +234,4 @@ export default function App() {
     </AppProvider>
   );
 }
+

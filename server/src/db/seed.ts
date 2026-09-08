@@ -39,7 +39,7 @@ export async function seedDatabase(force: boolean = false) {
   await query('DELETE FROM users'); // Wipes all users, including old demo accounts
 
   // 2. Initialize Single Secure Admin
-  const adminEmail = process.env.INITIAL_ADMIN_EMAIL || 'admin@rks.com';
+  const adminEmail = process.env.INITIAL_ADMIN_EMAIL || 'admin@rksprime.com';
   let adminPassword = process.env.INITIAL_ADMIN_PASSWORD;
   let generatedPassword = false;
 

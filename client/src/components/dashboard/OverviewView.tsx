@@ -81,12 +81,12 @@ export const OverviewView: React.FC = () => {
       {/* Top Banner */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-amber-500 dark:text-amber-400">
+          <div className="flex items-center gap-2 text-xs font-bold font-heading tracking-tight uppercase tracking-widest text-brand-teal dark:text-brand-teal-light">
             <span>RKS Real Estate Intelligence</span>
             <span>•</span>
             <span>{isStaff ? 'Inventory Command Center' : 'Customer & Buyer Portal'}</span>
           </div>
-          <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-900 dark:text-white font-sans">
+          <h1 className="mt-1 text-3xl font-black tracking-tight text-brand-navy dark:text-brand-charcoal dark:text-white font-sans">
             {isStaff ? 'Executive Inventory Overview' : 'Explore RKS Prime Properties'}
           </h1>
           <p className="mt-1 text-xs text-slate-500 dark:text-zinc-400">
@@ -100,21 +100,21 @@ export const OverviewView: React.FC = () => {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsExportModalOpen(true)}
-              className="flex items-center gap-2 rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-700 hover:text-slate-900 dark:hover:text-white transition-colors shadow-sm"
+              className="flex items-center gap-2 rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-700 hover:text-brand-navy dark:hover:text-brand-charcoal dark:text-white transition-colors shadow-sm"
             >
               <Download className="h-4 w-4 text-cyan-500 dark:text-cyan-400" />
               <span>Export Report</span>
             </button>
             <button
               onClick={() => setActiveTab('import')}
-              className="flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-xs font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-colors"
+              className="flex items-center gap-2 rounded-xl border border-amber-500/30 bg-brand-teal/10 px-4 py-2.5 text-xs font-semibold text-amber-600 dark:text-brand-teal-light hover:bg-amber-500/20 transition-colors"
             >
               <FileSpreadsheet className="h-4 w-4" />
               <span>Import Excel</span>
             </button>
             <button
               onClick={() => setIsAddModalOpen(true)}
-              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-5 py-2.5 text-xs font-bold text-black shadow-lg shadow-amber-500/20 hover:from-amber-400 hover:to-amber-500 transition-all cursor-pointer"
+              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-teal to-brand-teal-dark text-white shadow-premium px-5 py-2.5 text-xs font-bold font-heading tracking-tight text-black shadow-lg shadow-amber-500/20 hover:from-brand-teal-light hover:to-brand-teal transition-all cursor-pointer"
             >
               <Plus className="h-4 w-4 stroke-[3]" />
               <span>+ Add Property</span>
@@ -124,16 +124,16 @@ export const OverviewView: React.FC = () => {
           <div className="flex items-center gap-3">
             <button
               onClick={() => openSiteVisitModal()}
-              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-5 py-2.5 text-xs font-bold text-black shadow-lg shadow-amber-500/20 hover:from-amber-400 hover:to-amber-500 transition-all cursor-pointer"
+              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-teal to-brand-teal-dark text-white shadow-premium px-5 py-2.5 text-xs font-bold font-heading tracking-tight text-black shadow-lg shadow-amber-500/20 hover:from-brand-teal-light hover:to-brand-teal transition-all cursor-pointer"
             >
               <Calendar className="h-4 w-4" />
               <span>🚗 Book Free Site Visit</span>
             </button>
             <button
               onClick={() => setActiveTab('properties')}
-              className="flex items-center gap-2 rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-[#12161F] px-4 py-2.5 text-xs font-bold text-slate-800 dark:text-zinc-200 hover:border-amber-500 transition-all cursor-pointer shadow-sm"
+              className="flex items-center gap-2 rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-rks-card dark:bg-rks-cardDark shadow-premium px-4 py-2.5 text-xs font-bold font-heading tracking-tight text-slate-800 dark:text-zinc-200 hover:border-amber-500 transition-all cursor-pointer shadow-sm"
             >
-              <Building2 className="h-4 w-4 text-amber-500" />
+              <Building2 className="h-4 w-4 text-brand-teal" />
               <span>Explore 58 Plots</span>
             </button>
           </div>
@@ -141,12 +141,12 @@ export const OverviewView: React.FC = () => {
       </div>
 
       {/* 6 MASTER KPI CARDS (Drawn dynamically from DB) */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
         <MetricCard
           title="Total Properties"
           value={Number(kpis.total_properties || 0).toLocaleString('en-IN')}
           subtitle="Master Portfolio Units"
-          icon={<Building2 className="h-5 w-5 text-white" />}
+          icon={<Building2 className="h-5 w-5 text-brand-charcoal dark:text-white" />}
           gradient="from-violet-500 to-indigo-600"
           onClick={() => setActiveTab('properties')}
         />
@@ -155,7 +155,7 @@ export const OverviewView: React.FC = () => {
           title="Available"
           value={Number(kpis.available_count || 0).toLocaleString('en-IN')}
           subtitle="Ready for Allocation"
-          icon={<CheckCircle2 className="h-5 w-5 text-white" />}
+          icon={<CheckCircle2 className="h-5 w-5 text-brand-charcoal dark:text-white" />}
           gradient="from-emerald-500 to-teal-600"
           onClick={() => setActiveTab('available')}
         />
@@ -164,7 +164,7 @@ export const OverviewView: React.FC = () => {
           title="Reserved"
           value={Number(kpis.reserved_count || 0).toLocaleString('en-IN')}
           subtitle="Under Negotiation"
-          icon={<Clock className="h-5 w-5 text-white" />}
+          icon={<Clock className="h-5 w-5 text-brand-charcoal dark:text-white" />}
           gradient="from-amber-500 to-orange-600"
           onClick={() => setActiveTab('reserved')}
         />
@@ -173,7 +173,7 @@ export const OverviewView: React.FC = () => {
           title="Sold"
           value={Number(kpis.sold_count || 0).toLocaleString('en-IN')}
           subtitle="Registered & Closed"
-          icon={<CheckCheck className="h-5 w-5 text-white" />}
+          icon={<CheckCheck className="h-5 w-5 text-brand-charcoal dark:text-white" />}
           gradient="from-rose-500 to-red-600"
           onClick={() => setActiveTab('sold')}
         />
@@ -182,7 +182,7 @@ export const OverviewView: React.FC = () => {
           title="Total Value"
           value={formatCurrencyINR(kpis.total_inventory_value, true)}
           subtitle={formatCurrencyINR(kpis.total_inventory_value)}
-          icon={<DollarSign className="h-5 w-5 text-white" />}
+          icon={<DollarSign className="h-5 w-5 text-brand-charcoal dark:text-white" />}
           gradient="from-cyan-500 to-blue-600"
         />
 
@@ -190,8 +190,22 @@ export const OverviewView: React.FC = () => {
           title="Avg Rate"
           value={`₹${Number(kpis.avg_rate_per_sqft || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`}
           subtitle="Per Sq.Ft Rate"
-          icon={<TrendingUp className="h-5 w-5 text-white" />}
+          icon={<TrendingUp className="h-5 w-5 text-brand-charcoal dark:text-white" />}
           gradient="from-pink-500 to-fuchsia-600"
+        />
+        <MetricCard
+          title="Active Leads"
+          value={Number(kpis.pending_leads_count || 0).toLocaleString('en-IN')}
+          subtitle="Pending Inquiries"
+          icon={<TrendingUp className="h-5 w-5 text-brand-charcoal dark:text-white" />}
+          gradient="from-blue-500 to-indigo-600"
+        />
+        <MetricCard
+          title="Site Visits"
+          value={Number(kpis.site_visits_count || 0).toLocaleString('en-IN')}
+          subtitle="Total Bookings"
+          icon={<Calendar className="h-5 w-5 text-brand-charcoal dark:text-white" />}
+          gradient="from-purple-500 to-fuchsia-600"
         />
       </div>
 
@@ -199,15 +213,15 @@ export const OverviewView: React.FC = () => {
       {/* MID SECTION: PORTFOLIO BREAKDOWN & CHARTS */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Project Inventory Valuation Bar Chart */}
-        <div className="rounded-2xl border border-zinc-800 bg-[#12161F]/90 p-6 shadow-xl backdrop-blur-md lg:col-span-2 space-y-4">
+        <div className="rounded-2xl border border-zinc-800 bg-rks-card dark:bg-rks-cardDark shadow-premium/90 p-6 shadow-xl backdrop-blur-md lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-bold text-base text-white">Project Inventory Valuation</h3>
+              <h3 className="font-bold font-heading tracking-tight text-base text-brand-charcoal dark:text-white">Project Inventory Valuation</h3>
               <p className="text-xs text-zinc-400">Total property worth by project (₹ Crores)</p>
             </div>
             <button
               onClick={() => setActiveTab('projects')}
-              className="flex items-center gap-1 text-xs font-semibold text-amber-400 hover:underline"
+              className="flex items-center gap-1 text-xs font-semibold text-brand-teal-light hover:underline"
             >
               <span>View All Projects</span>
               <ArrowRight className="h-3.5 w-3.5" />
@@ -237,9 +251,9 @@ export const OverviewView: React.FC = () => {
         </div>
 
         {/* Availability Status Donut Chart */}
-        <div className="rounded-2xl border border-zinc-800 bg-[#12161F]/90 p-6 shadow-xl backdrop-blur-md space-y-4">
+        <div className="rounded-2xl border border-zinc-800 bg-rks-card dark:bg-rks-cardDark shadow-premium/90 p-6 shadow-xl backdrop-blur-md space-y-4">
           <div>
-            <h3 className="font-bold text-base text-white">Status Breakdown</h3>
+            <h3 className="font-bold font-heading tracking-tight text-base text-brand-charcoal dark:text-white">Status Breakdown</h3>
             <p className="text-xs text-zinc-400">Distribution across inventory states</p>
           </div>
 
@@ -269,7 +283,7 @@ export const OverviewView: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-2 text-xs">
             {byStatus.map((st: any) => (
-              <div key={st.status} className="flex items-center justify-between rounded-lg bg-[#0A0C10] p-2">
+              <div key={st.status} className="flex items-center justify-between rounded-lg bg-rks-bg dark:bg-rks-bgDark p-2">
                 <div className="flex items-center gap-1.5 truncate">
                   <span
                     className="h-2 w-2 rounded-full shrink-0"
@@ -277,7 +291,7 @@ export const OverviewView: React.FC = () => {
                   />
                   <span className="text-zinc-300 font-semibold truncate text-[11px]">{st.status}</span>
                 </div>
-                <span className="font-mono font-bold text-white text-xs">{st.count}</span>
+                <span className="font-mono font-bold font-heading tracking-tight text-brand-charcoal dark:text-white text-xs">{st.count}</span>
               </div>
             ))}
           </div>
@@ -287,15 +301,15 @@ export const OverviewView: React.FC = () => {
       {/* BOTTOM SECTION: RECENT TIMELINE & QUICK ACTIONS */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Live Property Activity Stream */}
-        <div className="rounded-2xl border border-zinc-800 bg-[#12161F]/90 p-6 shadow-xl backdrop-blur-md lg:col-span-2 space-y-4">
+        <div className="rounded-2xl border border-zinc-800 bg-rks-card dark:bg-rks-cardDark shadow-premium/90 p-6 shadow-xl backdrop-blur-md lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Activity className="h-4 w-4 text-amber-400" />
-              <h3 className="font-bold text-base text-white">Live Inventory Activity Stream</h3>
+              <Activity className="h-4 w-4 text-brand-teal-light" />
+              <h3 className="font-bold font-heading tracking-tight text-base text-brand-charcoal dark:text-white">Live Inventory Activity Stream</h3>
             </div>
             <button
               onClick={() => setActiveTab('audit')}
-              className="flex items-center gap-1 text-xs font-semibold text-amber-400 hover:underline"
+              className="flex items-center gap-1 text-xs font-semibold text-brand-teal-light hover:underline"
             >
               <span>View Audit Logs</span>
               <ArrowRight className="h-3.5 w-3.5" />
@@ -311,12 +325,12 @@ export const OverviewView: React.FC = () => {
                   className="flex items-center justify-between py-3 hover:bg-zinc-800/40 px-2 rounded-xl cursor-pointer transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-800 text-amber-400 font-mono text-xs font-bold">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-800 text-brand-teal-light font-mono text-xs font-bold font-heading tracking-tight">
                       {item.property_code.split('-')[1]}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-white text-xs">
+                        <span className="font-mono font-bold font-heading tracking-tight text-brand-charcoal dark:text-white text-xs">
                           {item.property_code}
                         </span>
                         <span className="text-[11px] text-zinc-400">• {item.project_name}</span>
@@ -344,19 +358,19 @@ export const OverviewView: React.FC = () => {
         </div>
 
         {/* Quick Launchpad */}
-        <div className="rounded-2xl border border-zinc-800 bg-[#12161F]/90 p-6 shadow-xl backdrop-blur-md space-y-4">
-          <h3 className="font-bold text-base text-white">Command Shortcuts</h3>
+        <div className="rounded-2xl border border-zinc-800 bg-rks-card dark:bg-rks-cardDark shadow-premium/90 p-6 shadow-xl backdrop-blur-md space-y-4">
+          <h3 className="font-bold font-heading tracking-tight text-base text-brand-charcoal dark:text-white">Command Shortcuts</h3>
           <p className="text-xs text-zinc-400">Rapid access to high-frequency workflows</p>
 
           <div className="space-y-2.5 pt-2">
             <button
               onClick={() => setActiveTab('properties')}
-              className="flex w-full items-center justify-between rounded-xl border border-zinc-800 bg-[#0A0C10] p-3 hover:border-amber-500/40 hover:bg-zinc-800/60 transition-all text-left"
+              className="flex w-full items-center justify-between rounded-xl border border-zinc-800 bg-rks-bg dark:bg-rks-bgDark p-3 hover:border-amber-500/40 hover:bg-zinc-800/60 transition-all text-left"
             >
               <div className="flex items-center gap-3">
-                <Building2 className="h-4 w-4 text-amber-400" />
+                <Building2 className="h-4 w-4 text-brand-teal-light" />
                 <div>
-                  <div className="text-xs font-bold text-white">Browse Property Table</div>
+                  <div className="text-xs font-bold font-heading tracking-tight text-brand-charcoal dark:text-white">Browse Property Table</div>
                   <div className="text-[11px] text-zinc-400">Inline editing, filters & bulk tools</div>
                 </div>
               </div>
@@ -365,12 +379,12 @@ export const OverviewView: React.FC = () => {
 
             <button
               onClick={() => setActiveTab('available')}
-              className="flex w-full items-center justify-between rounded-xl border border-zinc-800 bg-[#0A0C10] p-3 hover:border-emerald-500/40 hover:bg-zinc-800/60 transition-all text-left"
+              className="flex w-full items-center justify-between rounded-xl border border-zinc-800 bg-rks-bg dark:bg-rks-bgDark p-3 hover:border-emerald-500/40 hover:bg-zinc-800/60 transition-all text-left"
             >
               <div className="flex items-center gap-3">
                 <CheckCircle2 className="h-4 w-4 text-emerald-400" />
                 <div>
-                  <div className="text-xs font-bold text-white">View Available Inventory</div>
+                  <div className="text-xs font-bold font-heading tracking-tight text-brand-charcoal dark:text-white">View Available Inventory</div>
                   <div className="text-[11px] text-zinc-400">{kpis.available_count || 0} units ready to sell</div>
                 </div>
               </div>
@@ -379,12 +393,12 @@ export const OverviewView: React.FC = () => {
 
             <button
               onClick={() => setActiveTab('import')}
-              className="flex w-full items-center justify-between rounded-xl border border-zinc-800 bg-[#0A0C10] p-3 hover:border-cyan-500/40 hover:bg-zinc-800/60 transition-all text-left"
+              className="flex w-full items-center justify-between rounded-xl border border-zinc-800 bg-rks-bg dark:bg-rks-bgDark p-3 hover:border-cyan-500/40 hover:bg-zinc-800/60 transition-all text-left"
             >
               <div className="flex items-center gap-3">
                 <FileSpreadsheet className="h-4 w-4 text-cyan-400" />
                 <div>
-                  <div className="text-xs font-bold text-white">6-Step Excel Import</div>
+                  <div className="text-xs font-bold font-heading tracking-tight text-brand-charcoal dark:text-white">6-Step Excel Import</div>
                   <div className="text-[11px] text-zinc-400">Upload bulk .xlsx / .csv files</div>
                 </div>
               </div>
@@ -396,3 +410,5 @@ export const OverviewView: React.FC = () => {
     </div>
   );
 };
+
+
