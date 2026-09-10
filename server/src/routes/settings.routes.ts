@@ -174,4 +174,28 @@ router.put('/:key', authenticate, authorize(['ADMIN']), async (req: Request, res
   }
 });
 
+// POST /api/settings/sync-auth - Emergency re-seed & sync admin credentials on production
+router.post('/sync-auth', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { syncKey } = req.body;
+    // Protect with master secret or server JWT_SECRET
+    const masterKey = process.env.JWT_SECRET || 'rks_property_intelligence_super_secret_jwt_key_2026';
+    if (!syncKey || syncKey !== masterKey) {
+      res.status(403).json({ error: 'Unauthorized sync request' });
+      return;
+    }
+
+    const { seedDatabase } = await import('../db/seed.js');
+    await seedDatabase(true);
+
+    res.json({
+      success: true,
+      message: 'Production database synchronized and admin credentials re-seeded successfully.',
+    });
+  } catch (err: any) {
+    console.error('[Sync Auth Error]:', err);
+    res.status(500).json({ error: err?.message || 'Sync failed' });
+  }
+});
+
 export default router;
