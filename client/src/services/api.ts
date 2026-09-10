@@ -10,8 +10,8 @@ const isLocal = typeof window !== 'undefined' && (
   window.location.hostname.startsWith('10.')
 );
 
-const localBackendUrl = typeof window !== 'undefined' ? `http://${window.location.hostname}:5000/api` : 'http://localhost:5000/api';
-const API_BASE = isLocal ? localBackendUrl : (envApiUrl || DEFAULT_PRODUCTION_BACKEND + '/api');
+// In local browser environment, always use '/api' to go through Vite proxy or same origin port
+const API_BASE = isLocal ? '/api' : (envApiUrl || DEFAULT_PRODUCTION_BACKEND + '/api');
 
 function getHeaders(): HeadersInit {
   const token = localStorage.getItem('rks_auth_token');
