@@ -10,8 +10,11 @@ const isLocal = typeof window !== 'undefined' && (
   window.location.hostname.startsWith('10.')
 );
 
-// In local browser environment, always use '/api' to go through Vite proxy or same origin port
-const API_BASE = isLocal ? '/api' : (envApiUrl || DEFAULT_PRODUCTION_BACKEND + '/api');
+// In local browser, use '/api' to route via Vite dev proxy.
+// In Vercel / production, explicitly connect to the Railway backend API unless a valid full URL is supplied.
+const API_BASE = isLocal 
+  ? '/api' 
+  : (envApiUrl && envApiUrl.startsWith('http') ? envApiUrl : `${DEFAULT_PRODUCTION_BACKEND}/api`);
 
 function getHeaders(): HeadersInit {
   const token = localStorage.getItem('rks_auth_token');
