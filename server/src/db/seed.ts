@@ -39,12 +39,8 @@ export async function seedDatabase(force: boolean = false) {
 
   // 2. Create Admin
   const adminEmail = process.env.INITIAL_ADMIN_EMAIL || 'admin@rksprime.com';
-  let adminPassword = process.env.INITIAL_ADMIN_PASSWORD;
+  let adminPassword = process.env.INITIAL_ADMIN_PASSWORD || 'admin123';
   let generatedPassword = false;
-  if (!adminPassword) {
-    adminPassword = crypto.randomBytes(8).toString('hex');
-    generatedPassword = true;
-  }
   const adminHash = await bcrypt.hash(adminPassword, 10);
   const adminRes = await query(
     `INSERT INTO users (name, email, password_hash, role, phone, avatar_url) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
