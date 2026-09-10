@@ -3,6 +3,7 @@ import { useApp } from '../../context/AppContext.js';
 import { api } from '../../services/api.js';
 import { MetricCard } from '../common/MetricCard.js';
 import { StatusBadge } from '../common/StatusBadge.js';
+import { BlueprintPattern } from '../common/BlueprintPattern.js';
 import { formatCurrencyINR, formatSqFt, formatDateTime } from '../../utils/formatters.js';
 import {
   Building2,
@@ -31,6 +32,7 @@ import {
   PieChart,
   Pie,
   Cell,
+  LabelList
 } from 'recharts';
 
 export const OverviewView: React.FC = () => {
@@ -75,6 +77,15 @@ export const OverviewView: React.FC = () => {
   };
 
   const isStaff = activeRole !== 'VIEWER';
+  
+  const totalProperties = Number(kpis.total_properties || 0);
+  const availableCount = Number(kpis.available_count || 0);
+  const reservedCount = Number(kpis.reserved_count || 0);
+  const soldCount = Number(kpis.sold_count || 0);
+  
+  const availablePct = totalProperties > 0 ? (availableCount / totalProperties) * 100 : 0;
+  const reservedPct = totalProperties > 0 ? (reservedCount / totalProperties) * 100 : 0;
+  const soldPct = totalProperties > 0 ? (soldCount / totalProperties) * 100 : 0;
 
   return (
     <div className="space-y-8">
@@ -100,130 +111,149 @@ export const OverviewView: React.FC = () => {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsExportModalOpen(true)}
-              className="flex items-center gap-2 rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-700 hover:text-brand-navy dark:hover:text-brand-charcoal dark:text-white transition-colors shadow-sm"
+              className="flex items-center gap-2 rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors shadow-sm"
             >
-              <Download className="h-4 w-4 text-cyan-500 dark:text-cyan-400" />
+              <Download className="h-4 w-4" />
               <span>Export Report</span>
             </button>
             <button
               onClick={() => setActiveTab('import')}
-              className="flex items-center gap-2 rounded-xl border border-amber-500/30 bg-brand-teal/10 px-4 py-2.5 text-xs font-semibold text-amber-600 dark:text-brand-teal-light hover:bg-amber-500/20 transition-colors"
+              className="flex items-center gap-2 rounded-xl border border-amber-500/30 bg-brand-teal/10 px-4 py-2.5 text-xs font-semibold text-amber-600 hover:bg-amber-500/20 transition-colors"
             >
               <FileSpreadsheet className="h-4 w-4" />
               <span>Import Excel</span>
             </button>
             <button
               onClick={() => setIsAddModalOpen(true)}
-              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-teal to-brand-teal-dark text-white shadow-premium px-5 py-2.5 text-xs font-bold font-heading tracking-tight text-black shadow-lg shadow-amber-500/20 hover:from-brand-teal-light hover:to-brand-teal transition-all cursor-pointer"
+              className="flex items-center gap-2 rounded-xl bg-[#0F766E] hover:bg-[#0D655E] text-white px-5 py-2.5 text-xs font-bold font-heading tracking-tight shadow-md transition-all cursor-pointer"
             >
               <Plus className="h-4 w-4 stroke-[3]" />
-              <span>+ Add Property</span>
+              <span>Add Property</span>
             </button>
           </div>
         ) : (
           <div className="flex items-center gap-3">
             <button
               onClick={() => openSiteVisitModal()}
-              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-teal to-brand-teal-dark text-white shadow-premium px-5 py-2.5 text-xs font-bold font-heading tracking-tight text-black shadow-lg shadow-amber-500/20 hover:from-brand-teal-light hover:to-brand-teal transition-all cursor-pointer"
+              className="flex items-center gap-2 rounded-xl bg-[#0F766E] hover:bg-[#0D655E] text-white px-5 py-2.5 text-xs font-bold shadow-md transition-all cursor-pointer"
             >
               <Calendar className="h-4 w-4" />
-              <span>🚗 Book Free Site Visit</span>
+              <span>Book Site Visit</span>
             </button>
             <button
               onClick={() => setActiveTab('properties')}
-              className="flex items-center gap-2 rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-rks-card dark:bg-rks-cardDark shadow-premium px-4 py-2.5 text-xs font-bold font-heading tracking-tight text-slate-800 dark:text-zinc-200 hover:border-amber-500 transition-all cursor-pointer shadow-sm"
+              className="flex items-center gap-2 rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-rks-cardDark shadow-sm px-4 py-2.5 text-xs font-bold text-slate-800 dark:text-zinc-200 transition-all cursor-pointer"
             >
               <Building2 className="h-4 w-4 text-brand-teal" />
-              <span>Explore 58 Plots</span>
+              <span>Explore Plots</span>
             </button>
           </div>
         )}
       </div>
 
-      {/* 6 MASTER KPI CARDS (Drawn dynamically from DB) */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
-        <MetricCard
-          title="Total Properties"
-          value={Number(kpis.total_properties || 0).toLocaleString('en-IN')}
-          subtitle="Master Portfolio Units"
-          icon={<Building2 className="h-5 w-5 text-brand-charcoal dark:text-white" />}
-          gradient="from-violet-500 to-indigo-600"
-          onClick={() => setActiveTab('properties')}
-        />
+      {/* KPI ROW */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        {/* HERO KPI CARD - Span 2 columns */}
+        <div className="lg:col-span-2 relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0A1128] to-[#1a2340] border border-slate-800 shadow-lg p-6 flex flex-col justify-between">
+          <BlueprintPattern opacity={0.2} color="teal" />
+          <div className="relative z-10">
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h2 className="text-slate-300 text-sm font-semibold uppercase tracking-widest mb-1">Total Inventory Value</h2>
+                <div className="text-4xl lg:text-5xl font-serif text-white font-bold">{formatCurrencyINR(kpis.total_inventory_value, true)}</div>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-sm">
+                <DollarSign className="w-6 h-6 text-brand-teal-light" />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-white/10">
+              <div>
+                <p className="text-slate-400 text-xs mb-1">Total Properties</p>
+                <p className="text-white text-lg font-bold">{totalProperties.toLocaleString('en-IN')}</p>
+              </div>
+              <div>
+                <p className="text-slate-400 text-xs mb-1">Avg Rate/Sq.Ft</p>
+                <p className="text-white text-lg font-bold">₹{Number(kpis.avg_rate_per_sqft || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}</p>
+              </div>
+            </div>
+          </div>
+        </div>
 
-        <MetricCard
-          title="Available"
-          value={Number(kpis.available_count || 0).toLocaleString('en-IN')}
-          subtitle="Ready for Allocation"
-          icon={<CheckCircle2 className="h-5 w-5 text-brand-charcoal dark:text-white" />}
-          gradient="from-emerald-500 to-teal-600"
-          onClick={() => setActiveTab('available')}
-        />
+        {/* SMALLER KPI CARDS */}
+        <div className="lg:col-span-1 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm p-5 flex flex-col justify-between cursor-pointer hover:border-emerald-300 transition-colors" onClick={() => setActiveTab('available')}>
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <StatusBadge status="AVAILABLE" />
+              <CheckCircle2 className="w-5 h-5 text-emerald-500 opacity-20" />
+            </div>
+            <div className="text-3xl font-bold text-slate-800 dark:text-white mb-1">{availableCount.toLocaleString()}</div>
+            <p className="text-xs text-slate-500">units ready to allocate</p>
+          </div>
+          <div className="mt-4">
+            <div className="flex justify-between text-[10px] text-slate-500 mb-1">
+              <span>{availablePct.toFixed(1)}% of total</span>
+            </div>
+            <div className="w-full bg-slate-100 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+              <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${availablePct}%` }}></div>
+            </div>
+          </div>
+        </div>
 
-        <MetricCard
-          title="Reserved"
-          value={Number(kpis.reserved_count || 0).toLocaleString('en-IN')}
-          subtitle="Under Negotiation"
-          icon={<Clock className="h-5 w-5 text-brand-charcoal dark:text-white" />}
-          gradient="from-amber-500 to-orange-600"
-          onClick={() => setActiveTab('reserved')}
-        />
+        <div className="lg:col-span-1 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm p-5 flex flex-col justify-between cursor-pointer hover:border-amber-300 transition-colors" onClick={() => setActiveTab('reserved')}>
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <StatusBadge status="RESERVED" />
+              <Clock className="w-5 h-5 text-amber-500 opacity-20" />
+            </div>
+            <div className="text-3xl font-bold text-slate-800 dark:text-white mb-1">{reservedCount.toLocaleString()}</div>
+            <p className="text-xs text-slate-500">units under negotiation</p>
+          </div>
+          <div className="mt-4">
+            <div className="flex justify-between text-[10px] text-slate-500 mb-1">
+              <span>{reservedPct.toFixed(1)}% of total</span>
+            </div>
+            <div className="w-full bg-slate-100 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+              <div className="bg-amber-500 h-full rounded-full" style={{ width: `${reservedPct}%` }}></div>
+            </div>
+          </div>
+        </div>
 
-        <MetricCard
-          title="Sold"
-          value={Number(kpis.sold_count || 0).toLocaleString('en-IN')}
-          subtitle="Registered & Closed"
-          icon={<CheckCheck className="h-5 w-5 text-brand-charcoal dark:text-white" />}
-          gradient="from-rose-500 to-red-600"
-          onClick={() => setActiveTab('sold')}
-        />
-
-        <MetricCard
-          title="Total Value"
-          value={formatCurrencyINR(kpis.total_inventory_value, true)}
-          subtitle={formatCurrencyINR(kpis.total_inventory_value)}
-          icon={<DollarSign className="h-5 w-5 text-brand-charcoal dark:text-white" />}
-          gradient="from-cyan-500 to-blue-600"
-        />
-
-        <MetricCard
-          title="Avg Rate"
-          value={`₹${Number(kpis.avg_rate_per_sqft || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`}
-          subtitle="Per Sq.Ft Rate"
-          icon={<TrendingUp className="h-5 w-5 text-brand-charcoal dark:text-white" />}
-          gradient="from-pink-500 to-fuchsia-600"
-        />
-        <MetricCard
-          title="Active Leads"
-          value={Number(kpis.pending_leads_count || 0).toLocaleString('en-IN')}
-          subtitle="Pending Inquiries"
-          icon={<TrendingUp className="h-5 w-5 text-brand-charcoal dark:text-white" />}
-          gradient="from-blue-500 to-indigo-600"
-        />
-        <MetricCard
-          title="Site Visits"
-          value={Number(kpis.site_visits_count || 0).toLocaleString('en-IN')}
-          subtitle="Total Bookings"
-          icon={<Calendar className="h-5 w-5 text-brand-charcoal dark:text-white" />}
-          gradient="from-purple-500 to-fuchsia-600"
-        />
+        <div className="lg:col-span-1 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm p-5 flex flex-col justify-between cursor-pointer hover:border-rose-300 transition-colors" onClick={() => setActiveTab('sold')}>
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <StatusBadge status="SOLD" />
+              <CheckCheck className="w-5 h-5 text-rose-500 opacity-20" />
+            </div>
+            <div className="text-3xl font-bold text-slate-800 dark:text-white mb-1">{soldCount.toLocaleString()}</div>
+            <p className="text-xs text-slate-500">registered & closed</p>
+          </div>
+          <div className="mt-4">
+            <div className="flex justify-between text-[10px] text-slate-500 mb-1">
+              <span>{soldPct.toFixed(1)}% of total</span>
+            </div>
+            <div className="w-full bg-slate-100 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+              <div className="bg-rose-500 h-full rounded-full" style={{ width: `${soldPct}%` }}></div>
+            </div>
+          </div>
+        </div>
       </div>
 
 
       {/* MID SECTION: PORTFOLIO BREAKDOWN & CHARTS */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Project Inventory Valuation Bar Chart */}
-        <div className="rounded-2xl border border-zinc-800 bg-rks-card dark:bg-rks-cardDark shadow-premium/90 p-6 shadow-xl backdrop-blur-md lg:col-span-2 space-y-4">
+        {/* Project Inventory Valuation Bar Chart (Horizontal) */}
+        <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm p-6 lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-bold font-heading tracking-tight text-base text-brand-charcoal dark:text-white">Project Inventory Valuation</h3>
-              <p className="text-xs text-zinc-400">Total property worth by project (₹ Crores)</p>
+              <h3 className="font-bold text-base text-slate-800 dark:text-white">Project Inventory Valuation</h3>
+              <p className="text-xs text-slate-500">Total property worth by project (₹ Crores)</p>
             </div>
             <button
               onClick={() => setActiveTab('projects')}
-              className="flex items-center gap-1 text-xs font-semibold text-brand-teal-light hover:underline"
+              className="flex items-center gap-1 text-xs font-semibold text-brand-teal hover:underline"
             >
-              <span>View All Projects</span>
+              <span>View All</span>
               <ArrowRight className="h-3.5 w-3.5" />
             </button>
           </div>
@@ -231,30 +261,34 @@ export const OverviewView: React.FC = () => {
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
+                layout="vertical"
                 data={byProject.map((p: any) => ({
                   name: p.project_name.replace('RKS ', ''),
                   value: Number((Number(p.inventory_value) / 10000000).toFixed(2)),
                   rate: Number(p.avg_rate),
                 }))}
-                margin={{ top: 10, right: 10, left: -20, bottom: 20 }}
+                margin={{ top: 10, right: 30, left: 40, bottom: 0 }}
               >
-                <XAxis dataKey="name" stroke="#71717a" fontSize={11} interval={0} angle={-15} textAnchor="end" />
-                <YAxis stroke="#71717a" fontSize={11} unit=" Cr" />
+                <XAxis type="number" stroke="#94a3b8" fontSize={11} unit="Cr" />
+                <YAxis dataKey="name" type="category" stroke="#94a3b8" fontSize={11} width={80} />
                 <Tooltip
-                  contentStyle={{ backgroundColor: '#181B24', borderColor: '#3f3f46', borderRadius: '12px' }}
-                  formatter={(val: any) => [`₹${val} Cr`, 'Inventory Value']}
+                  cursor={{fill: 'transparent'}}
+                  contentStyle={{ backgroundColor: '#181B24', borderColor: '#3f3f46', borderRadius: '8px', color: '#fff' }}
+                  formatter={(val: any) => [`₹${val} Cr`, 'Value']}
                 />
-                <Bar dataKey="value" fill="#D4AF37" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="value" fill="#0F766E" radius={[0, 4, 4, 0]} barSize={24}>
+                  <LabelList dataKey="value" position="right" formatter={(v: any) => `₹${v}Cr`} style={{ fill: '#64748b', fontSize: 11, fontWeight: 500 }} />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         {/* Availability Status Donut Chart */}
-        <div className="rounded-2xl border border-zinc-800 bg-rks-card dark:bg-rks-cardDark shadow-premium/90 p-6 shadow-xl backdrop-blur-md space-y-4">
+        <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm p-6 space-y-4">
           <div>
-            <h3 className="font-bold font-heading tracking-tight text-base text-brand-charcoal dark:text-white">Status Breakdown</h3>
-            <p className="text-xs text-zinc-400">Distribution across inventory states</p>
+            <h3 className="font-bold text-base text-slate-800 dark:text-white">Status Breakdown</h3>
+            <p className="text-xs text-slate-500">Distribution across inventory</p>
           </div>
 
           <div className="h-48 w-full">
@@ -266,16 +300,16 @@ export const OverviewView: React.FC = () => {
                   nameKey="status"
                   cx="50%"
                   cy="50%"
-                  innerRadius={45}
-                  outerRadius={75}
-                  paddingAngle={4}
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={2}
                 >
                   {byStatus.map((entry: any, index: number) => (
-                    <Cell key={`cell-${index}`} fill={statusColors[entry.status] || '#71717a'} />
+                    <Cell key={`cell-${index}`} fill={statusColors[entry.status] || '#94a3b8'} />
                   ))}
                 </Pie>
                 <Tooltip
-                  contentStyle={{ backgroundColor: '#181B24', borderColor: '#3f3f46', borderRadius: '12px' }}
+                  contentStyle={{ backgroundColor: '#181B24', borderColor: '#3f3f46', borderRadius: '8px', color: '#fff' }}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -283,15 +317,15 @@ export const OverviewView: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-2 text-xs">
             {byStatus.map((st: any) => (
-              <div key={st.status} className="flex items-center justify-between rounded-lg bg-rks-bg dark:bg-rks-bgDark p-2">
+              <div key={st.status} className="flex items-center justify-between rounded-lg bg-slate-50 dark:bg-zinc-800/50 p-2 border border-slate-100 dark:border-zinc-800">
                 <div className="flex items-center gap-1.5 truncate">
                   <span
                     className="h-2 w-2 rounded-full shrink-0"
-                    style={{ backgroundColor: statusColors[st.status] || '#71717a' }}
+                    style={{ backgroundColor: statusColors[st.status] || '#94a3b8' }}
                   />
-                  <span className="text-zinc-300 font-semibold truncate text-[11px]">{st.status}</span>
+                  <span className="text-slate-600 dark:text-slate-300 font-semibold truncate text-[10px]">{st.status}</span>
                 </div>
-                <span className="font-mono font-bold font-heading tracking-tight text-brand-charcoal dark:text-white text-xs">{st.count}</span>
+                <span className="font-bold text-slate-800 dark:text-white">{st.count}</span>
               </div>
             ))}
           </div>
@@ -300,16 +334,16 @@ export const OverviewView: React.FC = () => {
 
       {/* BOTTOM SECTION: RECENT TIMELINE & QUICK ACTIONS */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Live Property Activity Stream */}
-        <div className="rounded-2xl border border-zinc-800 bg-rks-card dark:bg-rks-cardDark shadow-premium/90 p-6 shadow-xl backdrop-blur-md lg:col-span-2 space-y-4">
+        {/* Live Property Activity Stream - Timeline Style */}
+        <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm p-6 lg:col-span-2 space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Activity className="h-4 w-4 text-brand-teal-light" />
-              <h3 className="font-bold font-heading tracking-tight text-base text-brand-charcoal dark:text-white">Live Inventory Activity Stream</h3>
+              <Activity className="h-5 w-5 text-brand-teal" />
+              <h3 className="font-bold text-base text-slate-800 dark:text-white">Activity Timeline</h3>
             </div>
             <button
               onClick={() => setActiveTab('audit')}
-              className="flex items-center gap-1 text-xs font-semibold text-brand-teal-light hover:underline"
+              className="flex items-center gap-1 text-xs font-semibold text-brand-teal hover:underline"
             >
               <span>View Audit Logs</span>
               <ArrowRight className="h-3.5 w-3.5" />
@@ -317,92 +351,88 @@ export const OverviewView: React.FC = () => {
           </div>
 
           {recentActivity.length > 0 ? (
-            <div className="divide-y divide-zinc-800/60 font-sans">
+            <div className="relative pl-3 border-l-2 border-slate-100 dark:border-zinc-800 space-y-6">
               {recentActivity.map((item: any, i: number) => (
                 <div
                   key={i}
                   onClick={() => setSelectedPropertyId(item.property_id)}
-                  className="flex items-center justify-between py-3 hover:bg-zinc-800/40 px-2 rounded-xl cursor-pointer transition-colors"
+                  className="relative group cursor-pointer"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-800 text-brand-teal-light font-mono text-xs font-bold font-heading tracking-tight">
-                      {item.property_code.split('-')[1]}
-                    </div>
-                    <div>
+                  {/* Timeline Dot */}
+                  <div className="absolute -left-[17px] top-1.5 h-3 w-3 rounded-full border-2 border-white dark:border-zinc-900 bg-brand-teal group-hover:bg-brand-teal-light transition-colors"></div>
+                  
+                  <div className="pl-4">
+                    <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold font-heading tracking-tight text-brand-charcoal dark:text-white text-xs">
+                        <span className="font-bold text-slate-800 dark:text-white text-sm">
                           {item.property_code}
                         </span>
-                        <span className="text-[11px] text-zinc-400">• {item.project_name}</span>
+                        <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-slate-300">
+                          {item.event_type}
+                        </span>
                       </div>
-                      <p className="text-xs text-zinc-300 mt-0.5">{item.description}</p>
+                      <div className="text-[11px] text-slate-400 font-medium">
+                        {formatDateTime(item.created_at)}
+                      </div>
                     </div>
-                  </div>
-
-                  <div className="text-right">
-                    <span className="rounded bg-zinc-800 px-2 py-0.5 text-[10px] font-mono text-zinc-400">
-                      {item.event_type}
-                    </span>
-                    <div className="text-[10px] text-zinc-500 font-mono mt-1">
-                      {formatDateTime(item.created_at)}
-                    </div>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">{item.description}</p>
+                    <p className="text-[11px] text-slate-400 mt-1">{item.project_name}</p>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="p-8 text-center text-xs text-zinc-500">
+            <div className="p-8 text-center text-sm text-slate-500">
               No recent activity recorded yet.
             </div>
           )}
         </div>
 
         {/* Quick Launchpad */}
-        <div className="rounded-2xl border border-zinc-800 bg-rks-card dark:bg-rks-cardDark shadow-premium/90 p-6 shadow-xl backdrop-blur-md space-y-4">
-          <h3 className="font-bold font-heading tracking-tight text-base text-brand-charcoal dark:text-white">Command Shortcuts</h3>
-          <p className="text-xs text-zinc-400">Rapid access to high-frequency workflows</p>
+        <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm p-6 space-y-5">
+          <div>
+            <h3 className="font-bold text-base text-slate-800 dark:text-white">Command Shortcuts</h3>
+            <p className="text-xs text-slate-500">High-frequency workflows</p>
+          </div>
 
-          <div className="space-y-2.5 pt-2">
+          <div className="grid grid-cols-1 gap-3">
             <button
               onClick={() => setActiveTab('properties')}
-              className="flex w-full items-center justify-between rounded-xl border border-zinc-800 bg-rks-bg dark:bg-rks-bgDark p-3 hover:border-amber-500/40 hover:bg-zinc-800/60 transition-all text-left"
+              className="flex items-center gap-3 w-full p-4 rounded-xl border border-slate-200 dark:border-zinc-800 hover:border-brand-teal dark:hover:border-brand-teal hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-all text-left group"
             >
-              <div className="flex items-center gap-3">
-                <Building2 className="h-4 w-4 text-brand-teal-light" />
-                <div>
-                  <div className="text-xs font-bold font-heading tracking-tight text-brand-charcoal dark:text-white">Browse Property Table</div>
-                  <div className="text-[11px] text-zinc-400">Inline editing, filters & bulk tools</div>
-                </div>
+              <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-zinc-800 flex items-center justify-center group-hover:bg-brand-teal/10 transition-colors">
+                <Building2 className="h-5 w-5 text-slate-600 dark:text-slate-400 group-hover:text-brand-teal" />
               </div>
-              <ArrowRight className="h-4 w-4 text-zinc-500" />
+              <div className="flex-1">
+                <div className="font-semibold text-sm text-slate-800 dark:text-white group-hover:text-brand-teal">Browse Inventory</div>
+                <div className="text-xs text-slate-500">Filter, edit & manage</div>
+              </div>
             </button>
 
             <button
               onClick={() => setActiveTab('available')}
-              className="flex w-full items-center justify-between rounded-xl border border-zinc-800 bg-rks-bg dark:bg-rks-bgDark p-3 hover:border-emerald-500/40 hover:bg-zinc-800/60 transition-all text-left"
+              className="flex items-center gap-3 w-full p-4 rounded-xl border border-slate-200 dark:border-zinc-800 hover:border-emerald-500 dark:hover:border-emerald-500 hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-all text-left group"
             >
-              <div className="flex items-center gap-3">
-                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                <div>
-                  <div className="text-xs font-bold font-heading tracking-tight text-brand-charcoal dark:text-white">View Available Inventory</div>
-                  <div className="text-[11px] text-zinc-400">{kpis.available_count || 0} units ready to sell</div>
-                </div>
+              <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-zinc-800 flex items-center justify-center group-hover:bg-emerald-500/10 transition-colors">
+                <CheckCircle2 className="h-5 w-5 text-slate-600 dark:text-slate-400 group-hover:text-emerald-500" />
               </div>
-              <ArrowRight className="h-4 w-4 text-zinc-500" />
+              <div className="flex-1">
+                <div className="font-semibold text-sm text-slate-800 dark:text-white group-hover:text-emerald-500">Available Units</div>
+                <div className="text-xs text-slate-500">{availableCount} ready to sell</div>
+              </div>
             </button>
 
             <button
               onClick={() => setActiveTab('import')}
-              className="flex w-full items-center justify-between rounded-xl border border-zinc-800 bg-rks-bg dark:bg-rks-bgDark p-3 hover:border-cyan-500/40 hover:bg-zinc-800/60 transition-all text-left"
+              className="flex items-center gap-3 w-full p-4 rounded-xl border border-slate-200 dark:border-zinc-800 hover:border-cyan-500 dark:hover:border-cyan-500 hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-all text-left group"
             >
-              <div className="flex items-center gap-3">
-                <FileSpreadsheet className="h-4 w-4 text-cyan-400" />
-                <div>
-                  <div className="text-xs font-bold font-heading tracking-tight text-brand-charcoal dark:text-white">6-Step Excel Import</div>
-                  <div className="text-[11px] text-zinc-400">Upload bulk .xlsx / .csv files</div>
-                </div>
+              <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-zinc-800 flex items-center justify-center group-hover:bg-cyan-500/10 transition-colors">
+                <FileSpreadsheet className="h-5 w-5 text-slate-600 dark:text-slate-400 group-hover:text-cyan-500" />
               </div>
-              <ArrowRight className="h-4 w-4 text-zinc-500" />
+              <div className="flex-1">
+                <div className="font-semibold text-sm text-slate-800 dark:text-white group-hover:text-cyan-500">Excel Import</div>
+                <div className="text-xs text-slate-500">Upload bulk data</div>
+              </div>
             </button>
           </div>
         </div>
@@ -410,5 +440,3 @@ export const OverviewView: React.FC = () => {
     </div>
   );
 };
-
-

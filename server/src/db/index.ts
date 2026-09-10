@@ -56,15 +56,27 @@ export async function getDb(): Promise<{ type: 'pool' | 'pglite'; client: pg.Poo
       const isServerless = !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NOW_REGION);
       let dataDir = process.env.DATA_DIR;
 
-      if (!dataDir) {
+      if (!dataDir || dataDir === './data/postgres') {
         dataDir = isServerless
           ? path.join('/tmp', 'rks-postgres-data')
           : path.join(projectRootDir, 'data', 'postgres');
+      } else if (!path.isAbsolute(dataDir)) {
+        dataDir = path.resolve(projectRootDir, dataDir);
       }
 
       try {
         if (!fs.existsSync(dataDir)) {
           fs.mkdirSync(dataDir, { recursive: true });
+        } else {
+          // Clean stale lockfiles from previous terminated instances
+          try {
+            const pidFile = path.join(dataDir, 'postmaster.pid');
+            if (fs.existsSync(pidFile)) fs.unlinkSync(pidFile);
+            const lockFile = path.join(dataDir, '.s.PGSQL.5432.lock.out');
+            if (fs.existsSync(lockFile)) fs.unlinkSync(lockFile);
+          } catch (e: any) {
+            console.warn('[Database] Note cleaning lockfiles:', e.message);
+          }
         }
         console.log(`[Database] Initializing embedded PGlite at directory: ${dataDir}`);
         pgliteDb = new PGlite(dataDir);

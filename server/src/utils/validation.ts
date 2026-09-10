@@ -49,6 +49,7 @@ export const CreatePropertySchema = z.object({
   broker: z.string().optional().nullable(),
   assigned_to: z.number().int().optional().nullable(),
   description: z.string().optional().nullable(),
+  description_ta: z.string().optional().nullable(),
   internal_notes: z.string().optional().nullable(),
   latitude: z.number().optional().nullable(),
   longitude: z.number().optional().nullable(),

@@ -19,7 +19,9 @@ import siteVisitsRoutes from './routes/site-visits.routes.js';
 import aiChatRoutes from './routes/ai-chat.routes.js';
 import offersRoutes from './routes/offers.routes.js';
 import settingsRoutes from './routes/settings.routes.js';
-import { securityHeaders, createRateLimiter } from './middleware/security.js';
+import leadsRoutes from './routes/leads.routes.js';
+import { createRateLimiter } from './middleware/security.js';
+import helmet from 'helmet';
 
 dotenv.config();
 
@@ -27,7 +29,20 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Security Headers & Rate Limiting
-app.use(securityHeaders);
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "blob:", "https:"],
+      connectSrc: ["'self'", "https:", "http:"]
+    }
+  },
+  frameguard: { action: 'sameorigin' },
+  hsts: { maxAge: 31536000, includeSubDomains: true },
+  xContentTypeOptions: true
+}));
 app.use('/api', createRateLimiter(60000, 200, 'Rate limit exceeded. Please slow down your requests.'));
 
 // CORS & Parsing Middleware
@@ -56,6 +71,7 @@ app.use('/api/site-visits', siteVisitsRoutes);
 app.use('/api/ai-chat', aiChatRoutes);
 app.use('/api/offers', offersRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/leads', leadsRoutes);
 
 // Comprehensive Health check endpoint
 app.get('/api/health', async (_req: Request, res: Response) => {
@@ -78,6 +94,63 @@ app.get('/api/health', async (_req: Request, res: Response) => {
   } catch (err: any) {
     console.error('[Health Check Error]:', err?.stack || err);
     res.status(500).json({ status: 'ERROR', error: err?.message || 'Database unavailable' });
+  }
+});
+
+// XML Sitemap with Bilingual Support & Hreflang Alternates
+app.get('/sitemap.xml', async (_req: Request, res: Response) => {
+  try {
+    const baseUrl = 'https://rksprime.com';
+    const pages = [
+      { en: '', ta: '/ta', priority: '1.0' },
+      { en: '/properties', ta: '/ta/properties', priority: '0.9' },
+      { en: '/plots/chennai', ta: '/ta/plots/chennai', priority: '0.8' },
+      { en: '/plots/trichy', ta: '/ta/plots/trichy', priority: '0.8' },
+      { en: '/plots/coimbatore', ta: '/ta/plots/coimbatore', priority: '0.8' },
+      { en: '/plots/hosur', ta: '/ta/plots/hosur', priority: '0.8' },
+      { en: '/plots/bangalore-corridor', ta: '/ta/plots/bangalore-corridor', priority: '0.8' },
+      { en: '/about', ta: '/ta/about', priority: '0.7' },
+      { en: '/contact', ta: '/ta/contact', priority: '0.7' },
+      { en: '/legal', ta: '/ta/legal', priority: '0.5' },
+    ];
+
+    const today = new Date().toISOString().split('T')[0];
+    const urlEntries: string[] = [];
+
+    for (const page of pages) {
+      const enUrl = `${baseUrl}${page.en || '/'}`;
+      const taUrl = `${baseUrl}${page.ta}`;
+
+      // English entry
+      urlEntries.push(`  <url>
+    <loc>${enUrl}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>${page.priority}</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="${enUrl}" />
+    <xhtml:link rel="alternate" hreflang="ta" href="${taUrl}" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="${enUrl}" />
+  </url>`);
+
+      // Tamil entry
+      urlEntries.push(`  <url>
+    <loc>${taUrl}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>${page.priority}</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="${enUrl}" />
+    <xhtml:link rel="alternate" hreflang="ta" href="${taUrl}" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="${enUrl}" />
+  </url>`);
+    }
+
+    res.header('Content-Type', 'application/xml');
+    res.send(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+${urlEntries.join('\n')}
+</urlset>`);
+  } catch {
+    res.status(500).send('Error generating sitemap');
   }
 });
 

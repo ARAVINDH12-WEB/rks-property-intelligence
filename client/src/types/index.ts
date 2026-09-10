@@ -140,6 +140,7 @@ export interface Property {
   assigned_user_name?: string;
   assigned_user_email?: string;
   description?: string;
+  description_ta?: string;
   internal_notes?: string;
   latitude?: number;
   longitude?: number;

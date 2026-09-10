@@ -2,8 +2,9 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import enTranslations from './locales/en.json';
 import taTranslations from './locales/ta.json';
+import { detectInitialLocale } from './utils/locale.js';
 
-const savedLanguage = localStorage.getItem('preferred_language') || 'en';
+const initialLocale = detectInitialLocale();
 
 i18n
   .use(initReactI18next)
@@ -12,7 +13,7 @@ i18n
       en: { translation: enTranslations },
       ta: { translation: taTranslations }
     },
-    lng: savedLanguage,
+    lng: initialLocale,
     fallbackLng: 'en',
     interpolation: {
       escapeValue: false

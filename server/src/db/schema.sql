@@ -8,9 +8,16 @@ CREATE TABLE IF NOT EXISTS users (
   role VARCHAR(30) NOT NULL DEFAULT 'EMPLOYEE', -- 'ADMIN', 'MANAGER', 'EMPLOYEE', 'VIEWER'
   avatar_url TEXT,
   phone VARCHAR(30),
+  two_factor_secret VARCHAR(255),
+  two_factor_enabled BOOLEAN DEFAULT FALSE,
+  backup_codes JSONB,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_secret VARCHAR(255);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_enabled BOOLEAN DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS backup_codes JSONB;
 
 CREATE TABLE IF NOT EXISTS locations (
   id SERIAL PRIMARY KEY,
@@ -69,6 +76,7 @@ CREATE TABLE IF NOT EXISTS properties (
   broker VARCHAR(100),
   assigned_to INTEGER REFERENCES users(id) ON DELETE SET NULL,
   description TEXT,
+  description_ta TEXT,
   internal_notes TEXT,
   latitude NUMERIC(10, 7),
   longitude NUMERIC(10, 7),
@@ -174,6 +182,32 @@ CREATE TABLE IF NOT EXISTS customer_visitors (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS leads (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(150) NOT NULL,
+  phone VARCHAR(30) NOT NULL,
+  email VARCHAR(150),
+  source VARCHAR(50) DEFAULT 'WEBSITE', -- 'WEBSITE', 'WHATSAPP', 'REFERRAL', 'SITE_VISIT', 'WALK_IN'
+  status VARCHAR(30) NOT NULL DEFAULT 'NEW', -- 'NEW', 'CONTACTED', 'SITE_VISIT_SCHEDULED', 'NEGOTIATION', 'CLOSED_WON', 'CLOSED_LOST'
+  property_id INTEGER REFERENCES properties(id) ON DELETE SET NULL,
+  property_code VARCHAR(50),
+  notes TEXT,
+  assigned_to INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS chat_conversations (
+  id SERIAL PRIMARY KEY,
+  session_id VARCHAR(100) NOT NULL,
+  user_message TEXT NOT NULL,
+  assistant_reply TEXT NOT NULL,
+  detected_intent VARCHAR(50),
+  language VARCHAR(10) DEFAULT 'en',
+  lead_id INTEGER REFERENCES leads(id) ON DELETE SET NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Indexes for ultra-fast search and filtering
 CREATE INDEX IF NOT EXISTS idx_properties_property_code ON properties(property_code);
 CREATE INDEX IF NOT EXISTS idx_properties_status ON properties(status);
@@ -188,3 +222,8 @@ CREATE INDEX IF NOT EXISTS idx_property_history_property_id ON property_history(
 CREATE INDEX IF NOT EXISTS idx_site_visits_visit_date ON site_visits(visit_date);
 CREATE INDEX IF NOT EXISTS idx_site_visits_status ON site_visits(status);
 CREATE INDEX IF NOT EXISTS idx_customer_visitors_phone ON customer_visitors(phone);
+CREATE INDEX IF NOT EXISTS idx_leads_status ON leads(status);
+CREATE INDEX IF NOT EXISTS idx_leads_phone ON leads(phone);
+CREATE INDEX IF NOT EXISTS idx_chat_conversations_session ON chat_conversations(session_id);
+
+

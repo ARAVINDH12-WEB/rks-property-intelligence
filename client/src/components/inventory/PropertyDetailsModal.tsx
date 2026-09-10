@@ -502,7 +502,7 @@ export const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
                           Internal Notes & Audit Log Details
                         </h4>
                         <p className="text-xs text-zinc-300 leading-relaxed font-mono whitespace-pre-wrap">
-                          {property.internal_notes || 'All land titles and parent deeds verified by RKS legal panel.'}
+                          {property.internal_notes || 'All land titles and revenue records verified by RKS legal panel.'}
                         </p>
                       </div>
                     )}

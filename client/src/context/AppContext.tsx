@@ -16,7 +16,8 @@ export type NavigationTab =
   | 'import'
   | 'reports'
   | 'audit'
-  | 'settings';
+  | 'settings'
+  | 'leads';
 
 export type ViewMode = 'table' | 'cards' | 'compact';
 
@@ -71,6 +72,7 @@ interface AppContextType {
     reserved: number;
     sold: number;
     siteVisits: number;
+    leads: number;
   };
 }
 
@@ -158,8 +160,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setIsLoggedIn(false);
     showToast('Logged Out', 'Returned to Portal Login Gateway', 'info');
     // Auto-fetch guest token so customer can still browse without auth errors
-    fetch('/api/auth/guest-token')
-      .then(r => r.json())
+    // Uses api.getGuestToken() to ensure LAN IP bypass works (not relative URL)
+    api.getGuestToken()
       .then(data => {
         if (data.token) localStorage.setItem('rks_auth_token', data.token);
       })
@@ -199,6 +201,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     reserved: 0,
     sold: 0,
     siteVisits: 0,
+    leads: 0,
   });
 
   const refreshInventory = () => {
@@ -224,6 +227,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setBadgeCounts((prev) => ({
           ...prev,
           siteVisits: (data.stats.requested_count || 0) + (data.stats.confirmed_count || 0),
+        }));
+      }
+    }).catch(() => {});
+
+    api.getLeads({ status: 'NEW', limit: 1 }).then((data) => {
+      if (data && data.total !== undefined) {
+        setBadgeCounts((prev) => ({
+          ...prev,
+          leads: data.total,
         }));
       }
     }).catch(() => {});

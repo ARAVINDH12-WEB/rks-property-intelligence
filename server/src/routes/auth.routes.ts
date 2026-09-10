@@ -4,6 +4,21 @@ import jwt from 'jsonwebtoken';
 import { query } from '../db/index.js';
 import { authenticate, authorize, GUEST_TOKEN } from '../middleware/auth.js';
 import { createRateLimiter } from '../middleware/security.js';
+import speakeasy from 'speakeasy';
+import QRCode from 'qrcode';
+import crypto from 'crypto';
+
+function encrypt(text: string): string {
+  const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(JWT_SECRET.padEnd(32, '0').slice(0,32)), Buffer.alloc(16, 0));
+  return cipher.update(text, 'utf8', 'hex') + cipher.final('hex');
+}
+
+function decrypt(text: string): string {
+  if (!text) return '';
+  const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(JWT_SECRET.padEnd(32, '0').slice(0,32)), Buffer.alloc(16, 0));
+  return decipher.update(text, 'hex', 'utf8') + decipher.final('utf8');
+}
+
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'rks_property_intelligence_super_secret_jwt_key_2026';
@@ -32,7 +47,7 @@ router.get('/guest-token', (_req: Request, res: Response): void => {
 });
 
 // POST /api/auth/login - Sign In with Brute-Force Rate Limiting
-router.post('/login', createRateLimiter(60000, 15, 'Too many login attempts. Please wait a minute and try again.'), async (req: Request, res: Response): Promise<void> => {
+router.post('/login', createRateLimiter(15 * 60 * 1000, 5, 'Too many login attempts. Please wait 15 minutes.'), async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
     const clientIp = req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown';
@@ -44,7 +59,7 @@ router.post('/login', createRateLimiter(60000, 15, 'Too many login attempts. Ple
     }
 
     const userResult = await query(
-      'SELECT id, name, email, password_hash, role, phone, avatar_url FROM users WHERE LOWER(email) = LOWER($1)',
+      'SELECT id, name, email, password_hash, role, phone, avatar_url, two_factor_secret, two_factor_enabled, backup_codes FROM users WHERE LOWER(email) = LOWER($1)',
       [email.trim()]
     );
 
@@ -96,6 +111,84 @@ router.post('/login', createRateLimiter(60000, 15, 'Too many login attempts. Ple
 });
 
 // POST /api/auth/customer-login - Record Customer Visit (stores name & phone)
+
+// POST /api/auth/verify-2fa
+router.post('/verify-2fa', createRateLimiter(15 * 60 * 1000, 5, 'Too many attempts. Please wait 15 minutes.'), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId, token: userToken, isBackupCode } = req.body;
+    if (!userId || !userToken) {
+      res.status(400).json({ error: 'User ID and token are required' });
+      return;
+    }
+
+    const userResult = await query(
+      'SELECT id, name, email, role, phone, avatar_url, two_factor_secret, two_factor_enabled, backup_codes FROM users WHERE id = $1',
+      [userId]
+    );
+
+    if (userResult.rowCount === 0) {
+      res.status(401).json({ error: 'User not found' });
+      return;
+    }
+
+    const user = userResult.rows[0];
+    const secret = decrypt(user.two_factor_secret);
+
+    let isValid = false;
+
+    if (isBackupCode) {
+      const backupCodes = typeof user.backup_codes === 'string' ? JSON.parse(user.backup_codes) : (user.backup_codes || []);
+      const codeIndex = backupCodes.indexOf(userToken);
+      if (codeIndex !== -1) {
+        isValid = true;
+        backupCodes.splice(codeIndex, 1);
+        await query('UPDATE users SET backup_codes = $1 WHERE id = $2', [JSON.stringify(backupCodes), user.id]);
+      }
+    } else {
+      isValid = speakeasy.totp.verify({
+        secret: secret,
+        encoding: 'base32',
+        token: userToken,
+        window: 1
+      });
+    }
+
+    if (!isValid) {
+      res.status(401).json({ error: 'Invalid or expired 2FA code' });
+      return;
+    }
+
+    if (!user.two_factor_enabled) {
+      await query('UPDATE users SET two_factor_enabled = true WHERE id = $1', [user.id]);
+    }
+
+    const payload = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    };
+
+    const jwtToken = jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
+    const clientIp = req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown';
+    await logAuthAttempt(user.email, true, clientIp);
+
+    res.json({
+      token: jwtToken,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        phone: user.phone,
+        avatar_url: user.avatar_url
+      }
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to verify 2FA' });
+  }
+});
+
 router.post('/customer-login', async (req: Request, res: Response): Promise<void> => {
   try {
     const { name, phone, email } = req.body;
@@ -412,3 +505,4 @@ router.delete('/users/:id', authenticate, authorize(['ADMIN']), async (req: Requ
 });
 
 export default router;
+

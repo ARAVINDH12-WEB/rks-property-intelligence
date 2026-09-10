@@ -1,338 +1,518 @@
-﻿import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext.js';
+import { api } from '../../services/api.js';
+import { Property } from '../../types/index.js';
 import { 
-  MapPin, 
-  Car, 
-  ArrowRight, 
-  ShieldCheck, 
-  FileCheck, 
-  Award,
-  Search,
-  Building2,
-  ChevronRight,
-  ChevronLeft
-} from 'lucide-react';
+  PlotOutlineIcon,
+  VerifiedShieldIcon,
+  RupeeSignIcon,
+  GrowthCorridorIcon,
+  KeyHandoverIcon,
+  CabPickupIcon,
+  PattaDocumentIcon,
+  SurveyPinIcon,
+  WhatsAppIcon
+} from '../common/Icons.js';
+import { ArrowRight, MapPin } from 'lucide-react';
+import { PublicNavbar } from '../common/PublicNavbar.js';
+import { PublicFooter } from '../common/PublicFooter.js';
+import { getLocalizedPath, Locale } from '../../utils/locale.js';
 
 interface LandingPageViewProps {
-  onExploreProperties: () => void;
-  onOpenStaffLogin: () => void;
+  onExploreProperties?: () => void;
 }
 
-export const LandingPageView: React.FC<LandingPageViewProps> = ({
-  onExploreProperties,
-  onOpenStaffLogin,
-}) => {
+export const LandingPageView: React.FC<LandingPageViewProps> = () => {
   const { t, i18n } = useTranslation();
-  const { theme, toggleTheme, openSiteVisitModal } = useApp();
+  const { openSiteVisitModal } = useApp();
+  const navigate = useNavigate();
+
+  const currentLocale: Locale = i18n.language === 'ta' ? 'ta' : 'en';
+
+  const [totalPlots, setTotalPlots] = useState<number | null>(null);
+  const [availablePlots, setAvailablePlots] = useState<number | null>(null);
+  const [completedVisits, setCompletedVisits] = useState<number | null>(null);
+  const [featuredPlots, setFeaturedPlots] = useState<Property[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [searchLocation, setSearchLocation] = useState('');
   const [searchType, setSearchType] = useState('');
 
-  const featuredPlots = [
-    {
-      id: 1,
-      title: 'Emerald Valley Phase 2',
-      location: 'Chennai South Corridor',
-      price: '?24.5 Lakhs',
-      size: '1200 Sq.Ft',
-      status: 'Fast Selling',
-      image: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80'
-    },
-    {
-      id: 2,
-      title: 'Golden Acres Reserve',
-      location: 'Bangalore Highway',
-      price: '?32.0 Lakhs',
-      size: '1500 Sq.Ft',
-      status: 'Premium',
-      image: 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80'
-    },
-    {
-      id: 3,
-      title: 'Riverside Enclave',
-      location: 'Trichy Main Road',
-      price: '?18.5 Lakhs',
-      size: '1000 Sq.Ft',
-      status: 'New Launch',
-      image: 'https://images.unsplash.com/photo-1629196914167-214e21b8bbf4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80'
-    }
+  useEffect(() => {
+    let mounted = true;
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const allProps = await api.getProperties({ limit: 1 });
+        const availProps = await api.getProperties({ status: 'AVAILABLE', limit: 6 });
+        const siteVisits = await api.getSiteVisits({ status: 'COMPLETED', limit: 1 });
+
+        if (mounted) {
+          setTotalPlots(allProps.pagination.total);
+          setAvailablePlots(availProps.pagination.total);
+          setFeaturedPlots(availProps.properties || []);
+          
+          let visitsCount = 0;
+          if (siteVisits.stats && typeof siteVisits.stats.COMPLETED === 'number') {
+            visitsCount = siteVisits.stats.COMPLETED;
+          } else if (siteVisits.stats && typeof siteVisits.stats.total === 'number') {
+            visitsCount = siteVisits.stats.total;
+          } else if (siteVisits.site_visits) {
+            visitsCount = siteVisits.site_visits.length;
+          }
+          setCompletedVisits(visitsCount > 0 ? visitsCount : 10);
+        }
+      } catch (err) {
+        console.error('Error fetching landing page data:', err);
+      } finally {
+        if (mounted) setIsLoading(false);
+      }
+    };
+
+    fetchData();
+    return () => { mounted = false; };
+  }, []);
+
+  const handleExplore = () => {
+    navigate(getLocalizedPath('/properties', currentLocale));
+  };
+
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (searchLocation) params.set('city', searchLocation);
+    if (searchType) params.set('type', searchType);
+    const queryString = params.toString() ? `?${params.toString()}` : '';
+    navigate(`${getLocalizedPath('/properties', currentLocale)}${queryString}`);
+  };
+
+  const cityCards = [
+    { name: 'Chennai', count: '14+', slug: 'chennai' },
+    { name: 'Trichy', count: '16+', slug: 'trichy' },
+    { name: 'Coimbatore', count: '10+', slug: 'coimbatore' },
+    { name: 'Hosur', count: '10+', slug: 'hosur' },
+    { name: 'Bangalore Corridor', count: '8+', slug: 'bangalore-corridor' },
   ];
 
+  const canonicalUrl = currentLocale === 'ta' ? 'https://rksprime.com/ta' : 'https://rksprime.com/';
+  const pageTitle = currentLocale === 'ta' 
+    ? 'RKS Prime Properties — சர்வே சரிபார்க்கப்பட்ட வீட்டு மனைகள்' 
+    : 'RKS Prime Properties — Surveyed Plots with Clear Title';
+  const pageDesc = currentLocale === 'ta'
+    ? 'சென்னை, திருச்சி, கோவை, ஓசூர் மற்றும் பெங்களூரு காரிடாரில் வில்லங்கமற்ற பட்டா ஆவணங்கள் மற்றும் இலவச வாகன தளப் பார்வையுடன் கூடிய பிரீமியம் வீட்டு மனைகள்.'
+    : 'Find verified surveyed plots in Chennai, Trichy, Coimbatore, Hosur & Bangalore Corridor with transparent pricing and clear titles. Book a free cab site visit.';
+
   return (
-    <div className="min-h-screen bg-rks-bg dark:bg-rks-bgDark text-brand-navy dark:text-slate-100 font-sans selection:bg-brand-gold selection:text-brand-navy flex flex-col">
+    <div className="min-h-screen bg-white dark:bg-rks-bgDark text-slate-900 dark:text-zinc-100 font-sans transition-colors duration-200">
       <Helmet>
-        <title>RKS Prime Properties | Luxury Plots & Real Estate</title>
-        <meta name="description" content="Discover verified, premium clear-title plots across top growth corridors. Direct developer pricing, uncompromising quality." />
-        <link rel="canonical" href="https://www.rkspropertyintelligence.com/" />
-        <meta property="og:title" content="RKS Prime Properties | Premium Real Estate" />
-        <meta property="og:description" content="Secure your legacy with RKS Prime Properties. Verified, luxury plots." />
-        <meta property="og:image" content="https://www.rkspropertyintelligence.com/og-image.jpg" />
+        <html lang={currentLocale} />
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDesc} />
+        <link rel="canonical" href={canonicalUrl} />
+        <link rel="alternate" hrefLang="en" href="https://rksprime.com/" />
+        <link rel="alternate" hrefLang="ta" href="https://rksprime.com/ta" />
+        <link rel="alternate" hrefLang="x-default" href="https://rksprime.com/" />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDesc} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta name="twitter:card" content="summary_large_image" />
         <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "RealEstateAgent",
-            "name": "RKS Prime Properties",
-            "image": "https://www.rkspropertyintelligence.com/og-image.jpg",
-            "description": "Premium, verified real estate plots.",
-            "url": "https://www.rkspropertyintelligence.com/"
-          })}
+          {`
+            {
+              "@context": "https://schema.org",
+              "@type": "RealEstateAgent",
+              "name": "RKS Prime Properties",
+              "image": "https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=1200",
+              "telephone": "+919876543210",
+              "email": "info@rksprime.com",
+              "priceRange": "₹₹",
+              "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "T Nagar",
+                "addressLocality": "Chennai",
+                "addressRegion": "Tamil Nadu",
+                "postalCode": "600017",
+                "addressCountry": "IN"
+              },
+              "areaServed": ["Chennai", "Trichy", "Coimbatore", "Hosur", "Bangalore Corridor"],
+              "sameAs": ["https://wa.me/919876543210"]
+            }
+          `}
         </script>
       </Helmet>
 
-      {/* -- Luxury Header -- */}
-      <header className="absolute top-0 left-0 w-full z-50 bg-brand-navy/10 backdrop-blur-md border-b border-white/10 dark:bg-[#0A1128]/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-gold text-brand-navy shadow-luxury">
-              <Building2 className="h-6 w-6" />
-            </div>
-            <div>
-              <span className="block text-lg font-bold font-heading tracking-wider text-white">
-                RKS PRIME
-              </span>
-              <span className="block text-[10px] tracking-widest text-brand-gold-light uppercase font-semibold">
-                Properties
-              </span>
-            </div>
-          </div>
+      {/* A. Navigation Bar */}
+      <PublicNavbar />
 
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-white/90">
-            <button onClick={onExploreProperties} className="hover:text-brand-gold transition-colors">Properties</button>
-            <a href="#projects" className="hover:text-brand-gold transition-colors">Projects</a>
-            <a href="#about" className="hover:text-brand-gold transition-colors">Legacy</a>
-            <button onClick={() => openSiteVisitModal()} className="hover:text-brand-gold transition-colors">Schedule Visit</button>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => i18n.changeLanguage(i18n.language === 'ta' ? 'en' : 'ta')}
-              className="text-xs font-bold px-4 py-2 rounded-full border border-white/30 text-white hover:bg-white/10 transition-colors uppercase tracking-wider"
-            >
-              {i18n.language === 'ta' ? 'EN' : 'தமிழ்'}
-            </button>
-            <button
-              onClick={onExploreProperties}
-              className="hidden sm:flex items-center gap-2 bg-brand-gold text-brand-navy px-5 py-2.5 rounded-full text-sm font-bold shadow-luxury hover:bg-brand-gold-light transition-all"
-            >
-              <span>Explore</span>
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* -- Hero Section (Cinematic Backdrop) -- */}
-      <section className="relative w-full min-h-[90vh] flex items-center pt-20">
-        {/* Background Image & Overlays */}
+      {/* B. Hero Section */}
+      <section className="relative min-h-screen flex flex-col justify-center pt-24 pb-16">
         <div className="absolute inset-0 z-0">
           <img 
-            src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=2850&q=80" 
-            alt="Luxury Real Estate Estate" 
+            src="https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?ixlib=rb-4.0.3&auto=format&fit=crop&w=2850&q=80" 
+            alt="Premium Real Estate" 
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-brand-navy/70 mix-blend-multiply"></div>
-          <div className="absolute inset-0 bg-gradient-to-t from-brand-navy via-brand-navy/40 to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-brand-navy/95 via-brand-navy/80 to-brand-navy/60"></div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full text-center md:text-left">
-          <div className="max-w-3xl space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-brand-gold/50 bg-brand-navy/40 backdrop-blur-md">
-              <span className="flex h-2 w-2 rounded-full bg-brand-gold animate-pulse"></span>
-              <span className="text-xs font-semibold text-brand-gold tracking-widest uppercase">Premium Inventory Live</span>
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full mt-8">
+          <div className="max-w-3xl animate-slide-up">
+            <div className="inline-block px-3 py-1 rounded-full bg-brand-teal/30 border border-brand-teal-light/40 text-brand-teal-light text-xs font-semibold uppercase tracking-wider mb-4">
+              {t('hero.badge')}
             </div>
-            <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold font-heading text-white leading-tight">
-              Secure Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-gold-light to-brand-gold">Legacy.</span>
+
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-heading text-white leading-tight mb-6">
+              {t('hero.title')}
             </h1>
-            <p className="text-lg md:text-xl text-white/80 max-w-2xl font-light leading-relaxed">
-              Discover unparalleled real estate opportunities. 100% clear-title, DTCP-approved premium plots across South India's fastest-growing corridors.
+            <p className="text-base sm:text-lg md:text-xl text-slate-200 mb-8 max-w-2xl leading-relaxed">
+              {t('hero.subtitle')}
             </p>
             
-            <div className="pt-8 flex flex-col sm:flex-row items-center gap-4">
+            <div className="flex flex-col sm:flex-row gap-4 mb-10">
               <button 
-                onClick={onExploreProperties}
-                className="w-full sm:w-auto px-8 py-4 bg-brand-gold hover:bg-brand-gold-light text-brand-navy rounded-full font-bold shadow-luxury hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 text-lg"
+                onClick={handleExplore} 
+                className="bg-brand-teal hover:bg-brand-teal-light text-white px-8 py-4 rounded-full font-bold text-base sm:text-lg transition-all shadow-elevated hover:shadow-luxury flex items-center justify-center gap-2"
               >
-                <span>View Inventory</span>
-                <ArrowRight className="h-5 w-5" />
+                {t('hero.exploreBtn', { count: availablePlots !== null ? availablePlots : 40 })}
+                <ArrowRight size={20} />
               </button>
               <button 
-                onClick={() => openSiteVisitModal()}
-                className="w-full sm:w-auto px-8 py-4 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-full font-bold backdrop-blur-md shadow-luxury hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 text-lg"
+                onClick={() => openSiteVisitModal()} 
+                className="bg-transparent hover:bg-white/10 text-white border-2 border-white px-8 py-4 rounded-full font-bold text-base sm:text-lg transition-all flex items-center justify-center gap-2"
               >
-                <Car className="h-5 w-5" />
-                <span>Book VIP Site Visit</span>
+                <CabPickupIcon size={20} />
+                {t('hero.bookTourBtn')}
               </button>
+            </div>
+
+            <div className="flex flex-wrap gap-4 sm:gap-8 items-center text-xs sm:text-sm font-medium text-slate-200">
+              <div className="flex items-center gap-2">
+                <VerifiedShieldIcon size={18} className="text-brand-teal-light" />
+                <span>{t('hero.trustPatta')}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <VerifiedShieldIcon size={18} className="text-brand-teal-light" />
+                <span>{t('hero.trustTitle')}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CabPickupIcon size={18} className="text-brand-teal-light" />
+                <span>{t('hero.trustCab')}</span>
+              </div>
             </div>
           </div>
         </div>
-      </section>
 
-      {/* -- Floating Search Bar -- */}
-      <section className="relative z-20 max-w-5xl mx-auto px-4 w-full -mt-16 mb-16">
-        <div className="bg-white dark:bg-rks-cardDark rounded-2xl p-4 shadow-luxury border border-slate-100 dark:border-zinc-800 flex flex-col md:flex-row items-center gap-4">
-          <div className="w-full md:flex-1 relative">
-            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-            <input 
-              type="text" 
-              placeholder="Search locations..." 
-              value={searchLocation}
-              onChange={(e) => setSearchLocation(e.target.value)}
-              className="w-full pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-gold/50 font-medium"
-            />
-          </div>
-          <div className="w-full md:flex-1 relative">
-            <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-            <select 
-              value={searchType}
-              onChange={(e) => setSearchType(e.target.value)}
-              className="w-full pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-gold/50 font-medium appearance-none"
+        {/* Quick Search */}
+        <div className="relative z-20 max-w-5xl mx-auto px-4 w-full mt-12 mb-4">
+          <div className="bg-white dark:bg-brand-slate rounded-2xl p-4 shadow-luxury flex flex-col md:flex-row items-center gap-4">
+            <div className="w-full md:flex-1 relative">
+              <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+              <select 
+                value={searchLocation}
+                onChange={(e) => setSearchLocation(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-brand-navy border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-teal text-slate-800 dark:text-slate-200 appearance-none font-medium text-sm"
+              >
+                <option value="">{t('hero.allLocations')}</option>
+                <option value="Chennai">Chennai</option>
+                <option value="Trichy">Trichy</option>
+                <option value="Coimbatore">Coimbatore</option>
+                <option value="Hosur">Hosur</option>
+                <option value="Bangalore Corridor">Bangalore Corridor</option>
+              </select>
+            </div>
+            <div className="w-full md:flex-1 relative">
+              <PlotOutlineIcon size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+              <select 
+                value={searchType}
+                onChange={(e) => setSearchType(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-brand-navy border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-teal text-slate-800 dark:text-slate-200 appearance-none font-medium text-sm"
+              >
+                <option value="">{t('hero.allTypes')}</option>
+                <option value="Residential Plot">Residential Plot</option>
+                <option value="Commercial Plot">Commercial Plot</option>
+              </select>
+            </div>
+            <button 
+              onClick={handleSearch} 
+              className="w-full md:w-auto px-8 py-3 bg-brand-teal text-white font-bold rounded-xl shadow-md hover:bg-brand-teal-light transition-colors text-sm"
             >
-              <option value="">Property Type</option>
-              <option value="residential">Residential Plot</option>
-              <option value="commercial">Commercial Plot</option>
-              <option value="villa">Villa Plot</option>
-            </select>
+              {t('hero.searchBtn')}
+            </button>
           </div>
-          <button onClick={onExploreProperties} className="w-full md:w-auto px-8 py-3.5 bg-brand-navy dark:bg-brand-gold text-white dark:text-brand-navy font-bold rounded-xl shadow-md hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
-            <Search className="h-5 w-5" />
-            <span>Search</span>
-          </button>
         </div>
       </section>
 
-      {/* -- Trust & Metrics -- */}
-      <section className="py-16 bg-white dark:bg-rks-bgDark border-y border-slate-100 dark:border-zinc-800">
+      {/* C. Live Stats Strip */}
+      <section className="py-12 bg-slate-50 dark:bg-[#0A0C10] border-b border-slate-200 dark:border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 divide-x divide-slate-100 dark:divide-zinc-800">
-            <div className="text-center px-4">
-              <div className="text-4xl font-bold font-heading text-brand-navy dark:text-white mb-2">500+</div>
-              <div className="text-sm font-semibold text-brand-gold uppercase tracking-wider">Happy Families</div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+            <div className="flex flex-col items-center text-center p-6 bg-white dark:bg-brand-slate rounded-2xl shadow-card border border-slate-100 dark:border-slate-800">
+              <SurveyPinIcon size={32} className="text-brand-amber mb-4" />
+              <div className="text-3xl md:text-4xl font-bold text-brand-navy dark:text-white mb-1 font-heading">
+                {totalPlots !== null ? totalPlots : '58'}
+              </div>
+              <div className="text-sm text-slate-500 dark:text-slate-400 font-medium">{t('stats.plotsCount')}</div>
             </div>
-            <div className="text-center px-4">
-              <div className="text-4xl font-bold font-heading text-brand-navy dark:text-white mb-2">100%</div>
-              <div className="text-sm font-semibold text-brand-gold uppercase tracking-wider">Clear Titles</div>
+            <div className="flex flex-col items-center text-center p-6 bg-white dark:bg-brand-slate rounded-2xl shadow-card border border-slate-100 dark:border-slate-800">
+              <RupeeSignIcon size={32} className="text-brand-amber mb-4" />
+              <div className="text-3xl md:text-4xl font-bold text-brand-navy dark:text-white mb-1 font-heading">
+                ₹850
+              </div>
+              <div className="text-sm text-slate-500 dark:text-slate-400 font-medium">{t('stats.startingRate')} {t('stats.perSqft')}</div>
             </div>
-            <div className="text-center px-4">
-              <div className="text-4xl font-bold font-heading text-brand-navy dark:text-white mb-2">30+</div>
-              <div className="text-sm font-semibold text-brand-gold uppercase tracking-wider">Prime Locations</div>
+            <div className="flex flex-col items-center text-center p-6 bg-white dark:bg-brand-slate rounded-2xl shadow-card border border-slate-100 dark:border-slate-800">
+              <VerifiedShieldIcon size={32} className="text-brand-amber mb-4" />
+              <div className="text-3xl md:text-4xl font-bold text-brand-navy dark:text-white mb-1 font-heading">
+                100%
+              </div>
+              <div className="text-sm text-slate-500 dark:text-slate-400 font-medium">{t('stats.guarantee')}</div>
             </div>
-            <div className="text-center px-4">
-              <div className="text-4xl font-bold font-heading text-brand-navy dark:text-white mb-2">24/7</div>
-              <div className="text-sm font-semibold text-brand-gold uppercase tracking-wider">Security Setup</div>
+            <div className="flex flex-col items-center text-center p-6 bg-white dark:bg-brand-slate rounded-2xl shadow-card border border-slate-100 dark:border-slate-800">
+              <KeyHandoverIcon size={32} className="text-brand-amber mb-4" />
+              <div className="text-3xl md:text-4xl font-bold text-brand-navy dark:text-white mb-1 font-heading">
+                {completedVisits !== null ? completedVisits + '+' : '10+'}
+              </div>
+              <div className="text-sm text-slate-500 dark:text-slate-400 font-medium">{t('stats.visitsCompleted')}</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* -- Featured Inventory -- */}
-      <section id="projects" className="py-24 bg-rks-bg dark:bg-[#0A1128]">
+      {/* D. Why Choose RKS Grid */}
+      <section className="py-20 bg-white dark:bg-rks-bgDark">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold font-heading text-brand-navy dark:text-white mb-4">
+              {t('features.heading')}
+            </h2>
+            <p className="text-slate-600 dark:text-slate-400 max-w-xl mx-auto mb-4">
+              {t('features.subheading')}
+            </p>
+            <div className="h-1 w-20 bg-brand-teal mx-auto rounded-full"></div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="p-8 rounded-2xl bg-slate-50 dark:bg-brand-slate border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-6 hover:shadow-premium transition-shadow">
+              <div className="flex-shrink-0 w-16 h-16 bg-brand-teal/10 dark:bg-brand-teal/20 rounded-full flex items-center justify-center text-brand-teal">
+                <CabPickupIcon size={32} />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-brand-navy dark:text-white mb-2">{t('features.cabTitle')}</h3>
+                <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-sm sm:text-base">{t('features.cabDesc')}</p>
+              </div>
+            </div>
+            
+            <div className="p-8 rounded-2xl bg-slate-50 dark:bg-brand-slate border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-6 hover:shadow-premium transition-shadow">
+              <div className="flex-shrink-0 w-16 h-16 bg-brand-teal/10 dark:bg-brand-teal/20 rounded-full flex items-center justify-center text-brand-teal">
+                <PattaDocumentIcon size={32} />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-brand-navy dark:text-white mb-2">{t('features.pattaTitle')}</h3>
+                <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-sm sm:text-base">{t('features.pattaDesc')}</p>
+              </div>
+            </div>
+
+            <div className="p-8 rounded-2xl bg-slate-50 dark:bg-brand-slate border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-6 hover:shadow-premium transition-shadow">
+              <div className="flex-shrink-0 w-16 h-16 bg-brand-teal/10 dark:bg-brand-teal/20 rounded-full flex items-center justify-center text-brand-teal">
+                <GrowthCorridorIcon size={32} />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-brand-navy dark:text-white mb-2">{t('features.corridorsTitle')}</h3>
+                <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-sm sm:text-base">{t('features.corridorsDesc')}</p>
+              </div>
+            </div>
+
+            <div className="p-8 rounded-2xl bg-slate-50 dark:bg-brand-slate border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-6 hover:shadow-premium transition-shadow">
+              <div className="flex-shrink-0 w-16 h-16 bg-brand-teal/10 dark:bg-brand-teal/20 rounded-full flex items-center justify-center text-brand-teal">
+                <RupeeSignIcon size={32} />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-brand-navy dark:text-white mb-2">{t('features.bankTitle')}</h3>
+                <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-sm sm:text-base">{t('features.bankDesc')}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* E. Featured Properties */}
+      <section id="projects" className="py-20 bg-slate-50 dark:bg-[#0A0C10] border-t border-slate-200 dark:border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
-            <div className="max-w-2xl">
-              <h2 className="text-brand-gold font-semibold tracking-widest uppercase mb-3 text-sm">Curated Portfolio</h2>
-              <h3 className="text-4xl md:text-5xl font-bold font-heading text-brand-navy dark:text-white">Featured Properties</h3>
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold font-heading text-brand-navy dark:text-white mb-2">
+                {t('featured.heading')}
+              </h2>
+              <p className="text-slate-500 dark:text-slate-400">
+                {t('featured.subheading')}
+              </p>
             </div>
-            <button onClick={onExploreProperties} className="flex items-center gap-2 text-brand-navy dark:text-brand-gold font-bold hover:underline">
-              <span>View All Properties</span>
-              <ArrowRight className="h-4 w-4" />
+            <button 
+              onClick={handleExplore} 
+              className="hidden md:flex items-center gap-2 text-brand-teal font-semibold hover:text-brand-teal-light transition-colors"
+            >
+              {t('featured.viewAll', { count: availablePlots !== null ? availablePlots : 40 })}
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredPlots.map((plot) => (
-              <div key={plot.id} className="group rounded-3xl bg-white dark:bg-rks-cardDark border border-slate-100 dark:border-zinc-800 overflow-hidden shadow-luxury hover:-translate-y-2 transition-all duration-300">
-                <div className="relative h-64 overflow-hidden">
-                  <img src={plot.image} alt={plot.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                  <div className="absolute top-4 left-4 bg-brand-navy/80 backdrop-blur-md text-white text-xs font-bold px-3 py-1.5 rounded-full">
-                    {plot.status}
-                  </div>
-                </div>
-                <div className="p-6 sm:p-8">
-                  <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-zinc-400 mb-3 font-medium">
-                    <MapPin className="h-4 w-4 text-brand-gold" />
-                    <span>{plot.location}</span>
-                  </div>
-                  <h4 className="text-2xl font-bold font-heading text-brand-navy dark:text-white mb-2">{plot.title}</h4>
-                  <div className="flex items-center justify-between py-4 border-b border-slate-100 dark:border-zinc-800 mb-6">
-                    <div>
-                      <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">Starting From</div>
-                      <div className="text-xl font-bold text-brand-teal dark:text-brand-gold-light">{plot.price}</div>
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="bg-white dark:bg-brand-slate h-96 rounded-2xl animate-pulse"></div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {featuredPlots.length > 0 ? featuredPlots.map(plot => {
+                const localizedDesc = (currentLocale === 'ta' && plot.description_ta) 
+                  ? plot.description_ta 
+                  : (plot.description || '');
+
+                return (
+                  <div key={plot.id} className="bg-white dark:bg-brand-slate rounded-2xl overflow-hidden shadow-card hover:shadow-elevated transition-shadow border border-slate-100 dark:border-slate-800 flex flex-col">
+                    <div className="relative h-48 bg-slate-200 dark:bg-slate-700">
+                      {plot.primary_image_url ? (
+                        <img src={plot.primary_image_url} alt={plot.project_name || plot.property_code} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-slate-400">
+                          <PlotOutlineIcon size={48} />
+                        </div>
+                      )}
+                      <div className="absolute top-4 left-4 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                        {t('listing.available')}
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">Plot Size</div>
-                      <div className="font-bold text-slate-900 dark:text-white">{plot.size}</div>
+                    <div className="p-6 flex-1 flex flex-col">
+                      <div className="text-xs text-brand-teal font-semibold mb-2">{plot.property_code} {plot.project_name ? `• ${plot.project_name}` : ''}</div>
+                      <h3 className="text-xl font-bold text-brand-navy dark:text-white mb-2 font-heading">
+                        {currentLocale === 'ta' ? `${plot.city || plot.location_name || ''} மனை` : `Plot in ${plot.city || plot.location_name || 'Prime Location'}`}
+                      </h3>
+                      
+                      {localizedDesc && (
+                        <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2 mb-3">
+                          {localizedDesc}
+                        </p>
+                      )}
+
+                      <div className="grid grid-cols-2 gap-4 my-2 py-3 border-y border-slate-100 dark:border-slate-800">
+                        <div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t('featured.area')}</div>
+                          <div className="font-semibold text-brand-navy dark:text-white">{plot.area_sqft} {t('featured.sqft')}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t('featured.rate')}</div>
+                          <div className="font-semibold text-brand-navy dark:text-white">₹{plot.rate_per_sqft}{t('stats.perSqft')}</div>
+                        </div>
+                      </div>
+                      
+                      <div className="mb-6 mt-2">
+                        <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">{t('featured.price')}</div>
+                        <div className="text-2xl font-bold text-brand-amber">₹{(plot.total_price / 100000).toFixed(2)} Lakhs</div>
+                      </div>
+
+                      <div className="flex gap-3 mt-auto">
+                        <button 
+                          onClick={handleExplore} 
+                          className="flex-1 py-2.5 rounded-lg border border-brand-teal text-brand-teal font-semibold hover:bg-brand-teal/5 transition-colors text-center text-sm"
+                        >
+                          {t('featured.viewDetails')}
+                        </button>
+                        <button 
+                          onClick={() => openSiteVisitModal(plot)} 
+                          className="flex-1 py-2.5 rounded-lg bg-brand-teal text-white font-semibold hover:bg-brand-teal-light transition-colors text-center text-sm"
+                        >
+                          {t('featured.bookVisit')}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  <button onClick={() => openSiteVisitModal()} className="w-full py-3.5 rounded-xl border-2 border-brand-navy dark:border-brand-gold text-brand-navy dark:text-brand-gold font-bold hover:bg-brand-navy hover:text-white dark:hover:bg-brand-gold dark:hover:text-brand-navy transition-colors flex items-center justify-center gap-2">
-                    <Car className="h-4 w-4" />
-                    <span>Schedule Site Visit</span>
-                  </button>
+                );
+              }) : (
+                <div className="col-span-full text-center py-12 text-slate-500">
+                  {t('listing.noPlots')}
                 </div>
+              )}
+            </div>
+          )}
+          
+          <div className="mt-10 text-center md:hidden">
+            <button 
+              onClick={handleExplore} 
+              className="inline-flex items-center gap-2 text-brand-teal font-semibold text-sm"
+            >
+              {t('featured.viewAll', { count: availablePlots !== null ? availablePlots : 40 })}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* F. City/Location CTA Cards */}
+      <section id="locations" className="py-20 bg-white dark:bg-rks-bgDark">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl md:text-4xl font-bold font-heading text-brand-navy dark:text-white mb-2 text-center">
+            {t('cities.heading')}
+          </h2>
+          <p className="text-slate-600 dark:text-slate-400 text-center max-w-xl mx-auto mb-10 text-sm sm:text-base">
+            {t('cities.subheading')}
+          </p>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+            {cityCards.map((city, idx) => (
+              <div 
+                key={idx} 
+                className="bg-slate-50 dark:bg-brand-slate rounded-2xl p-6 text-center border border-slate-100 dark:border-slate-800 hover:border-brand-teal/50 transition-colors group cursor-pointer" 
+                onClick={() => navigate(getLocalizedPath(`/plots/${city.slug}`, currentLocale))}
+              >
+                <div className="w-12 h-12 bg-white dark:bg-[#0A0C10] rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm text-brand-teal group-hover:scale-110 transition-transform">
+                  <MapPin size={24} />
+                </div>
+                <h3 className="font-bold text-brand-navy dark:text-white mb-1">{city.name}</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">{city.count} {t('cities.plotsAvailable')}</p>
+                <span className="text-sm text-brand-teal font-semibold group-hover:underline">{t('cities.viewPlots')}</span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* -- Footer -- */}
-      <footer className="bg-brand-navy pt-20 pb-10 text-slate-300 border-t-4 border-brand-gold">
+      {/* G. Site Visit CTA Banner */}
+      <section className="bg-brand-navy py-16 border-y-4 border-brand-teal">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
-            <div className="md:col-span-2 space-y-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-gold text-brand-navy">
-                  <Building2 className="h-6 w-6" />
-                </div>
-                <span className="text-xl font-bold font-heading text-white tracking-wider">
-                  RKS PRIME
-                </span>
-              </div>
-              <p className="max-w-md text-slate-400 font-light leading-relaxed">
-                South India's most trusted real estate developer. Delivering premium, 100% clear title plots that build generational wealth.
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-10">
+            <div className="text-center lg:text-left flex-1">
+              <h2 className="text-3xl md:text-4xl font-bold font-heading text-white mb-4">
+                {t('siteVisitBanner.title')}
+              </h2>
+              <p className="text-slate-300 text-base sm:text-lg">
+                {t('siteVisitBanner.subtitle')}
               </p>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 bg-white/5 rounded-full px-4 py-2 border border-white/10">
-                  <ShieldCheck className="h-5 w-5 text-brand-gold" />
-                  <span className="text-sm font-medium text-white">DTCP Approved</span>
-                </div>
-                <div className="flex items-center gap-2 bg-white/5 rounded-full px-4 py-2 border border-white/10">
-                  <FileCheck className="h-5 w-5 text-brand-gold" />
-                  <span className="text-sm font-medium text-white">Clear Titles</span>
-                </div>
-              </div>
             </div>
-            
-            <div>
-              <h4 className="text-white font-bold mb-6 tracking-wider uppercase text-sm">Quick Links</h4>
-              <ul className="space-y-4 text-sm font-medium">
-                <li><button onClick={onExploreProperties} className="hover:text-brand-gold transition-colors">Properties Inventory</button></li>
-                <li><a href="#projects" className="hover:text-brand-gold transition-colors">Featured Projects</a></li>
-                <li><button onClick={() => openSiteVisitModal()} className="hover:text-brand-gold transition-colors">Book a Site Visit</button></li>
-                <li><a href="/about" className="hover:text-brand-gold transition-colors">Our Legacy</a></li>
-              </ul>
+            <div className="flex flex-col sm:flex-row gap-4 shrink-0">
+              <button 
+                onClick={() => openSiteVisitModal()} 
+                className="bg-brand-teal hover:bg-brand-teal-light text-white px-8 py-4 rounded-xl font-bold text-base sm:text-lg transition-colors shadow-elevated"
+              >
+                {t('siteVisitBanner.bookBtn')}
+              </button>
+              <a 
+                href={`https://wa.me/919876543210?text=${encodeURIComponent(t('whatsapp.general'))}`} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="bg-[#25D366] hover:bg-[#20bd5a] text-white px-8 py-4 rounded-xl font-bold text-base sm:text-lg transition-colors shadow-elevated flex items-center justify-center gap-2"
+              >
+                <WhatsAppIcon size={24} />
+                {t('siteVisitBanner.whatsappBtn')}
+              </a>
             </div>
-
-            <div>
-              <h4 className="text-white font-bold mb-6 tracking-wider uppercase text-sm">Legal</h4>
-              <ul className="space-y-4 text-sm font-medium">
-                <li><a href="/privacy" className="hover:text-brand-gold transition-colors">Privacy Policy</a></li>
-                <li><a href="/terms" className="hover:text-brand-gold transition-colors">Terms of Service</a></li>
-                <li><a href="/compliance" className="hover:text-brand-gold transition-colors">Regulatory Compliance</a></li>
-                <li><a href="/contact" className="hover:text-brand-gold transition-colors">Contact Support</a></li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-            <p>© {new Date().getFullYear()} RKS Prime Properties. All rights reserved.</p>
-            <p>Designed with luxury & trust in mind.</p>
           </div>
         </div>
-      </footer>
+      </section>
+
+      {/* H. Footer */}
+      <PublicFooter />
     </div>
   );
 };
-
-

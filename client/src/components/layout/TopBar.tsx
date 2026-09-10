@@ -25,6 +25,7 @@ export const TopBar: React.FC = () => {
   const { i18n } = useTranslation();
   const {
     sidebarCollapsed,
+    setSidebarCollapsed,
     searchQuery,
     setSearchQuery,
     setSelectedPropertyId,
@@ -100,12 +101,16 @@ export const TopBar: React.FC = () => {
         }`}
       >
         <div className="flex items-center gap-3 w-full max-w-2xl">
-          {/* Mobile Sidebar Toggle */}
+          {/* Mobile Sidebar Toggle (hamburger) */}
           <button
-            onClick={() => useApp().setSidebarCollapsed((prev) => !prev)}
-            className="md:hidden p-2 -ml-2 text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white"
+            onClick={() => setSidebarCollapsed((prev) => !prev)}
+            className="md:hidden p-2 -ml-2 text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            title="Open menu"
+            aria-label="Toggle navigation"
           >
-            <Command className="h-5 w-5" />
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
           </button>
           
           {/* Global Omnisearch */}
@@ -221,17 +226,30 @@ export const TopBar: React.FC = () => {
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
-              <span className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs font-mono font-bold text-amber-500 dark:text-amber-400">
-                {activeRole}
-              </span>
+            <div className="flex items-center gap-2.5">
+              {/* Bespoke RKS Admin Crest Badge */}
+              <div className="flex items-center gap-2 pl-2.5 pr-3 py-1 rounded-xl bg-gradient-to-r from-brand-teal/20 via-slate-900 to-[#12161F] border border-brand-teal/40 shadow-inner">
+                <div className="relative flex items-center justify-center text-brand-gold">
+                  <Shield className="h-3.5 w-3.5 fill-brand-gold/20 stroke-brand-gold" />
+                  <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[9px] font-mono tracking-widest uppercase text-brand-gold-light font-bold leading-none">
+                    RKS · {activeRole}
+                  </span>
+                  <span className="text-[8px] text-slate-400 font-mono leading-tight mt-0.5">
+                    Authorized
+                  </span>
+                </div>
+              </div>
+
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-100 dark:bg-[#12161F] px-3 py-1.5 text-xs text-slate-600 dark:text-zinc-400 hover:bg-rose-500/10 hover:text-rose-500 hover:border-rose-500/30 transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-100 dark:bg-[#12161F] px-3 py-1.5 text-xs text-slate-600 dark:text-zinc-400 hover:bg-rose-500/10 hover:text-rose-400 hover:border-rose-500/30 transition-colors cursor-pointer"
                 title="Log Out to Login Gateway"
               >
                 <LogOut className="h-3.5 w-3.5" />
-                <span>Log Out</span>
+                <span className="hidden sm:inline">Log Out</span>
               </button>
             </div>
           )}

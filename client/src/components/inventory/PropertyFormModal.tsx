@@ -65,6 +65,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
     broker: '',
     assigned_to: '',
     description: '',
+    description_ta: '',
     internal_notes: '',
     latitude: '',
     longitude: '',
@@ -104,6 +105,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
         broker: property.broker || '',
         assigned_to: property.assigned_to || '',
         description: property.description || '',
+        description_ta: property.description_ta || '',
         internal_notes: property.internal_notes || '',
         latitude: property.latitude || '',
         longitude: property.longitude || '',
@@ -140,6 +142,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
         broker: '',
         assigned_to: '',
         description: '',
+        description_ta: '',
         internal_notes: '',
         latitude: '',
         longitude: '',
@@ -608,13 +611,27 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
               <div className="space-y-4">
                 <div>
                   <label className="text-xs font-semibold text-zinc-300">
-                    Property Description (Public / Customer Facing)
+                    Property Description (English — Public / Customer Facing)
                   </label>
                   <textarea
                     rows={3}
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     placeholder="Provide overview of property, elevation, road connectivity..."
+                    className="mt-1.5 w-full rounded-xl border border-zinc-800 bg-[#12161F] p-3 text-sm text-white outline-none focus:border-amber-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-zinc-300 flex items-center justify-between">
+                    <span>Tamil Description (தமிழ் விளக்கம் — Public / Customer Facing)</span>
+                    <span className="text-[11px] text-brand-teal font-normal">முழுமையான தமிழ் விபரம்</span>
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={formData.description_ta}
+                    onChange={(e) => setFormData({ ...formData, description_ta: e.target.value })}
+                    placeholder="மனை பற்றிய விபரம்: அமைவிடம், சாலை அகலம், பட்டா மற்றும் உடனடி பத்திரப்பதிவு விபரங்கள்..."
                     className="mt-1.5 w-full rounded-xl border border-zinc-800 bg-[#12161F] p-3 text-sm text-white outline-none focus:border-amber-500"
                   />
                 </div>

@@ -10,6 +10,7 @@ export default {
       colors: {
         brand: {
           navy: '#0A1128',
+          'navy-light': '#1a2e4a',
           slate: '#1E293B',
           teal: '#0F766E',
           'teal-light': '#14B8A6',
@@ -17,7 +18,9 @@ export default {
           charcoal: '#121212',
           gold: '#D4AF37',
           'gold-light': '#F4E5B1',
-          'gold-dark': '#AA8B2C'
+          'gold-dark': '#AA8B2C',
+          amber: '#F59E0B',
+          'amber-dark': '#B45309',
         },
         rks: {
           bg: '#FAF9F6', 
@@ -36,7 +39,20 @@ export default {
       },
       boxShadow: {
         'luxury': '0 20px 40px -10px rgba(0, 0, 0, 0.08)',
-        'luxury-dark': '0 20px 40px -15px rgba(0, 0, 0, 0.6), 0 0 1px 1px rgba(212, 175, 55, 0.15)',
+        'luxury-dark': '0 20px 40px -15px rgba(0, 0, 0, 0.6)',
+        'premium': '0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04)',
+        'card': '0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
+        'elevated': '0 8px 24px rgba(0,0,0,0.08)',
+      },
+      animation: {
+        'fade-in': 'fadeIn 0.4s ease-out',
+        'slide-up': 'slideUp 0.4s ease-out',
+        'slide-in-right': 'slideInRight 0.3s ease-out',
+      },
+      keyframes: {
+        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+        slideUp: { '0%': { opacity: '0', transform: 'translateY(16px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+        slideInRight: { '0%': { opacity: '0', transform: 'translateX(16px)' }, '100%': { opacity: '1', transform: 'translateX(0)' } },
       },
     },
   },

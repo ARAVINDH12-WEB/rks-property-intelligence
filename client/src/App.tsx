@@ -11,6 +11,7 @@ import { ReportsView } from './components/reports/ReportsView.js';
 import { AuditLogsView } from './components/audit/AuditLogsView.js';
 import { SettingsView } from './components/settings/SettingsView.js';
 import { TeamMembersView } from './components/team/TeamMembersView.js';
+import { LeadsView } from './components/leads/LeadsView.js';
 import { SiteVisitsManagementView } from './components/site-visits/SiteVisitsManagementView.js';
 import { OffersView } from './components/offers/OffersView.js';
 import { SiteVisitBookingModal } from './components/site-visits/SiteVisitBookingModal.js';
@@ -20,12 +21,20 @@ import { PropertyFormModal } from './components/inventory/PropertyFormModal.js';
 import { ExportModal } from './components/inventory/ExportModal.js';
 import { ConfirmationModal } from './components/common/ConfirmationModal.js';
 import { ToastContainer } from './components/common/Toast.js';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { setLocaleCookie } from './utils/locale.js';
 import { AuthGatewayView } from './components/auth/AuthGatewayView.js';
 import { WhatsAppFloatingButton } from './components/common/WhatsAppFloatingButton.js';
 import { api } from './services/api.js';
 import { Property, Project, Location } from './types/index.js';
 import { LandingPageView } from './components/landing/LandingPageView.js';
+import { PropertyListingPage } from './components/landing/PropertyListingPage.js';
+import { CityLandingPage } from './components/landing/CityLandingPage.js';
+import { AboutPage } from './components/landing/AboutPage.js';
+import { ContactPage } from './components/landing/ContactPage.js';
+import { LegalPage } from './components/landing/LegalPage.js';
+import { NotFoundPage } from './components/common/NotFoundPage.js';
 
 const MainLayout: React.FC = () => {
   const {
@@ -111,6 +120,7 @@ const MainLayout: React.FC = () => {
           {activeTab === 'offers' && <OffersView />}
           {activeTab === 'site-visits' && <SiteVisitsManagementView />}
           {activeTab === 'team' && <TeamMembersView />}
+          {activeTab === 'leads' && <LeadsView />}
           {activeTab === 'projects' && <ProjectsView />}
           {activeTab === 'locations' && <LocationsView />}
           {activeTab === 'import' && <ImportWizard />}
@@ -195,12 +205,47 @@ const MainLayout: React.FC = () => {
 
 const AppContent: React.FC = () => {
   const { isLoggedIn, setIsLoggedIn, setActiveRole } = useApp();
+  const location = useLocation();
+  const { i18n } = useTranslation();
+
+  // Route-based language synchronization
+  useEffect(() => {
+    const isTaRoute = location.pathname === '/ta' || location.pathname.startsWith('/ta/');
+    const targetLocale = isTaRoute ? 'ta' : 'en';
+    if (i18n.language !== targetLocale) {
+      i18n.changeLanguage(targetLocale);
+    }
+    setLocaleCookie(targetLocale);
+  }, [location.pathname, i18n]);
 
   return (
     <>
       <Routes>
-        <Route path="/" element={<LandingPageView onExploreProperties={() => {}} onOpenStaffLogin={() => {}} />} />
-        
+        {/* English public routes */}
+        <Route path="/" element={<LandingPageView />} />
+        <Route path="/properties" element={<PropertyListingPage />} />
+        <Route path="/plots/chennai" element={<CityLandingPage city="Chennai" slug="chennai" />} />
+        <Route path="/plots/trichy" element={<CityLandingPage city="Trichy" slug="trichy" />} />
+        <Route path="/plots/coimbatore" element={<CityLandingPage city="Coimbatore" slug="coimbatore" />} />
+        <Route path="/plots/hosur" element={<CityLandingPage city="Hosur" slug="hosur" />} />
+        <Route path="/plots/bangalore-corridor" element={<CityLandingPage city="Hosur Road Corridor" slug="bangalore-corridor" />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/legal" element={<LegalPage />} />
+
+        {/* Tamil mirrored public routes */}
+        <Route path="/ta" element={<LandingPageView />} />
+        <Route path="/ta/properties" element={<PropertyListingPage />} />
+        <Route path="/ta/plots/chennai" element={<CityLandingPage city="Chennai" slug="chennai" />} />
+        <Route path="/ta/plots/trichy" element={<CityLandingPage city="Trichy" slug="trichy" />} />
+        <Route path="/ta/plots/coimbatore" element={<CityLandingPage city="Coimbatore" slug="coimbatore" />} />
+        <Route path="/ta/plots/hosur" element={<CityLandingPage city="Hosur" slug="hosur" />} />
+        <Route path="/ta/plots/bangalore-corridor" element={<CityLandingPage city="Hosur Road Corridor" slug="bangalore-corridor" />} />
+        <Route path="/ta/about" element={<AboutPage />} />
+        <Route path="/ta/contact" element={<ContactPage />} />
+        <Route path="/ta/legal" element={<LegalPage />} />
+
+        {/* Admin & Dashboard */}
         <Route path="/admin" element={
           !isLoggedIn ? (
             <AuthGatewayView
@@ -218,10 +263,11 @@ const AppContent: React.FC = () => {
           isLoggedIn ? <MainLayout /> : <Navigate to="/admin" replace />
         } />
         
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
 
       <WhatsAppFloatingButton />
+      <AiConciergeChat />
       <ToastContainer />
     </>
   );
@@ -234,4 +280,3 @@ export default function App() {
     </AppProvider>
   );
 }
-

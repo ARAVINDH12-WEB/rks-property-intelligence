@@ -2,16 +2,16 @@ import { Property, Project, Location, PropertyFilterParams, PaginationMeta, User
 
 const DEFAULT_PRODUCTION_BACKEND = 'https://rks-property-intelligence-production.up.railway.app';
 const envApiUrl = (import.meta as any).env?.VITE_API_URL;
-const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+const isLocal = typeof window !== 'undefined' && (
+  window.location.hostname === 'localhost' || 
+  window.location.hostname === '127.0.0.1' || 
+  window.location.hostname.startsWith('192.168.') || 
+  window.location.hostname.startsWith('172.') || 
+  window.location.hostname.startsWith('10.')
+);
 
-// Force production URL if not local, ignoring VITE_API_URL if it is broken/relative.
-const resolvedBackendUrl = isLocal 
-  ? (envApiUrl || '') 
-  : DEFAULT_PRODUCTION_BACKEND;
-
-const API_BASE = resolvedBackendUrl
-  ? (resolvedBackendUrl.endsWith('/api') ? resolvedBackendUrl : `${resolvedBackendUrl.replace(/\/$/, '')}/api`)
-  : '/api';
+const localBackendUrl = typeof window !== 'undefined' ? `http://${window.location.hostname}:5000/api` : 'http://localhost:5000/api';
+const API_BASE = isLocal ? localBackendUrl : (envApiUrl || DEFAULT_PRODUCTION_BACKEND + '/api');
 
 function getHeaders(): HeadersInit {
   const token = localStorage.getItem('rks_auth_token');
@@ -29,13 +29,9 @@ function getHeaders(): HeadersInit {
   return headers;
 }
 
-/**
- * If no token is stored (customer visiting without login),
- * auto-fetch the guest VIEWER token so all API calls succeed.
- */
 async function ensureGuestToken(): Promise<void> {
   const existingToken = localStorage.getItem('rks_auth_token');
-  if (existingToken) return; // Already have a token
+  if (existingToken) return;
 
   try {
     const res = await fetch(`${API_BASE}/auth/guest-token`);
@@ -47,11 +43,10 @@ async function ensureGuestToken(): Promise<void> {
       }
     }
   } catch {
-    // Silently fail — optionalAuthenticate on server will handle unauthenticated requests anyway
+    // Fail silently
   }
 }
 
-// Auto-initialize guest token on module load
 ensureGuestToken();
 
 async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
@@ -73,16 +68,32 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
 
 export const api = {
   // Auth
-  async login(email: string, password: string): Promise<{ token: string; user: any }> {
-    const res = await request<{ token: string; user: any }>('/auth/login', {
+  async login(email: string, password: string): Promise<any> {
+    const res = await request<any>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
     if (res.token) {
       localStorage.setItem('rks_auth_token', res.token);
-      localStorage.setItem('rks_active_role', res.user.role);
+      localStorage.setItem('rks_active_role', res.user?.role || 'ADMIN');
     }
     return res;
+  },
+
+  async verify2FA(userId: number, token: string, isBackupCode: boolean = false): Promise<any> {
+    const res = await request<any>('/auth/verify-2fa', {
+      method: 'POST',
+      body: JSON.stringify({ userId, token, isBackupCode }),
+    });
+    if (res.token) {
+      localStorage.setItem('rks_auth_token', res.token);
+      localStorage.setItem('rks_active_role', res.user?.role || 'ADMIN');
+    }
+    return res;
+  },
+
+  async getGuestToken(): Promise<{ token: string; role: string }> {
+    return request<{ token: string; role: string }>('/auth/guest-token');
   },
 
   async customerLogin(name: string, phone: string): Promise<{ message: string; customer: any }> {
@@ -92,9 +103,44 @@ export const api = {
         body: JSON.stringify({ name, phone }),
       });
     } catch {
-      // Non-blocking — if server fails, still allow customer in
       return { message: 'Welcome!', customer: { id: 0, name, phone } };
     }
+  },
+
+  async postLead(data: { name: string; phone: string; email?: string; source?: string; notes?: string; property_id?: number; property_code?: string; status?: string }): Promise<any> {
+    return request<any>('/leads', { method: 'POST', body: JSON.stringify(data) });
+  },
+
+  async postLeadsBatch(leads: Array<any>, duplicateMode: 'skip' | 'merge' | 'import' = 'skip'): Promise<{
+    success: boolean;
+    imported: number;
+    skipped: number;
+    failed: number;
+    total: number;
+    errors: Array<{ row: number; name?: string; phone?: string; error: string }>;
+  }> {
+    return request<any>('/leads/batch', {
+      method: 'POST',
+      body: JSON.stringify({ leads, duplicateMode }),
+    });
+  },
+
+  async getLeads(params?: { status?: string; q?: string; limit?: number; offset?: number }): Promise<any> {
+    const searchParams = new URLSearchParams();
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.q) searchParams.set('q', params.q);
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.offset) searchParams.set('offset', String(params.offset));
+    const qs = searchParams.toString();
+    return request<any>(`/leads${qs ? '?' + qs : ''}`);
+  },
+
+  async updateLeadStatus(id: number, status: string, notes?: string): Promise<any> {
+    return request<any>(`/leads/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status, notes }) });
+  },
+
+  async deleteLead(id: number): Promise<any> {
+    return request<any>(`/leads/${id}`, { method: 'DELETE' });
   },
 
   async register(data: { name: string; email: string; password: string; phone?: string }): Promise<{ token: string; user: any; message: string }> {
@@ -261,7 +307,6 @@ export const api = {
     return res.json();
   },
 
-  // Legacy alias kept for compat
   async uploadSpreadsheet(file: File): Promise<any> {
     return this.parseAndValidateSpreadsheet(file);
   },
@@ -306,7 +351,7 @@ export const api = {
     });
   },
 
-  // AI Concierge Chat
+  // AI Concierge Chat (Grounded RAG)
   async sendAiChatMessage(data: {
     message: string;
     history?: any[];
@@ -314,12 +359,17 @@ export const api = {
     customer_phone?: string;
     customer_email?: string;
     current_property_id?: number | null;
+    locale?: string;
+    session_id?: string;
   }): Promise<{
     reply: string;
     suggestedActions: string[];
+    detectedIntent?: string;
+    language?: string;
     requiresHuman: boolean;
     escalationReason: string | null;
-    whatsappAlertSent: boolean;
+    whatsappAlertSent?: boolean;
+    leadCaptured?: boolean;
     whatsappNotification?: any;
   }> {
     return request('/ai-chat', {

@@ -1,24 +1,159 @@
 {
   "nav": {
     "home": "Home",
+    "properties": "Properties",
     "projects": "Projects",
+    "locations": "Locations",
+    "siteVisits": "Site Visits",
+    "offers": "Offers",
+    "about": "About Us",
     "contact": "Contact",
-    "dashboard": "Dashboard"
+    "staffSignIn": "Staff Sign In",
+    "explorePlots": "Explore Plots",
+    "darkMode": "Dark Mode",
+    "language": "Language"
   },
   "hero": {
-    "title": "Find Your Perfect Property",
-    "subtitle": "Explore our exclusive collection of premium real estate across top locations.",
-    "cta": "Explore Properties"
+    "badge": "SURVEY-VERIFIED RESIDENTIAL PLOTS",
+    "title": "Discover Verified Surveyed Plots With Transparent Pricing",
+    "subtitle": "Premium residential plots in Chennai, Trichy, Coimbatore, Hosur & Bangalore Corridor with clear titles, Patta verified, and free cab site visits.",
+    "exploreBtn": "Explore {{count}} Available Plots",
+    "bookTourBtn": "Book Free Cab Site Tour",
+    "trustPatta": "Patta Verified",
+    "trustTitle": "Survey Clear Title",
+    "trustCab": "Free Cab Pickup",
+    "searchPlaceholder": "Search by location, project, or plot ID...",
+    "allLocations": "All Locations",
+    "allTypes": "All Plot Types",
+    "searchBtn": "Search Plots"
+  },
+  "stats": {
+    "plotsCount": "Surveyed Plots",
+    "startingRate": "Starting From",
+    "perSqft": "/sq.ft",
+    "clearTitle": "Clear Title",
+    "guarantee": "100% Legal Clearance",
+    "visitsCompleted": "Site Visits Completed",
+    "happyFamilies": "Satisfied Families"
   },
   "features": {
-    "premium": "Premium Locations",
-    "verified": "Verified Properties",
-    "support": "24/7 Support"
+    "heading": "Why Buyers Trust RKS Prime Properties",
+    "subheading": "Transparent real estate backed by on-ground surveys and legal verification.",
+    "cabTitle": "Free Cab Pickup",
+    "cabDesc": "We pick you up from anywhere in the city for your site visit. No auto-rickshaws, no confusion.",
+    "pattaTitle": "Patta & Survey Verified",
+    "pattaDesc": "Every plot comes with verified Patta, clear survey number, and legal documents reviewed by our team.",
+    "corridorsTitle": "High Growth Corridors",
+    "corridorsDesc": "Strategic locations near upcoming IT parks, highways, and industrial zones for maximum appreciation.",
+    "bankTitle": "Bank Loan Desk",
+    "bankDesc": "In-house loan assistance team with SBI, HDFC & Axis Bank tie-ups for up to 75% funding."
   },
-  "languagePrompt": {
-    "title": "Choose your language",
-    "subtitle": "You can change this later at any time.",
-    "english": "English",
-    "tamil": "?????"
+  "featured": {
+    "heading": "Available Plots — Ready to Register",
+    "subheading": "Surveyed, boundary-marked plots with clear documentation ready for immediate construction.",
+    "viewDetails": "View Details",
+    "bookVisit": "Book Site Visit",
+    "viewAll": "View All {{count}} Available Plots →",
+    "price": "Price",
+    "rate": "Rate",
+    "area": "Area",
+    "facing": "Facing",
+    "sqft": "sq.ft"
+  },
+  "cities": {
+    "heading": "Plots Available Across Tamil Nadu & Beyond",
+    "subheading": "Explore high-potential plotted development projects in major growth hubs.",
+    "plotsAvailable": "plots available",
+    "viewPlots": "View Plots →"
+  },
+  "siteVisitBanner": {
+    "title": "Schedule Your Free Site Visit Today",
+    "subtitle": "Experience the location, inspect survey stones, and review original legal documents in person.",
+    "bookBtn": "Book Free Site Visit",
+    "whatsappBtn": "Chat on WhatsApp"
+  },
+  "listing": {
+    "title": "Verified Surveyed Plots",
+    "subtitle": "Clear Patta, boundary stones placed, and ready for registration",
+    "filters": "Filters",
+    "location": "Location",
+    "allLocations": "All Cities",
+    "budget": "Budget (₹ Lakhs)",
+    "plotSize": "Plot Size (sq.ft)",
+    "propertyType": "Property Type",
+    "allTypes": "All Types",
+    "sortBy": "Sort By",
+    "priceLowHigh": "Price: Low to High",
+    "priceHighLow": "Price: High to Low",
+    "areaLargeSmall": "Area: Large to Small",
+    "newest": "Newest First",
+    "available": "Available",
+    "reserved": "Reserved",
+    "sold": "Sold",
+    "noPlots": "No plots found matching your criteria.",
+    "clearFilters": "Reset Filters",
+    "enquireWhatsApp": "WhatsApp Enquiry"
+  },
+  "cityPage": {
+    "plotsInCity": "Available Plots in {{city}}",
+    "browsePlots": "Browse {{city}} Plots",
+    "whyInvest": "Why Invest in {{city}}?",
+    "faqs": "Frequently Asked Questions — {{city}}",
+    "mapTitle": "{{city}} Project Location Map",
+    "mapSubtitle": "High-resolution master layout & boundary coordinates available upon request"
+  },
+  "contact": {
+    "heading": "Contact Our Property Advisors",
+    "subtitle": "Get in touch for property inquiries, legal document inspections, and complimentary site visits.",
+    "fullName": "Full Name",
+    "phone": "Mobile Number (10 digits)",
+    "email": "Email Address (Optional)",
+    "preferredCity": "Preferred Location",
+    "budgetRange": "Estimated Budget",
+    "message": "Your Requirement / Message",
+    "submit": "Submit Enquiry",
+    "submitting": "Submitting...",
+    "success": "Thank you! Our property advisor will reach out within 24 hours.",
+    "error": "Failed to send enquiry. Please contact our helpline directly via WhatsApp."
+  },
+  "about": {
+    "title": "About RKS Prime Properties",
+    "storyTitle": "Our Mission & Heritage",
+    "storyText": "RKS Prime Properties has surveyed and developed over 500 acres of premium residential land across Tamil Nadu and the Bangalore Corridor since 2010. We specialize in identifying high-growth corridors and transforming them into secure, clear-titled communities for generations to build upon.",
+    "valuesTitle": "Our Core Values",
+    "transparency": "100% Transparency",
+    "transparencyDesc": "Zero hidden costs, verified legal documents, and transparent fixed per-sqft pricing.",
+    "clearTitles": "Clear Titles & Patta",
+    "clearTitlesDesc": "Every land parcel goes through multi-tier legal checks before offering to buyers.",
+    "communityFirst": "Community First",
+    "communityFirstDesc": "Thoughtfully planned layouts with wide internal roads, avenue trees, and underground utilities.",
+    "growthCorridors": "Growth Corridors",
+    "growthCorridorsDesc": "Positioned near upcoming expressways, defense corridors, and IT hubs for compounding appreciation."
+  },
+  "legal": {
+    "title": "Legal Information & Disclaimers",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "disclaimer": "Property Disclaimer",
+    "regulatoryTitle": "Regulatory Transparency",
+    "regulatoryText": "All plot dimensions, survey coordinates, and road widths reflect surveyed municipal and panchayat layouts. Approvals where applicable are registered with local planning authorities."
+  },
+  "toasts": {
+    "enquirySent": "Enquiry submitted successfully! Our team will call you shortly.",
+    "visitBooked": "Free site visit booked successfully! Our transport team will coordinate pickup.",
+    "copied": "Copied to clipboard!"
+  },
+  "whatsapp": {
+    "general": "Hi, I am interested in viewing surveyed plots at RKS Prime Properties.",
+    "plotInquiry": "Hi, I am interested in Plot {{code}} in {{city}} listed at RKS Prime Properties."
+  },
+  "footer": {
+    "tagline": "Surveyed residential plots with transparent pricing and clear titles across Tamil Nadu & Bangalore Corridor.",
+    "quickLinks": "Quick Links",
+    "cities": "Key Micro-Markets",
+    "contact": "Contact Desk",
+    "rights": "All rights reserved.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service"
   }
 }
