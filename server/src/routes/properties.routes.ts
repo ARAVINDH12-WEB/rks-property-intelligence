@@ -77,6 +77,18 @@ router.get('/public-stats', async (_req: Request, res: Response): Promise<void> 
       LIMIT 6
     `);
 
+    // 7. System settings (contact desk & whatsapp numbers)
+    const settingsRes = await query(`SELECT key, value FROM system_settings`);
+    const settings: Record<string, string> = {
+      whatsapp_number: '+919840011223',
+      contact_phone: '+91 98400 11223',
+      contact_email: 'info@rksgroup.in',
+      contact_address: 'No. 42, GST Road, Guindy, Chennai, Tamil Nadu - 600032',
+    };
+    for (const row of settingsRes.rows) {
+      settings[row.key] = row.value;
+    }
+
     res.json({
       totalPlots,
       availablePlots,
@@ -85,6 +97,7 @@ router.get('/public-stats', async (_req: Request, res: Response): Promise<void> 
       cityCounts,
       locations,
       featuredPlots: featuredRes.rows,
+      settings,
     });
   } catch (error) {
     console.error('Error fetching public stats:', error);

@@ -50,6 +50,13 @@ export const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'details' | 'media' | 'docs' | 'history'>('details');
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
+  const [whatsappNumber, setWhatsappNumber] = useState('+919840011223');
+
+  useEffect(() => {
+    api.getSettings().then(res => {
+      if (res?.settings?.whatsapp_number) setWhatsappNumber(res.settings.whatsapp_number);
+    }).catch(() => {});
+  }, []);
 
   const canEdit = activeRole === 'ADMIN' || activeRole === 'MANAGER' || activeRole === 'EMPLOYEE';
 
@@ -316,7 +323,7 @@ export const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
                         </button>
 
                         <a
-                          href={`https://wa.me/919876543210?text=Hi%2C%20I%20am%20interested%20in%20property%20${encodeURIComponent(property.property_code)}%20-%20${encodeURIComponent(property.project_name || '')}%20in%20${encodeURIComponent(property.city || '')}.`}
+                          href={`https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=Hi%2C%20I%20am%20interested%20in%20property%20${encodeURIComponent(property.property_code)}%20-%20${encodeURIComponent(property.project_name || '')}%20in%20${encodeURIComponent(property.city || '')}.`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-xs font-bold text-emerald-400 hover:bg-emerald-500/20 transition-colors cursor-pointer"

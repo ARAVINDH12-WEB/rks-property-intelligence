@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useApp } from '../../context/AppContext.js';
+import { api } from '../../services/api.js';
 import { WhatsAppIcon, PhoneCallIcon } from './Icons.js';
 import { MapPin } from 'lucide-react';
 import { getLocalizedPath, Locale } from '../../utils/locale.js';
@@ -12,6 +13,25 @@ export const PublicFooter: React.FC = () => {
   const { openSiteVisitModal } = useApp();
 
   const currentLocale: Locale = i18n.language === 'ta' ? 'ta' : 'en';
+
+  const [whatsappNumber, setWhatsappNumber] = useState('+919840011223');
+  const [contactPhone, setContactPhone] = useState('+91 98400 11223');
+  const [contactAddress, setContactAddress] = useState('No. 42, GST Road, Guindy, Chennai, Tamil Nadu - 600032');
+
+  useEffect(() => {
+    api.getSettings()
+      .then((res) => {
+        if (res?.settings) {
+          if (res.settings.whatsapp_number) setWhatsappNumber(res.settings.whatsapp_number);
+          if (res.settings.contact_phone) setContactPhone(res.settings.contact_phone);
+          if (res.settings.contact_address) setContactAddress(res.settings.contact_address);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const cleanWhatsapp = whatsappNumber.replace(/[^0-9]/g, '');
+  const cleanPhone = contactPhone.replace(/[^\d+]/g, '');
 
   return (
     <footer className="bg-brand-navy pt-20 pb-8 text-slate-300">
@@ -28,7 +48,7 @@ export const PublicFooter: React.FC = () => {
             </p>
             <div className="flex gap-4">
               <a 
-                href="https://wa.me/919876543210" 
+                href={`https://wa.me/${cleanWhatsapp}`} 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-brand-teal transition-colors"
@@ -37,7 +57,7 @@ export const PublicFooter: React.FC = () => {
                 <WhatsAppIcon size={20} />
               </a>
               <a 
-                href="tel:+919876543210" 
+                href={`tel:${cleanPhone}`} 
                 className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-brand-teal transition-colors"
                 aria-label="Phone"
               >
@@ -85,23 +105,21 @@ export const PublicFooter: React.FC = () => {
             </ul>
           </div>
 
-          {/* Column 3 */}
+          {/* Column 3 - Contact Desk */}
           <div>
             <h4 className="text-white font-bold mb-6 tracking-wider uppercase text-sm">{t('footer.contact')}</h4>
             <ul className="space-y-4 text-sm">
               <li className="flex items-start gap-3">
                 <PhoneCallIcon size={20} className="text-brand-teal shrink-0 mt-0.5" />
                 <div>
-                  <div className="font-medium text-white">+91 98765 43210</div>
+                  <div className="font-medium text-white">{contactPhone}</div>
                   <div className="text-xs text-slate-400">Mon-Sat, 9AM-7PM</div>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <MapPin size={20} className="text-brand-teal shrink-0 mt-0.5" />
-                <div className="text-xs text-slate-400 leading-relaxed">
-                  RKS Prime Properties HQ<br />
-                  T Nagar, Chennai<br />
-                  Tamil Nadu, India 600017
+                <div className="text-xs text-slate-400 leading-relaxed whitespace-pre-line">
+                  {contactAddress}
                 </div>
               </li>
             </ul>

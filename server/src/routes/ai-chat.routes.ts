@@ -116,6 +116,15 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     const availablePlots = properties.filter((p: any) => p.status === 'AVAILABLE');
     const availableCount = availablePlots.length;
 
+    // Fetch configured whatsapp number
+    let cleanWa = '919840011223';
+    try {
+      const settingsRes = await query("SELECT value FROM system_settings WHERE key = 'whatsapp_number'");
+      if (settingsRes.rows[0]?.value) {
+        cleanWa = settingsRes.rows[0].value.replace(/[^0-9]/g, '');
+      }
+    } catch {}
+
     // 3. Intent Detection & Live RAG Routing
     let reply = '';
     const suggestedActions: string[] = [];
@@ -299,8 +308,8 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
 
         const negotiationNote = isNegotiation
           ? (isTa 
-              ? `\n\n💬 **விலை சலுகை கோரிக்கை:** உங்கள் சலுகை/தள்ளுபடி கோரிக்கை குறித்து விற்பனை மேலாளரிடம் பேச [வாட்ஸ்அப்பில் தொடர்புகொள்ளவும்](https://wa.me/919876543210?text=Hi, I want to discuss pricing for ${matchedProp.property_code}).`
-              : `\n\n💬 **Price Discussion:** Pricing for ${matchedProp.property_code} starts at ${formatPriceINR(matchedProp.total_price)}. For direct developer discount discussions, our senior manager has been alerted: [Connect on WhatsApp](https://wa.me/919876543210?text=Hi, I want to discuss pricing for ${matchedProp.property_code}).`)
+              ? `\n\n💬 **விலை சலுகை கோரிக்கை:** உங்கள் சலுகை/தள்ளுபடி கோரிக்கை குறித்து விற்பனை மேலாளரிடம் பேச [வாட்ஸ்அப்பில் தொடர்புகொள்ளவும்](https://wa.me/${cleanWa}?text=Hi, I want to discuss pricing for ${matchedProp.property_code}).`
+              : `\n\n💬 **Price Discussion:** Pricing for ${matchedProp.property_code} starts at ${formatPriceINR(matchedProp.total_price)}. For direct developer discount discussions, our senior manager has been alerted: [Connect on WhatsApp](https://wa.me/${cleanWa}?text=Hi, I want to discuss pricing for ${matchedProp.property_code}).`)
           : '';
 
         if (isTa) {

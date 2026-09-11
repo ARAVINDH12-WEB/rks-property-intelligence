@@ -50,6 +50,7 @@ export const PropertyListingPage: React.FC<PropertyListingPageProps> = ({ cityFi
   const limit = window.innerWidth < 768 ? 10 : 12;
   const [total, setTotal] = useState(0);
   const [locations, setLocations] = useState<string[]>([]);
+  const [whatsappNumber, setWhatsappNumber] = useState('+919840011223');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -57,9 +58,10 @@ export const PropertyListingPage: React.FC<PropertyListingPageProps> = ({ cityFi
     };
     window.addEventListener('scroll', handleScroll);
     
-    // Fetch distinct locations
+    // Fetch distinct locations & settings
     api.getPublicStats().then(stats => {
       if (stats.locations) setLocations(stats.locations);
+      if (stats.settings?.whatsapp_number) setWhatsappNumber(stats.settings.whatsapp_number);
     }).catch(console.error);
 
     return () => window.removeEventListener('scroll', handleScroll);
@@ -119,7 +121,8 @@ export const PropertyListingPage: React.FC<PropertyListingPageProps> = ({ cityFi
       code: plot.property_code, 
       city: plot.city || plot.location_name || 'Tamil Nadu' 
     });
-    window.open(`https://wa.me/919876543210?text=${encodeURIComponent(message)}`, '_blank');
+    const cleanWa = whatsappNumber.replace(/[^0-9]/g, '');
+    window.open(`https://wa.me/${cleanWa}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
   const formatPrice = (price: number) => {

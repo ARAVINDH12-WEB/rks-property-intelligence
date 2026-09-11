@@ -226,6 +226,7 @@ export const api = {
     cityCounts: Record<string, number>;
     locations: string[];
     featuredPlots: Property[];
+    settings?: Record<string, string>;
   }> {
     return request<any>('/properties/public-stats');
   },

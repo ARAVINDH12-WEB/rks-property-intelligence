@@ -40,6 +40,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [cityCounts, setCityCounts] = useState<Record<string, number>>({});
   const [locationList, setLocationList] = useState<string[]>([]);
+  const [whatsappNumber, setWhatsappNumber] = useState('+919840011223');
 
   const [searchLocation, setSearchLocation] = useState('');
   const [searchType, setSearchType] = useState('');
@@ -59,6 +60,9 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
           setFeaturedPlots(stats.featuredPlots || []);
           setCityCounts(stats.cityCounts || {});
           setLocationList(stats.locations || []);
+          if (stats.settings?.whatsapp_number) {
+            setWhatsappNumber(stats.settings.whatsapp_number);
+          }
         }
       } catch (err) {
         console.error('Error fetching landing page data:', err);
@@ -493,7 +497,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
                 {t('siteVisitBanner.bookBtn')}
               </button>
               <a 
-                href={`https://wa.me/919876543210?text=${encodeURIComponent(t('whatsapp.general'))}`} 
+                href={`https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(t('whatsapp.general'))}`} 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="bg-[#25D366] hover:bg-[#20bd5a] text-white px-8 py-4 rounded-xl font-bold text-base sm:text-lg transition-colors shadow-elevated flex items-center justify-center gap-2"

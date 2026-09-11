@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { PublicNavbar } from '../common/PublicNavbar.js';
@@ -27,6 +27,24 @@ export const ContactPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+
+  const [whatsappNumber, setWhatsappNumber] = useState('+919840011223');
+  const [contactPhone, setContactPhone] = useState('+91 98400 11223');
+  const [contactEmail, setContactEmail] = useState('info@rksgroup.in');
+  const [contactAddress, setContactAddress] = useState('No. 42, GST Road, Guindy, Chennai, Tamil Nadu - 600032');
+
+  useEffect(() => {
+    api.getSettings()
+      .then((res) => {
+        if (res?.settings) {
+          if (res.settings.whatsapp_number) setWhatsappNumber(res.settings.whatsapp_number);
+          if (res.settings.contact_phone) setContactPhone(res.settings.contact_phone);
+          if (res.settings.contact_email) setContactEmail(res.settings.contact_email);
+          if (res.settings.contact_address) setContactAddress(res.settings.contact_address);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -106,7 +124,7 @@ export const ContactPage: React.FC = () => {
                 </div>
                 <div>
                   <h4 className="text-lg font-semibold text-white mb-1">Phone & WhatsApp</h4>
-                  <p className="text-slate-300 text-lg">+91 98765 43210</p>
+                  <p className="text-slate-300 text-lg">{contactPhone}</p>
                   <p className="text-slate-400 text-sm">Mon-Sat, 9AM to 7PM</p>
                 </div>
               </div>
@@ -117,7 +135,7 @@ export const ContactPage: React.FC = () => {
                 </div>
                 <div>
                   <h4 className="text-lg font-semibold text-white mb-1">Email Desk</h4>
-                  <p className="text-slate-300 text-lg">info@rksprime.com</p>
+                  <p className="text-slate-300 text-lg">{contactEmail}</p>
                 </div>
               </div>
 
@@ -129,10 +147,8 @@ export const ContactPage: React.FC = () => {
                   <h4 className="text-lg font-semibold text-white mb-1">
                     {currentLocale === 'ta' ? 'தலைமை அலுவலகம்' : 'Headquarters'}
                   </h4>
-                  <p className="text-slate-300 text-base leading-relaxed">
-                    RKS Prime Properties HQ<br />
-                    T Nagar, Chennai<br />
-                    Tamil Nadu, India 600017
+                  <p className="text-slate-300 text-base leading-relaxed whitespace-pre-line">
+                    {contactAddress}
                   </p>
                 </div>
               </div>
@@ -140,7 +156,7 @@ export const ContactPage: React.FC = () => {
 
             <div className="mt-12 pt-8 border-t border-white/10">
               <a 
-                href={`https://wa.me/919876543210?text=${encodeURIComponent(t('whatsapp.general'))}`} 
+                href={`https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(t('whatsapp.general'))}`} 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="inline-flex items-center justify-center gap-2 w-full bg-[#25D366] hover:bg-[#20bd5a] text-white py-3.5 px-6 rounded-xl font-bold transition-colors shadow-elevated"
