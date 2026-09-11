@@ -317,14 +317,34 @@ export const api = {
     const headers: Record<string, string> = { 'x-demo-role': activeRole };
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
-    const res = await fetch(`${API_BASE}/import/parse-and-validate`, {
-      method: 'POST',
-      headers,
-      body: formData,
-    });
+    const primaryEndpoint = `${API_BASE}/import/parse-and-validate`;
+    let res: Response;
+    try {
+      res = await fetch(primaryEndpoint, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+    } catch (networkErr: any) {
+      // If direct cross-origin fetch failed, retry via same-origin proxy '/api'
+      if (API_BASE !== '/api') {
+        try {
+          console.warn(`Primary import request to ${primaryEndpoint} failed. Retrying via same-origin /api...`);
+          res = await fetch('/api/import/parse-and-validate', {
+            method: 'POST',
+            headers,
+            body: formData,
+          });
+        } catch {
+          throw networkErr;
+        }
+      } else {
+        throw networkErr;
+      }
+    }
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: 'Upload failed' }));
+      const err = await res.json().catch(() => ({ error: 'Upload failed with status ' + res.status }));
       throw new Error(err.error || 'Upload failed');
     }
 

@@ -7,13 +7,159 @@ import { calculateTotalPrice } from '../utils/calculations.js';
 
 const router = Router();
 
-// Helper to safely parse numeric strings with commas or currency symbols
+// Helper to safely parse numeric values (handles commas, Indian Lakhs/Crores, Rs. currency, sqft units)
 function parseNumeric(val: any): number {
   if (val === null || val === undefined || val === '') return NaN;
-  if (typeof val === 'number') return val;
-  const clean = String(val).replace(/[^0-9.-]/g, '');
-  return parseFloat(clean);
+  if (typeof val === 'number') return isNaN(val) ? NaN : val;
+  let str = String(val).trim();
+  if (!str) return NaN;
+
+  // Check Lakhs / Lacs / L: e.g. "45 Lakhs", "45.5 L", "45 Lacs"
+  const lakhMatch = str.match(/^([\d,.]+)\s*(?:lakh|lakhs|lac|lacs|l)\b/i);
+  if (lakhMatch) {
+    const num = parseFloat(lakhMatch[1].replace(/,/g, ''));
+    return isNaN(num) ? NaN : Math.round(num * 100000);
+  }
+
+  // Check Crores / Cr: e.g. "1.5 Cr", "1.5 Crore", "2 Crores"
+  const croreMatch = str.match(/^([\d,.]+)\s*(?:crore|crores|cr)\b/i);
+  if (croreMatch) {
+    const num = parseFloat(croreMatch[1].replace(/,/g, ''));
+    return isNaN(num) ? NaN : Math.round(num * 10000000);
+  }
+
+  // Check Thousands (k): e.g. "850k", "50 k"
+  const kMatch = str.match(/^([\d,.]+)\s*k\b/i);
+  if (kMatch) {
+    const num = parseFloat(kMatch[1].replace(/,/g, ''));
+    return isNaN(num) ? NaN : Math.round(num * 1000);
+  }
+
+  // Strip currency prefixes and symbols (e.g. 'Rs.', 'INR', '₹', '$')
+  str = str.replace(/(?:rs\.?|inr|₹|\$)/gi, '');
+  // Strip unit abbreviations (e.g. 'sq.ft.', 'sqft', '/sqft', 'sqm', 'per sqft')
+  str = str.replace(/(?:\/?\s*(?:sq\.?\s*ft\.?|sqft|sqm|per\s*sq\.?\s*ft\.?))/gi, '');
+  // Remove commas
+  str = str.replace(/,/g, '').trim();
+
+  // Extract the first valid floating-point number
+  const numMatch = str.match(/[-+]?\d+(?:\.\d+)?/);
+  if (!numMatch) return NaN;
+
+  const res = parseFloat(numMatch[0]);
+  return isNaN(res) ? NaN : res;
 }
+
+// Comprehensive heuristics for matching Excel / CSV column headers
+const mappingHeuristics: Record<string, RegExp[]> = {
+  property_code: [
+    /prop(erty)?[\s_-]?(id|code|no|num|number)?/i,
+    /plot[\s_-]?(id|code)/i,
+    /^code$/i,
+    /^id$/i,
+    /^uid$/i,
+  ],
+  project_name: [
+    /project[\s_-]?(name|title|code)?/i,
+    /^scheme$/i,
+    /^layout[\s_-]?(name)?$/i,
+    /^community$/i,
+    /^development$/i,
+    /^property[\s_-]?name$/i,
+  ],
+  location_name: [
+    /loc(ation)?[\s_-]?(name)?/i,
+    /^city$/i,
+    /^place$/i,
+    /^town$/i,
+    /^area$/i,
+    /^address$/i,
+    /^zone$/i,
+    /^region$/i,
+  ],
+  property_type: [
+    /(property[\s_-]?)?type/i,
+    /^category$/i,
+    /^kind$/i,
+    /^usage$/i,
+  ],
+  area_sqft: [
+    /area/i,
+    /sq[\s._-]?ft/i,
+    /sqft/i,
+    /extent/i,
+    /size/i,
+    /dimension/i,
+  ],
+  rate_per_sqft: [
+    /rate/i,
+    /per[\s_-]?sq/i,
+    /sqft[\s_-]?rate/i,
+    /price[\s_-]?per/i,
+    /base[\s_-]?rate/i,
+  ],
+  total_price: [
+    /total/i,
+    /price/i,
+    /cost/i,
+    /amount/i,
+    /value/i,
+    /budget/i,
+    /consideration/i,
+  ],
+  status: [
+    /status/i,
+    /avail/i,
+    /state/i,
+    /condition/i,
+  ],
+  facing: [
+    /facing/i,
+    /direction/i,
+    /orientation/i,
+  ],
+  survey_number: [
+    /survey/i,
+    /s[\s._-]?no/i,
+    /sf[\s._-]?no/i,
+    /patta/i,
+    /khata/i,
+  ],
+  plot_number: [
+    /plot[\s_-]?(no|number|num|#)?/i,
+    /^plot$/i,
+    /door[\s_-]?(no|num|number)?/i,
+    /unit[\s_-]?(no|num|number)?/i,
+    /site[\s_-]?(no|num|number)?/i,
+  ],
+  road_width: [
+    /road/i,
+    /street/i,
+    /lane/i,
+    /width/i,
+    /approach/i,
+  ],
+  description: [
+    /desc/i,
+    /note/i,
+    /remark/i,
+    /comment/i,
+    /detail/i,
+  ],
+  latitude: [
+    /^lat(itude)?$/i,
+    /^lat$/i,
+  ],
+  longitude: [
+    /^lon(gitude)?$|^lng$/i,
+    /^long$/i,
+  ],
+  google_maps_url: [
+    /maps/i,
+    /gmap/i,
+    /location[\s_-]?(url|link)/i,
+  ],
+};
 
 // SINGLE ENDPOINT: Parse + Validate in one request (Vercel-safe, memory-storage)
 router.post('/parse-and-validate', authenticate, requireRole(['ADMIN', 'MANAGER', 'EMPLOYEE']), upload.single('file'), async (req: Request, res: Response): Promise<void> => {
@@ -31,42 +177,28 @@ router.post('/parse-and-validate', authenticate, requireRole(['ADMIN', 'MANAGER'
       return;
     }
 
-    const sheetName = workbook.SheetNames[0];
-    if (!sheetName) {
+    if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
       res.status(400).json({ error: 'Spreadsheet has no sheets.' });
       return;
     }
 
-    const worksheet = workbook.Sheets[sheetName];
-    const rawRows: any[] = xlsx.utils.sheet_to_json(worksheet, { defval: '' });
+    // Pick the sheet with the most rows in case the first sheet is a cover/readme
+    let rawRows: any[] = [];
+    for (const name of workbook.SheetNames) {
+      const sheet = workbook.Sheets[name];
+      const rows: any[] = xlsx.utils.sheet_to_json(sheet, { defval: '' });
+      if (rows.length > rawRows.length) {
+        rawRows = rows;
+      }
+    }
 
     if (rawRows.length === 0) {
-      res.status(400).json({ error: 'The uploaded spreadsheet is empty.' });
+      res.status(400).json({ error: 'The uploaded spreadsheet is empty or contains no tabular data.' });
       return;
     }
 
     const headers = Object.keys(rawRows[0]);
-
-    // Intelligent auto-mapping heuristics
     const suggestedMapping: Record<string, string> = {};
-    const mappingHeuristics: Record<string, RegExp[]> = {
-      property_code: [/prop(erty)?[\s_-]?(id|code|no|num)/i, /plot[\s_-]?(no|num|id)/i, /^code$/i, /^id$/i],
-      project_name: [/project[\s_-]?(name|title)?/i, /^scheme$/i, /^layout$/i],
-      location_name: [/loc(ation)?[\s_-]?(name)?/i, /^city$/i, /^place$/i, /^town$/i],
-      property_type: [/(property[\s_-]?)?type/i, /^category$/i, /^kind$/i],
-      area_sqft: [/area[\s_-]?(sq[\s_-]?ft|sqft)?/i, /^sqft$/i, /^size$/i, /^extent$/i],
-      rate_per_sqft: [/rate[\s_-]?(per[\s_-]?sq[\s_-]?ft|\/sqft|sqft)?/i, /^rate$/i, /^sqft[\s_-]?rate$/i],
-      total_price: [/total[\s_-]?(price|cost|val(ue)?|amount)/i, /^price$/i, /^cost$/i, /^amount$/i],
-      status: [/status/i, /avail(ability)?/i, /state/i],
-      facing: [/facing/i, /direction/i],
-      survey_number: [/survey[\s_-]?(no|number|num)/i, /^sf[\s_-]?no$/i, /^survey$/i],
-      plot_number: [/plot[\s_-]?(no|number|num)/i, /^door[\s_-]?no$/i],
-      road_width: [/road[\s_-]?(width|size)?/i, /^street$/i],
-      description: [/desc(ription)?/i, /^notes$/i, /^remarks$/i],
-      latitude: [/^lat(itude)?$/i, /^lat$/i],
-      longitude: [/^lon(gitude)?$|^lng$/i, /^long$/i],
-      google_maps_url: [/google[\s_-]?maps[\s_-]?(url|link)?/i, /maps[\s_-]?link/i, /location[\s_-]?(url|link)/i, /^gmap(s)?$/i],
-    };
 
     for (const header of headers) {
       for (const [targetField, regexes] of Object.entries(mappingHeuristics)) {
@@ -102,38 +234,52 @@ router.post('/parse-and-validate', authenticate, requireRole(['ADMIN', 'MANAGER'
     let errorCount = 0;
     let warningCount = 0;
 
+    let displayIndex = 1;
     for (let idx = 0; idx < rawRows.length; idx++) {
       const raw = rawRows[idx];
+
+      // Skip truly empty rows (often present at bottom of Excel exports)
+      const isRowEmpty = Object.values(raw).every(v => v === null || v === undefined || String(v).trim() === '');
+      if (isRowEmpty) continue;
+
       const errors: string[] = [];
       const warnings: string[] = [];
 
-      const rawCode = String(raw[activeMapping.property_code] || '').trim();
-      const rawProj = String(raw[activeMapping.project_name] || 'General Inventory').trim();
-      const rawLoc = String(raw[activeMapping.location_name] || 'Chennai').trim();
-      const rawType = String(raw[activeMapping.property_type] || 'Residential Plot').trim();
-      const rawArea = parseNumeric(raw[activeMapping.area_sqft]);
-      const rawRate = parseNumeric(raw[activeMapping.rate_per_sqft]);
-      const rawPrice = parseNumeric(raw[activeMapping.total_price]);
+      let rawCode = activeMapping.property_code ? String(raw[activeMapping.property_code] || '').trim() : '';
+      const rawProj = (activeMapping.project_name && String(raw[activeMapping.project_name] || '').trim()) || 'RKS Prime Layout';
+      const rawLoc = (activeMapping.location_name && String(raw[activeMapping.location_name] || '').trim()) || 'Chennai';
+      const rawType = (activeMapping.property_type && String(raw[activeMapping.property_type] || '').trim()) || 'Residential Plot';
+      const rawPlotNum = activeMapping.plot_number ? String(raw[activeMapping.plot_number] || '').trim() : '';
+      const rawSurvey = activeMapping.survey_number ? String(raw[activeMapping.survey_number] || '').trim() : '';
+      const rawFacing = activeMapping.facing ? String(raw[activeMapping.facing] || '').trim() : '';
+      const rawRoadW = activeMapping.road_width ? String(raw[activeMapping.road_width] || '').trim() : '';
+      const rawDesc = activeMapping.description ? String(raw[activeMapping.description] || '').trim() : '';
+
+      let rawArea = parseNumeric(raw[activeMapping.area_sqft]);
+      let rawRate = parseNumeric(raw[activeMapping.rate_per_sqft]);
+      let rawPrice = parseNumeric(raw[activeMapping.total_price]);
       const rawStatus = String(raw[activeMapping.status] || 'AVAILABLE').trim().toUpperCase();
 
+      // Auto-generate code if not explicitly in spreadsheet
       if (!rawCode) {
-        errors.push('Missing Property ID / Code');
-      } else {
-        const codeUpper = rawCode.toUpperCase();
-        if (existingCodeSet.has(codeUpper)) {
-          warnings.push(`Existing ID '${codeUpper}' (will update existing plot)`);
+        const projPrefix = rawProj.replace(/[^a-zA-Z0-9]/g, '').slice(0, 3).toUpperCase() || 'RKS';
+        if (rawPlotNum) {
+          rawCode = `${projPrefix}-${rawPlotNum.replace(/[^a-zA-Z0-9]/g, '')}`;
+          warnings.push(`Auto-generated Property Code '${rawCode}' from Plot Number`);
+        } else {
+          rawCode = `${projPrefix}-P${String(displayIndex).padStart(3, '0')}`;
+          warnings.push(`Auto-generated Property Code '${rawCode}'`);
         }
-        if (seenCodesInFile.has(codeUpper)) {
-          warnings.push(`Duplicate ID '${codeUpper}' in file (later row will override)`);
-        }
-        seenCodesInFile.add(codeUpper);
       }
 
-      const rawFacing = activeMapping.facing ? String(raw[activeMapping.facing] || '') : '';
-      const rawPlotNum = activeMapping.plot_number ? String(raw[activeMapping.plot_number] || '') : '';
-      const rawSurvey = activeMapping.survey_number ? String(raw[activeMapping.survey_number] || '') : '';
-      const rawRoadW = activeMapping.road_width ? String(raw[activeMapping.road_width] || '') : '';
-      const rawDesc = activeMapping.description ? String(raw[activeMapping.description] || '') : '';
+      const codeUpper = rawCode.toUpperCase();
+      if (existingCodeSet.has(codeUpper)) {
+        warnings.push(`Existing Code '${codeUpper}' (will update existing plot)`);
+      }
+      if (seenCodesInFile.has(codeUpper)) {
+        warnings.push(`Duplicate Code '${codeUpper}' in file (later row will override)`);
+      }
+      seenCodesInFile.add(codeUpper);
 
       // Location coordinates — explicit columns first, then parse from Google Maps URL
       let rawLat: number | null = null;
@@ -160,26 +306,35 @@ router.post('/parse-and-validate', authenticate, requireRole(['ADMIN', 'MANAGER'
             rawLat = parseFloat(match[1]);
             rawLng = parseFloat(match[2]);
           } else if (mapsUrl.length > 5) {
-            warnings.push(`Could not extract coordinates from Maps URL — use full Google Maps link, not a short link`);
+            warnings.push(`Could not extract coordinates from Maps URL`);
           }
         }
       }
 
+      // Validate Area
       if (isNaN(rawArea) || rawArea <= 0) {
-        errors.push('Invalid Area (must be positive number)');
+        errors.push('Invalid Area (must be positive number, e.g. 1200 or 1,200 sqft)');
       }
 
+      // Auto-derive Rate per sqft if missing but Total Price and Area are available
       if (isNaN(rawRate) || rawRate <= 0) {
-        errors.push('Invalid Rate per Sq.Ft (must be positive number)');
+        if (!isNaN(rawPrice) && rawPrice > 0 && !isNaN(rawArea) && rawArea > 0) {
+          rawRate = Math.round(rawPrice / rawArea);
+          warnings.push(`Rate calculated as Rs.${rawRate}/sq.ft from total price`);
+        } else {
+          errors.push('Invalid Rate per Sq.Ft (could not determine from rate or total price)');
+        }
       }
 
+      // Auto-calculate Total Price if missing
       let computedPrice = 0;
-      if (!isNaN(rawArea) && !isNaN(rawRate)) {
+      if (!isNaN(rawArea) && !isNaN(rawRate) && rawArea > 0 && rawRate > 0) {
         computedPrice = calculateTotalPrice(rawArea, rawRate);
       }
-
-      if (!isNaN(rawPrice) && rawPrice > 0 && computedPrice > 0 && Math.abs(rawPrice - computedPrice) > 100) {
-        warnings.push(`Price mismatch: Provided ₹${rawPrice.toLocaleString('en-IN')} vs calculated ₹${computedPrice.toLocaleString('en-IN')}`);
+      if (isNaN(rawPrice) || rawPrice <= 0) {
+        rawPrice = computedPrice;
+      } else if (computedPrice > 0 && Math.abs(rawPrice - computedPrice) > 100) {
+        warnings.push(`Price mismatch: Provided Rs.${rawPrice.toLocaleString('en-IN')} vs calculated Rs.${computedPrice.toLocaleString('en-IN')}`);
       }
 
       const validStatuses = ['AVAILABLE', 'RESERVED', 'SOLD', 'BLOCKED', 'HOLD', 'UPCOMING', 'DRAFT'];
@@ -193,14 +348,14 @@ router.post('/parse-and-validate', authenticate, requireRole(['ADMIN', 'MANAGER'
       if (warnings.length > 0) warningCount++;
 
       validatedRows.push({
-        rowIndex: idx + 1,
-        property_code: rawCode ? rawCode.toUpperCase() : `ROW-${idx + 1}`,
+        rowIndex: displayIndex++,
+        property_code: codeUpper,
         project_name: rawProj,
         location_name: rawLoc,
         property_type: rawType,
         area_sqft: isNaN(rawArea) ? 0 : rawArea,
         rate_per_sqft: isNaN(rawRate) ? 0 : rawRate,
-        total_price: computedPrice || rawPrice || 0,
+        total_price: rawPrice || computedPrice || 0,
         status: normalizedStatus,
         plot_number: rawPlotNum,
         survey_number: rawSurvey,
@@ -270,7 +425,21 @@ router.post('/commit', authenticate, requireRole(['ADMIN', 'MANAGER', 'EMPLOYEE'
     let userId: number | null = req.user?.id || null;
     let userName: string = req.user?.name || 'Staff Member';
 
-    // Fallback to primary admin user if not present in token
+    // Verify userId actually exists in users table to prevent FK constraint failure
+    if (userId) {
+      try {
+        const uCheck = await query('SELECT id, name FROM users WHERE id = $1', [userId]);
+        if (uCheck.rowCount === 0) {
+          userId = null;
+        } else {
+          userName = uCheck.rows[0].name;
+        }
+      } catch {
+        userId = null;
+      }
+    }
+
+    // Fallback to primary admin user if not present or valid
     if (!userId) {
       try {
         const uRes = await query('SELECT id, name FROM users ORDER BY id ASC LIMIT 1');
@@ -278,7 +447,9 @@ router.post('/commit', authenticate, requireRole(['ADMIN', 'MANAGER', 'EMPLOYEE'
           userId = uRes.rows[0].id;
           userName = uRes.rows[0].name;
         }
-      } catch {}
+      } catch {
+        userId = null;
+      }
     }
 
     // 1. Resolve or Create Locations and Projects Cache
@@ -286,8 +457,8 @@ router.post('/commit', authenticate, requireRole(['ADMIN', 'MANAGER', 'EMPLOYEE'
     try {
       const existingLocs = await query('SELECT id, name, city FROM locations');
       for (const l of existingLocs.rows) {
-        locMap.set(String(l.name).toLowerCase(), l.id);
-        locMap.set(String(l.city).toLowerCase(), l.id);
+        locMap.set(String(l.name).toLowerCase().trim(), l.id);
+        locMap.set(String(l.city).toLowerCase().trim(), l.id);
       }
     } catch {}
 
@@ -295,7 +466,7 @@ router.post('/commit', authenticate, requireRole(['ADMIN', 'MANAGER', 'EMPLOYEE'
     try {
       const existingProjs = await query('SELECT id, name FROM projects');
       for (const p of existingProjs.rows) {
-        projMap.set(String(p.name).toLowerCase(), p.id);
+        projMap.set(String(p.name).toLowerCase().trim(), p.id);
       }
     } catch {}
 
@@ -310,23 +481,43 @@ router.post('/commit', authenticate, requireRole(['ADMIN', 'MANAGER', 'EMPLOYEE'
         // Resolve or create Location
         let locId: number = locMap.get(locName.toLowerCase()) || 0;
         if (!locId) {
-          const newLoc = await query(
-            `INSERT INTO locations (name, city, state) VALUES ($1, $2, 'Tamil Nadu') RETURNING id`,
-            [locName, locName]
+          const existingLoc = await query(
+            `SELECT id FROM locations WHERE LOWER(name) = LOWER($1) OR LOWER(city) = LOWER($1) LIMIT 1`,
+            [locName]
           );
-          locId = Number(newLoc.rows[0].id);
+          if (existingLoc.rowCount > 0) {
+            locId = Number(existingLoc.rows[0].id);
+          } else {
+            const newLoc = await query(
+              `INSERT INTO locations (name, city, state) VALUES ($1, $2, 'Tamil Nadu') RETURNING id`,
+              [locName, locName]
+            );
+            locId = Number(newLoc.rows[0].id);
+          }
           locMap.set(locName.toLowerCase(), locId);
         }
 
         // Resolve or create Project
         let projId: number = projMap.get(projName.toLowerCase()) || 0;
         if (!projId) {
-          const projCode = `PRJ-${projName.replace(/[^a-zA-Z0-9]/g, '').slice(0, 4).toUpperCase() || 'RKS'}-${Math.floor(100 + Math.random() * 900)}`;
-          const newProj = await query(
-            `INSERT INTO projects (name, code, location_id, status) VALUES ($1, $2, $3, 'ACTIVE') RETURNING id`,
-            [projName, projCode, locId]
+          const existingProj = await query(
+            `SELECT id FROM projects WHERE LOWER(name) = LOWER($1) LIMIT 1`,
+            [projName]
           );
-          projId = Number(newProj.rows[0].id);
+          if (existingProj.rowCount > 0) {
+            projId = Number(existingProj.rows[0].id);
+          } else {
+            const baseCode = `PRJ-${projName.replace(/[^a-zA-Z0-9]/g, '').slice(0, 4).toUpperCase() || 'RKS'}`;
+            const projCode = `${baseCode}-${Math.floor(100 + Math.random() * 900)}`;
+            const newProj = await query(
+              `INSERT INTO projects (name, code, location_id, status)
+               VALUES ($1, $2, $3, 'ACTIVE')
+               ON CONFLICT (code) DO UPDATE SET updated_at = NOW()
+               RETURNING id`,
+              [projName, projCode, locId]
+            );
+            projId = Number(newProj.rows[0].id);
+          }
           projMap.set(projName.toLowerCase(), projId);
         }
 
@@ -397,23 +588,27 @@ router.post('/commit', authenticate, requireRole(['ADMIN', 'MANAGER', 'EMPLOYEE'
 
         if (propId) {
           // Add default primary image if none exists
-          await query(
-            `INSERT INTO property_images (property_id, url, title, is_primary)
-             SELECT $1, $2, $3, true
-             WHERE NOT EXISTS (SELECT 1 FROM property_images WHERE property_id = $1)`,
-            [
-              propId,
-              'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&auto=format&fit=crop&q=80',
-              `${propCode} Layout View`,
-            ]
-          );
+          try {
+            await query(
+              `INSERT INTO property_images (property_id, url, title, is_primary)
+               SELECT $1, $2, $3, true
+               WHERE NOT EXISTS (SELECT 1 FROM property_images WHERE property_id = $1)`,
+              [
+                propId,
+                'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&auto=format&fit=crop&q=80',
+                `${propCode} Layout View`,
+              ]
+            );
+          } catch {}
 
           // Add history record
-          await query(
-            `INSERT INTO property_history (property_id, event_type, old_value, new_value, description, changed_by)
-             VALUES ($1, 'IMPORTED', null, $2, 'Imported from spreadsheet batch', $3)`,
-            [propId, item.status || 'AVAILABLE', userId]
-          );
+          try {
+            await query(
+              `INSERT INTO property_history (property_id, event_type, old_value, new_value, description, changed_by)
+               VALUES ($1, 'IMPORTED', null, $2, 'Imported from spreadsheet batch', $3)`,
+              [propId, item.status || 'AVAILABLE', userId]
+            );
+          } catch {}
         }
 
         importedCount++;

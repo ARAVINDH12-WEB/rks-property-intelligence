@@ -41,12 +41,12 @@ export const ImportWizard: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const targetFields = [
-    { key: 'property_code', label: 'Property ID / Code', required: true },
-    { key: 'project_name', label: 'Project Name', required: true },
-    { key: 'location_name', label: 'Location / City', required: true },
+    { key: 'property_code', label: 'Property ID / Code', required: false },
+    { key: 'project_name', label: 'Project Name', required: false },
+    { key: 'location_name', label: 'Location / City', required: false },
     { key: 'property_type', label: 'Property Type', required: false },
     { key: 'area_sqft', label: 'Area in Sq.Ft', required: true },
-    { key: 'rate_per_sqft', label: 'Rate per Sq.Ft', required: true },
+    { key: 'rate_per_sqft', label: 'Rate per Sq.Ft', required: false },
     { key: 'total_price', label: 'Total Price', required: false },
     { key: 'status', label: 'Availability Status', required: false },
     { key: 'plot_number', label: 'Plot / Unit Number', required: false },
@@ -66,15 +66,20 @@ export const ImportWizard: React.FC = () => {
       setHeaders(res.headers || []);
       setMapping(res.suggestedMapping || {});
       setSampleRows(res.sampleRows || []);
-      if (res.stage === 'validated') {
+      if (res.stage === 'validated' && res.summary?.validRows > 0) {
         setValidationSummary(res.summary);
         setPreviewRows(res.previewRows || []);
         setAllValidatedRows(res.allValidatedRows || []);
         setStep(3);
         showToast('Parsed & validated!', `${res.summary.totalRows} rows, ${res.summary.validRows} valid`, 'success');
       } else {
+        if (res.summary) {
+          setValidationSummary(res.summary);
+          setPreviewRows(res.previewRows || []);
+          setAllValidatedRows(res.allValidatedRows || []);
+        }
         setStep(2);
-        showToast('Review column mapping', `${res.totalRows} rows detected`, 'info');
+        showToast('Review column mapping', `Please confirm or adjust column mappings for ${res.summary?.totalRows || res.totalRows || 'your'} rows`, 'info');
       }
     } catch (err: any) {
       showToast('Upload Failed', err.message, 'error');
@@ -140,7 +145,8 @@ RKS-00902,RKS Grandeur City,Bangalore,Villa,3400,9800,AVAILABLE,Villa G-12,North
     { num: 4, label: 'Done!', icon: CheckCircle2 },
   ];
 
-  const requiredMapped = targetFields.filter(f => f.required).every(f => mapping[f.key]);
+  // Required: area_sqft AND either rate_per_sqft OR total_price
+  const requiredMapped = Boolean(mapping.area_sqft && (mapping.rate_per_sqft || mapping.total_price));
 
   return (
     <div className="space-y-6">
