@@ -28,6 +28,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust reverse proxy (Railway, Vercel, Cloudflare, etc.)
+app.set('trust proxy', 1);
+
 // Security Headers & Rate Limiting
 app.use(helmet({
   contentSecurityPolicy: {

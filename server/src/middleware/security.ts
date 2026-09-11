@@ -35,7 +35,11 @@ export function createRateLimiter(
       return next();
     }
 
-    const ip = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+    const rawForwarded = req.headers['x-forwarded-for'];
+    const clientIp = typeof rawForwarded === 'string'
+      ? rawForwarded.split(',')[0].trim()
+      : (Array.isArray(rawForwarded) ? rawForwarded[0] : null);
+    const ip = req.ip || clientIp || req.socket.remoteAddress || 'unknown';
     const key = `${req.baseUrl || req.path}:${String(ip)}`;
     const now = Date.now();
 
