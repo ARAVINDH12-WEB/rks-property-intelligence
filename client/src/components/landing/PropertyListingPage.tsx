@@ -49,12 +49,19 @@ export const PropertyListingPage: React.FC<PropertyListingPageProps> = ({ cityFi
   const [page, setPage] = useState(1);
   const limit = window.innerWidth < 768 ? 10 : 12;
   const [total, setTotal] = useState(0);
+  const [locations, setLocations] = useState<string[]>([]);
 
   useEffect(() => {
     const handleScroll = () => {
       setShowScrollTop(window.scrollY > 300);
     };
     window.addEventListener('scroll', handleScroll);
+    
+    // Fetch distinct locations
+    api.getPublicStats().then(stats => {
+      if (stats.locations) setLocations(stats.locations);
+    }).catch(console.error);
+
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -66,8 +73,8 @@ export const PropertyListingPage: React.FC<PropertyListingPageProps> = ({ cityFi
         offset: (page - 1) * limit,
         status,
       };
-      if (city) params.search = city;
-      if (propertyType) params.type = propertyType;
+      if (city) params.q = city;
+      if (propertyType) params.property_type = propertyType;
 
       const res = await api.getProperties(params);
       let fetchedProps = res.properties || [];
@@ -162,11 +169,9 @@ export const PropertyListingPage: React.FC<PropertyListingPageProps> = ({ cityFi
               </label>
               <select value={city} onChange={e => setCity(e.target.value)} className="w-full rounded-md border border-slate-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm">
                 <option value="">{t('listing.allLocations')}</option>
-                <option value="Chennai">Chennai</option>
-                <option value="Trichy">Trichy</option>
-                <option value="Coimbatore">Coimbatore</option>
-                <option value="Hosur">Hosur</option>
-                <option value="Bangalore Corridor">Bangalore Corridor</option>
+                {locations.map(loc => (
+                  <option key={loc} value={loc}>{loc}</option>
+                ))}
               </select>
             </div>
 
@@ -416,11 +421,9 @@ export const PropertyListingPage: React.FC<PropertyListingPageProps> = ({ cityFi
                 <label className="block text-sm font-medium mb-2">{t('listing.location')}</label>
                 <select value={city} onChange={e => setCity(e.target.value)} className="w-full rounded-md border border-slate-300 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm">
                   <option value="">{t('listing.allLocations')}</option>
-                  <option value="Chennai">Chennai</option>
-                  <option value="Trichy">Trichy</option>
-                  <option value="Coimbatore">Coimbatore</option>
-                  <option value="Hosur">Hosur</option>
-                  <option value="Bangalore Corridor">Bangalore Corridor</option>
+                  {locations.map(loc => (
+                    <option key={loc} value={loc}>{loc}</option>
+                  ))}
                 </select>
               </div>
               <button 

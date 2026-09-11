@@ -35,8 +35,11 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
   const [totalPlots, setTotalPlots] = useState<number | null>(null);
   const [availablePlots, setAvailablePlots] = useState<number | null>(null);
   const [completedVisits, setCompletedVisits] = useState<number | null>(null);
+  const [startingRate, setStartingRate] = useState<number | null>(null);
   const [featuredPlots, setFeaturedPlots] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [cityCounts, setCityCounts] = useState<Record<string, number>>({});
+  const [locationList, setLocationList] = useState<string[]>([]);
 
   const [searchLocation, setSearchLocation] = useState('');
   const [searchType, setSearchType] = useState('');
@@ -46,24 +49,16 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const allProps = await api.getProperties({ limit: 1 });
-        const availProps = await api.getProperties({ status: 'AVAILABLE', limit: 6 });
-        const siteVisits = await api.getSiteVisits({ status: 'COMPLETED', limit: 1 });
+        const stats = await api.getPublicStats();
 
         if (mounted) {
-          setTotalPlots(allProps.pagination.total);
-          setAvailablePlots(availProps.pagination.total);
-          setFeaturedPlots(availProps.properties || []);
-          
-          let visitsCount = 0;
-          if (siteVisits.stats && typeof siteVisits.stats.COMPLETED === 'number') {
-            visitsCount = siteVisits.stats.COMPLETED;
-          } else if (siteVisits.stats && typeof siteVisits.stats.total === 'number') {
-            visitsCount = siteVisits.stats.total;
-          } else if (siteVisits.site_visits) {
-            visitsCount = siteVisits.site_visits.length;
-          }
-          setCompletedVisits(visitsCount > 0 ? visitsCount : 10);
+          setTotalPlots(stats.totalPlots);
+          setAvailablePlots(stats.availablePlots);
+          setStartingRate(stats.startingRate);
+          setCompletedVisits(stats.completedVisits);
+          setFeaturedPlots(stats.featuredPlots || []);
+          setCityCounts(stats.cityCounts || {});
+          setLocationList(stats.locations || []);
         }
       } catch (err) {
         console.error('Error fetching landing page data:', err);
@@ -75,6 +70,14 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
     fetchData();
     return () => { mounted = false; };
   }, []);
+
+  // Build city cards dynamically from API data
+  const slugify = (name: string) => name.toLowerCase().replace(/\s+/g, '-');
+  const cityCards = locationList.map(city => ({
+    name: city,
+    count: cityCounts[city] || 0,
+    slug: slugify(city),
+  }));
 
   const handleExplore = () => {
     navigate(getLocalizedPath('/properties', currentLocale));
@@ -88,13 +91,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
     navigate(`${getLocalizedPath('/properties', currentLocale)}${queryString}`);
   };
 
-  const cityCards = [
-    { name: 'Chennai', count: '14+', slug: 'chennai' },
-    { name: 'Trichy', count: '16+', slug: 'trichy' },
-    { name: 'Coimbatore', count: '10+', slug: 'coimbatore' },
-    { name: 'Hosur', count: '10+', slug: 'hosur' },
-    { name: 'Bangalore Corridor', count: '8+', slug: 'bangalore-corridor' },
-  ];
+
 
   const canonicalUrl = currentLocale === 'ta' ? 'https://rksprime.com/ta' : 'https://rksprime.com/';
   const pageTitle = currentLocale === 'ta' 
@@ -176,7 +173,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
                 onClick={handleExplore} 
                 className="bg-brand-teal hover:bg-brand-teal-light text-white px-8 py-4 rounded-full font-bold text-base sm:text-lg transition-all shadow-elevated hover:shadow-luxury flex items-center justify-center gap-2"
               >
-                {t('hero.exploreBtn', { count: availablePlots !== null ? availablePlots : 40 })}
+                {t('hero.exploreBtn', { count: availablePlots !== null ? availablePlots : '…' })}
                 <ArrowRight size={20} />
               </button>
               <button 
@@ -216,11 +213,9 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
                 className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-brand-navy border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-teal text-slate-800 dark:text-slate-200 appearance-none font-medium text-sm"
               >
                 <option value="">{t('hero.allLocations')}</option>
-                <option value="Chennai">Chennai</option>
-                <option value="Trichy">Trichy</option>
-                <option value="Coimbatore">Coimbatore</option>
-                <option value="Hosur">Hosur</option>
-                <option value="Bangalore Corridor">Bangalore Corridor</option>
+                {locationList.map(city => (
+                  <option key={city} value={city}>{city}</option>
+                ))}
               </select>
             </div>
             <div className="w-full md:flex-1 relative">
@@ -252,14 +247,14 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
             <div className="flex flex-col items-center text-center p-6 bg-white dark:bg-brand-slate rounded-2xl shadow-card border border-slate-100 dark:border-slate-800">
               <SurveyPinIcon size={32} className="text-brand-amber mb-4" />
               <div className="text-3xl md:text-4xl font-bold text-brand-navy dark:text-white mb-1 font-heading">
-                {totalPlots !== null ? totalPlots : '58'}
+                {totalPlots !== null ? totalPlots : '…'}
               </div>
               <div className="text-sm text-slate-500 dark:text-slate-400 font-medium">{t('stats.plotsCount')}</div>
             </div>
             <div className="flex flex-col items-center text-center p-6 bg-white dark:bg-brand-slate rounded-2xl shadow-card border border-slate-100 dark:border-slate-800">
               <RupeeSignIcon size={32} className="text-brand-amber mb-4" />
               <div className="text-3xl md:text-4xl font-bold text-brand-navy dark:text-white mb-1 font-heading">
-                ₹850
+                {startingRate !== null ? `₹${startingRate}` : '…'}
               </div>
               <div className="text-sm text-slate-500 dark:text-slate-400 font-medium">{t('stats.startingRate')} {t('stats.perSqft')}</div>
             </div>
@@ -273,7 +268,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
             <div className="flex flex-col items-center text-center p-6 bg-white dark:bg-brand-slate rounded-2xl shadow-card border border-slate-100 dark:border-slate-800">
               <KeyHandoverIcon size={32} className="text-brand-amber mb-4" />
               <div className="text-3xl md:text-4xl font-bold text-brand-navy dark:text-white mb-1 font-heading">
-                {completedVisits !== null ? completedVisits + '+' : '10+'}
+                {completedVisits !== null ? completedVisits + '+' : '…'}
               </div>
               <div className="text-sm text-slate-500 dark:text-slate-400 font-medium">{t('stats.visitsCompleted')}</div>
             </div>
@@ -354,7 +349,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
               onClick={handleExplore} 
               className="hidden md:flex items-center gap-2 text-brand-teal font-semibold hover:text-brand-teal-light transition-colors"
             >
-              {t('featured.viewAll', { count: availablePlots !== null ? availablePlots : 40 })}
+              {t('featured.viewAll', { count: availablePlots !== null ? availablePlots : '…' })}
             </button>
           </div>
 
@@ -443,7 +438,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
               onClick={handleExplore} 
               className="inline-flex items-center gap-2 text-brand-teal font-semibold text-sm"
             >
-              {t('featured.viewAll', { count: availablePlots !== null ? availablePlots : 40 })}
+              {t('featured.viewAll', { count: availablePlots !== null ? availablePlots : '…' })}
             </button>
           </div>
         </div>

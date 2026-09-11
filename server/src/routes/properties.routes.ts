@@ -12,6 +12,86 @@ import {
 
 const router = Router();
 
+// GET /api/properties/public-stats — Aggregated stats for the public front page (unauthenticated)
+router.get('/public-stats', async (_req: Request, res: Response): Promise<void> => {
+  try {
+    // 1. Total plots (non-archived)
+    const totalRes = await query(`SELECT COUNT(*)::int as total FROM properties WHERE archived = false`);
+    const totalPlots = totalRes.rows[0]?.total || 0;
+
+    // 2. Available plots
+    const availRes = await query(`SELECT COUNT(*)::int as total FROM properties WHERE archived = false AND status = 'AVAILABLE'`);
+    const availablePlots = availRes.rows[0]?.total || 0;
+
+    // 3. Starting rate (minimum rate_per_sqft among AVAILABLE non-archived plots)
+    const rateRes = await query(`SELECT MIN(rate_per_sqft)::numeric as min_rate FROM properties WHERE archived = false AND status = 'AVAILABLE' AND rate_per_sqft > 0`);
+    const startingRate = rateRes.rows[0]?.min_rate ? Number(rateRes.rows[0].min_rate) : 0;
+
+    // 4. Completed site visits count
+    let completedVisits = 0;
+    try {
+      const visitsRes = await query(`SELECT COUNT(*)::int as total FROM site_visits WHERE status = 'COMPLETED'`);
+      completedVisits = visitsRes.rows[0]?.total || 0;
+    } catch {
+      // site_visits table might not exist yet
+    }
+
+    // 5. Per-city counts of AVAILABLE plots
+    const cityRes = await query(`
+      SELECT loc.city, COUNT(*)::int as count
+      FROM properties p
+      LEFT JOIN locations loc ON p.location_id = loc.id
+      WHERE p.archived = false AND p.status = 'AVAILABLE' AND loc.city IS NOT NULL
+      GROUP BY loc.city
+      ORDER BY count DESC
+    `);
+    const cityCounts: Record<string, number> = {};
+    const locations: string[] = [];
+    for (const row of cityRes.rows) {
+      if (row.city) {
+        cityCounts[row.city] = row.count;
+        locations.push(row.city);
+      }
+    }
+
+    // 6. Featured plots (up to 6 AVAILABLE, newest first)
+    const featuredRes = await query(`
+      SELECT
+        p.*,
+        prj.name as project_name,
+        prj.code as project_code,
+        loc.name as location_name,
+        loc.city as city,
+        loc.state as state,
+        (
+          SELECT url FROM property_images pi
+          WHERE pi.property_id = p.id
+          ORDER BY pi.is_primary DESC, pi.id ASC
+          LIMIT 1
+        ) as primary_image_url
+      FROM properties p
+      LEFT JOIN projects prj ON p.project_id = prj.id
+      LEFT JOIN locations loc ON p.location_id = loc.id
+      WHERE p.archived = false AND p.status = 'AVAILABLE'
+      ORDER BY p.created_at DESC
+      LIMIT 6
+    `);
+
+    res.json({
+      totalPlots,
+      availablePlots,
+      startingRate,
+      completedVisits,
+      cityCounts,
+      locations,
+      featuredPlots: featuredRes.rows,
+    });
+  } catch (error) {
+    console.error('Error fetching public stats:', error);
+    res.status(500).json({ error: 'Failed to fetch public stats' });
+  }
+});
+
 // GET /api/properties - High-Performance Search, Filter, Sort & Paginate
 router.get('/', optionalAuthenticate, async (req: Request, res: Response): Promise<void> => {
   try {

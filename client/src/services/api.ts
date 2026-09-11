@@ -218,6 +218,18 @@ export const api = {
     return request<{ properties: Property[]; pagination: PaginationMeta }>(`/properties?${query.toString()}`);
   },
 
+  async getPublicStats(): Promise<{
+    totalPlots: number;
+    availablePlots: number;
+    startingRate: number;
+    completedVisits: number;
+    cityCounts: Record<string, number>;
+    locations: string[];
+    featuredPlots: Property[];
+  }> {
+    return request<any>('/properties/public-stats');
+  },
+
   async getProperty(id: number): Promise<{ property: Property }> {
     return request<{ property: Property }>(`/properties/${id}`);
   },
