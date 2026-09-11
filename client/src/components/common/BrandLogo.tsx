@@ -36,7 +36,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
     >
       <div className={`${iconDimensions} rounded-xl bg-white p-1 shadow-md border border-slate-200/50 flex items-center justify-center shrink-0 overflow-hidden`}>
         <img
-          src="/logo.png"
+          src="/logo-icon.png"
           alt="RKS Property Hub"
           className="h-full w-full object-contain"
         />

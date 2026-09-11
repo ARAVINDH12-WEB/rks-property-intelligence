@@ -9,18 +9,18 @@ export default {
     extend: {
       colors: {
         brand: {
-          navy: '#0A192F',
-          'navy-light': '#1e293b',
+          navy: '#0B1E2D',
+          'navy-light': '#162b3d',
           slate: '#1E293B',
-          teal: '#008080',
+          teal: '#0E7A5F',
           'teal-light': '#14B8A6',
-          'teal-dark': '#042F2E',
-          charcoal: '#333233',
-          gold: '#D4AF37',
+          'teal-dark': '#064e3b',
+          charcoal: '#1A242D',
+          gold: '#C98A2C',
           'gold-light': '#F4E5B1',
-          'gold-dark': '#AA8B2C',
-          amber: '#F59E0B',
-          'amber-dark': '#B45309',
+          'gold-dark': '#9A661C',
+          amber: '#C98A2C',
+          'amber-dark': '#9A661C',
         },
         rks: {
           bg: '#FAF9F6', 

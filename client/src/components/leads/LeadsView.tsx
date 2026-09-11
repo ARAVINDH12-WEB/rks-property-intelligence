@@ -199,6 +199,14 @@ export const LeadsView: React.FC = () => {
     .filter(l => !['CLOSED_LOST'].includes(l.status))
     .reduce((acc, l) => acc + (l.total_price || 1500000), 0);
 
+  // Stale Lead Indicator (3+ days untouched without closing)
+  const isStaleLead = (createdAt: string, status: string) => {
+    if (!createdAt || ['CLOSED_WON', 'CLOSED_LOST'].includes(status)) return false;
+    const createdDate = new Date(createdAt);
+    const diffDays = (Date.now() - createdDate.getTime()) / (1000 * 3600 * 24);
+    return diffDays >= 3;
+  };
+
   // Lead Temperature Indicator
   const getLeadUrgency = (lead: Lead) => {
     if (lead.status === 'CLOSED_WON') return { label: 'REGISTERED', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' };
@@ -502,10 +510,18 @@ export const LeadsView: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* Urgency Badge */}
-                        <span className={`text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full border ${urgency.color}`}>
-                          {urgency.label}
-                        </span>
+                        {/* Urgency & Stale Badges */}
+                        <div className="flex flex-col items-end gap-1">
+                          <span className={`text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full border ${urgency.color}`}>
+                            {urgency.label}
+                          </span>
+                          {isStaleLead(lead.created_at, lead.status) && (
+                            <span className="text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded-full border bg-amber-500/20 text-amber-300 border-amber-500/40 flex items-center gap-1">
+                              <AlertCircle className="w-2.5 h-2.5 text-amber-400" />
+                              <span>⚠️ Stale (3+ days)</span>
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       {/* Property Intent Pill */}
