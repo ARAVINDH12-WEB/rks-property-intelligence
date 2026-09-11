@@ -242,6 +242,30 @@ CREATE TABLE IF NOT EXISTS chat_conversations (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS posters (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(200),
+  image_url TEXT NOT NULL,
+  link_url TEXT,
+  alt_text VARCHAR(255),
+  display_order INTEGER DEFAULT 0,
+  is_active BOOLEAN DEFAULT true,
+  start_date DATE,
+  end_date DATE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS notification_logs (
+  id SERIAL PRIMARY KEY,
+  type VARCHAR(50) NOT NULL,
+  recipient VARCHAR(50) NOT NULL,
+  payload JSONB,
+  status VARCHAR(30) NOT NULL,
+  error_message TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE INDEX IF NOT EXISTS idx_properties_property_code ON properties(property_code);
 CREATE INDEX IF NOT EXISTS idx_properties_status ON properties(status);
 CREATE INDEX IF NOT EXISTS idx_properties_project_id ON properties(project_id);

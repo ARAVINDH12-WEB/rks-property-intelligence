@@ -79,10 +79,10 @@ export const ContactPage: React.FC = () => {
   };
 
   const canonicalUrl = currentLocale === 'ta' ? 'https://rksprime.com/ta/contact' : 'https://rksprime.com/contact';
-  const pageTitle = currentLocale === 'ta' ? 'தொடர்பு கொள்ள | RKS Prime Properties' : 'Contact Us | RKS Prime Properties';
+  const pageTitle = currentLocale === 'ta' ? 'தொடர்பு கொள்ள | RKS Property Hub' : 'Contact Us | RKS Property Hub';
   const pageDesc = currentLocale === 'ta'
-    ? 'மனை விசாரணைகள், பட்டா ஆவண சரிபார்ப்பு மற்றும் இலவச வாகன தளப் பார்வைக்கு எங்கள் ஆலோசகர்களை அணுகவும்.'
-    : 'Get in touch with RKS Prime Properties advisors for property inquiries, legal verification, and free cab site visits.';
+    ? 'மனை விசாரணைகள், சட்ட ஆவண சரிபார்ப்பு மற்றும் இலவச வாகன தளப் பார்வைக்கு RKS Property Hub ஆலோசகர்களைத் தொடர்பு கொள்ளவும்.'
+    : 'Get in touch with RKS Property Hub advisors for property inquiries, legal verification, and free cab site visits.';
 
   return (
     <div className={`min-h-screen font-sans ${theme === 'dark' ? 'dark bg-rks-bgDark text-white' : 'bg-rks-bg text-brand-navy'}`}>

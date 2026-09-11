@@ -98,7 +98,7 @@ export const OverviewView: React.FC = () => {
             <span>{isStaff ? 'Inventory Command Center' : 'Customer & Buyer Portal'}</span>
           </div>
           <h1 className="mt-1 text-3xl font-black tracking-tight text-brand-navy dark:text-brand-charcoal dark:text-white font-sans">
-            {isStaff ? 'Executive Inventory Overview' : 'Explore RKS Prime Properties'}
+            {isStaff ? 'Executive Inventory Overview' : 'Explore RKS Property Hub'}
           </h1>
           <p className="mt-1 text-xs text-slate-500 dark:text-zinc-400">
             {isStaff

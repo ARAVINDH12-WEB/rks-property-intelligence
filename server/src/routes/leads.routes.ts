@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { query } from '../db/index.js';
 import { authenticate, authorize } from '../middleware/auth.js';
+import { dispatchWhatsAppAlert } from '../services/whatsapp.service.js';
 
 const router = Router();
 
@@ -23,6 +24,20 @@ router.post('/', async (req: Request, res: Response) => {
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, created_at`,
       [name.trim(), cleanPhone, email?.trim() || null, source, notes?.trim() || null, property_id || null, property_code || null, leadStatus]
     );
+
+    // Dispatch WhatsApp alert asynchronously (non-blocking)
+    dispatchWhatsAppAlert({
+      type: 'NEW_LEAD',
+      customerName: name.trim(),
+      customerPhone: cleanPhone,
+      customerEmail: email?.trim(),
+      propertyCode: property_code || (property_id ? `PROP-${property_id}` : undefined),
+      summary: `New lead enquiry via ${source}`,
+      userMessage: notes?.trim(),
+    }).catch(err => {
+      console.warn('[Leads] WhatsApp notification error:', err);
+    });
+
     res.status(201).json({ 
       success: true, 
       leadId: result.rows[0].id, 

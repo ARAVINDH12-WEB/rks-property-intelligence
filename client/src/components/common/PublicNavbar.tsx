@@ -43,7 +43,7 @@ export const PublicNavbar: React.FC = () => {
             onClick={() => navigate(currentLocale === 'ta' ? '/ta' : '/')}
           >
             <span className={`font-heading font-bold text-2xl mr-1 drop-shadow-md ${isScrolled ? 'text-white' : 'text-brand-navy dark:text-white'}`}>RKS</span>
-            <span className="font-heading font-bold text-2xl text-brand-teal drop-shadow-md">Prime</span>
+            <span className="font-heading font-bold text-2xl text-brand-teal drop-shadow-md">Property Hub</span>
           </div>
 
           {/* Desktop Menu */}

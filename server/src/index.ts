@@ -20,6 +20,7 @@ import aiChatRoutes from './routes/ai-chat.routes.js';
 import offersRoutes from './routes/offers.routes.js';
 import settingsRoutes from './routes/settings.routes.js';
 import leadsRoutes from './routes/leads.routes.js';
+import postersRoutes from './routes/posters.routes.js';
 import { createRateLimiter } from './middleware/security.js';
 import helmet from 'helmet';
 
@@ -96,6 +97,7 @@ app.use('/api/ai-chat', aiChatRoutes);
 app.use('/api/offers', offersRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/leads', leadsRoutes);
+app.use('/api/posters', postersRoutes);
 
 // Comprehensive Health check endpoint
 app.get('/api/health', async (_req: Request, res: Response) => {

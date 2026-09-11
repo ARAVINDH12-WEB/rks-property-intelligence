@@ -24,10 +24,10 @@ export const AboutPage: React.FC = () => {
   ];
 
   const canonicalUrl = currentLocale === 'ta' ? 'https://rksprime.com/ta/about' : 'https://rksprime.com/about';
-  const pageTitle = currentLocale === 'ta' ? 'எங்களை பற்றி | RKS Prime Properties' : 'About Us | RKS Prime Properties';
+  const pageTitle = currentLocale === 'ta' ? 'எங்களை பற்றி | RKS Property Hub' : 'About Us | RKS Property Hub';
   const pageDesc = currentLocale === 'ta'
-    ? '2010 முதல் தமிழ்நாடு & பெங்களூரு காரிடாரில் 500-க்கும் மேற்பட்ட ஏக்கர் நிலங்களை சர்வே செய்து வழங்கி வரும் நம்பகமான நிறுவனம்.'
-    : 'Learn about RKS Prime Properties — surveying and developing over 500 acres of prime residential communities with transparent titles.';
+    ? 'RKS Property Hub பற்றி அறியவும் — 500-க்கும் மேற்பட்ட ஏக்கர் தெளிவான பட்டா மனைகளை உருவாக்கி மேம்படுத்திய நிறுவனம்.'
+    : 'Learn about RKS Property Hub — surveying and developing over 500 acres of prime residential communities with transparent titles.';
 
   return (
     <div className={`min-h-screen font-sans ${theme === 'dark' ? 'dark bg-rks-bgDark text-white' : 'bg-rks-bg text-brand-navy'}`}>

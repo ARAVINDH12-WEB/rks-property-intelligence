@@ -1,4 +1,4 @@
-import { Property, Project, Location, PropertyFilterParams, PaginationMeta, UserRole } from '../types/index.js';
+import { Property, Project, Location, PropertyFilterParams, PaginationMeta, UserRole, Poster } from '../types/index.js';
 
 const DEFAULT_PRODUCTION_BACKEND = 'https://rks-property-intelligence-production.up.railway.app';
 const envApiUrl = (import.meta as any).env?.VITE_API_URL;
@@ -224,6 +224,7 @@ export const api = {
     startingRate: number;
     completedVisits: number;
     cityCounts: Record<string, number>;
+    categoryCounts?: Record<string, number>;
     locations: string[];
     featuredPlots: Property[];
     settings?: Record<string, string>;
@@ -507,5 +508,40 @@ export const api = {
       if (filters.location_id) params.set('location_id', filters.location_id);
     }
     return `${API_BASE}/export?${params.toString()}`;
+  },
+
+  // Posters & Banners
+  async getPosters(): Promise<{ posters: Poster[] }> {
+    return request<{ posters: Poster[] }>('/posters');
+  },
+
+  async getAdminPosters(): Promise<{ posters: Poster[] }> {
+    return request<{ posters: Poster[] }>('/posters/admin');
+  },
+
+  async createPoster(data: Partial<Poster>): Promise<{ message: string; poster: Poster }> {
+    return request<{ message: string; poster: Poster }>('/posters', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async updatePoster(id: number, data: Partial<Poster>): Promise<{ message: string; poster: Poster }> {
+    return request<{ message: string; poster: Poster }>(`/posters/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async togglePoster(id: number): Promise<{ message: string; poster: Poster }> {
+    return request<{ message: string; poster: Poster }>(`/posters/${id}/toggle`, {
+      method: 'PATCH',
+    });
+  },
+
+  async deletePoster(id: number): Promise<{ message: string }> {
+    return request<{ message: string }>(`/posters/${id}`, {
+      method: 'DELETE',
+    });
   },
 };

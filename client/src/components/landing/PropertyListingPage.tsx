@@ -58,6 +58,13 @@ export const PropertyListingPage: React.FC<PropertyListingPageProps> = ({ cityFi
     };
     window.addEventListener('scroll', handleScroll);
     
+    // Parse URL search params on initial load
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlType = urlParams.get('property_type') || urlParams.get('type');
+    const urlCity = urlParams.get('city') || urlParams.get('q');
+    if (urlType) setPropertyType(urlType);
+    if (urlCity && !cityFilter) setCity(urlCity);
+
     // Fetch distinct locations & settings
     api.getPublicStats().then(stats => {
       if (stats.locations) setLocations(stats.locations);
@@ -66,6 +73,17 @@ export const PropertyListingPage: React.FC<PropertyListingPageProps> = ({ cityFi
 
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Update URL search parameters when filters change
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (propertyType) params.set('property_type', propertyType);
+    else params.delete('property_type');
+    if (city) params.set('city', city);
+    else params.delete('city');
+    const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
+    window.history.replaceState(null, '', newUrl);
+  }, [propertyType, city]);
 
   const fetchProperties = async () => {
     setLoading(true);
@@ -132,8 +150,8 @@ export const PropertyListingPage: React.FC<PropertyListingPageProps> = ({ cityFi
 
   const canonicalUrl = currentLocale === 'ta' ? 'https://rksprime.com/ta/properties' : 'https://rksprime.com/properties';
   const pageTitle = currentLocale === 'ta' 
-    ? 'விற்பனைக்கு உள்ள மனைகள் | RKS Prime Properties' 
-    : 'Verified Surveyed Plots for Sale | RKS Prime Properties';
+    ? 'விற்பனைக்கு உள்ள மனைகள் | RKS Property Hub' 
+    : 'Verified Surveyed Plots for Sale | RKS Property Hub';
   const pageDesc = currentLocale === 'ta'
     ? 'சென்னை, திருச்சி, கோவை மற்றும் ஓசூரில் உடனடி பத்திரப்பதிவுக்கு தயார் நிலையில் உள்ள சர்வே வீட்டு மனைகள்.'
     : 'Browse verified residential plots in Chennai, Trichy, Coimbatore, Hosur & Bangalore Corridor with clear Patta and transparent pricing.';
@@ -208,6 +226,12 @@ export const PropertyListingPage: React.FC<PropertyListingPageProps> = ({ cityFi
                 <option value="">{t('listing.allTypes')}</option>
                 <option value="Residential Plot">Residential Plot</option>
                 <option value="Commercial Plot">Commercial Plot</option>
+                <option value="Villa">Villa & House</option>
+                <option value="Apartment">Apartment / Flat</option>
+                <option value="Agricultural Land">Agricultural Land</option>
+                <option value="Industrial">Industrial Zone</option>
+                <option value="Independent House">Independent House</option>
+                <option value="Duplex">Duplex Home</option>
               </select>
             </div>
 
@@ -241,7 +265,7 @@ export const PropertyListingPage: React.FC<PropertyListingPageProps> = ({ cityFi
                 {t('listing.subtitle')} ({properties.length} results)
               </p>
             </div>
-            
+
             <div className="flex items-center gap-4 w-full sm:w-auto">
               <button 
                 className="md:hidden flex-1 border border-slate-300 dark:border-zinc-700 rounded-md py-2 px-4 flex items-center justify-center gap-2 bg-white dark:bg-[#12161F] text-sm" 
@@ -278,6 +302,33 @@ export const PropertyListingPage: React.FC<PropertyListingPageProps> = ({ cityFi
                 <option value="area_desc">{t('listing.areaLargeSmall')}</option>
               </select>
             </div>
+          </div>
+
+          {/* Quick Category Filter Chips */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-6 scrollbar-none">
+            {[
+              { type: '', label: 'All Categories' },
+              { type: 'Residential Plot', label: 'Residential Plot' },
+              { type: 'Commercial Plot', label: 'Commercial Plot' },
+              { type: 'Villa', label: 'Villa & House' },
+              { type: 'Apartment', label: 'Apartment' },
+              { type: 'Agricultural Land', label: 'Agricultural Land' },
+              { type: 'Industrial', label: 'Industrial' },
+              { type: 'Independent House', label: 'Independent House' },
+              { type: 'Duplex', label: 'Duplex Home' },
+            ].map((chip) => (
+              <button
+                key={chip.type}
+                onClick={() => setPropertyType(chip.type)}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold shrink-0 transition-all cursor-pointer ${
+                  propertyType === chip.type
+                    ? 'bg-brand-teal text-white shadow-md'
+                    : 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700'
+                }`}
+              >
+                {chip.label}
+              </button>
+            ))}
           </div>
 
           {loading ? (

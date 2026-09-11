@@ -37,7 +37,7 @@
     "happyFamilies": "Satisfied Families"
   },
   "features": {
-    "heading": "Why Buyers Trust RKS Prime Properties",
+    "heading": "Why Buyers Trust RKS Property Hub",
     "subheading": "Transparent real estate backed by on-ground surveys and legal verification.",
     "cabTitle": "Free Cab Pickup",
     "cabDesc": "We pick you up from anywhere in the city for your site visit. No auto-rickshaws, no confusion.",
@@ -117,9 +117,9 @@
     "error": "Failed to send enquiry. Please contact our helpline directly via WhatsApp."
   },
   "about": {
-    "title": "About RKS Prime Properties",
+    "title": "About RKS Property Hub",
     "storyTitle": "Our Mission & Heritage",
-    "storyText": "RKS Prime Properties has surveyed and developed over 500 acres of premium residential land across Tamil Nadu and the Bangalore Corridor since 2010. We specialize in identifying high-growth corridors and transforming them into secure, clear-titled communities for generations to build upon.",
+    "storyText": "RKS Property Hub has surveyed and developed over 500 acres of premium residential land across Tamil Nadu and the Bangalore Corridor since 2010. We specialize in identifying high-growth corridors and transforming them into secure, clear-titled communities for generations to build upon.",
     "valuesTitle": "Our Core Values",
     "transparency": "100% Transparency",
     "transparencyDesc": "Zero hidden costs, verified legal documents, and transparent fixed per-sqft pricing.",
@@ -144,8 +144,8 @@
     "copied": "Copied to clipboard!"
   },
   "whatsapp": {
-    "general": "Hi, I am interested in viewing surveyed plots at RKS Prime Properties.",
-    "plotInquiry": "Hi, I am interested in Plot {{code}} in {{city}} listed at RKS Prime Properties."
+    "general": "Hi, I am interested in viewing surveyed plots at RKS Property Hub.",
+    "plotInquiry": "Hi, I am interested in Plot {{code}} in {{city}} listed at RKS Property Hub."
   },
   "footer": {
     "tagline": "Surveyed residential plots with transparent pricing and clear titles across Tamil Nadu & Bangalore Corridor.",

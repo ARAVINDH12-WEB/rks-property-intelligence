@@ -166,7 +166,7 @@ export const LeadsView: React.FC = () => {
 
   const handleWhatsApp = (phone: string, name: string, propCode?: string | null) => {
     const text = encodeURIComponent(
-      `Vanakkam ${name}, greeting from RKS Prime Properties. Following up regarding your inquiry for ${propCode || 'our surveyed plots'}. When would be convenient for a brief call or site visit?`
+      `Vanakkam ${name}, greeting from RKS Property Hub. Following up regarding your inquiry for ${propCode || 'our surveyed plots'}. When would be convenient for a brief call or site visit?`
     );
     window.open(`https://wa.me/91${phone}?text=${text}`, '_blank');
   };

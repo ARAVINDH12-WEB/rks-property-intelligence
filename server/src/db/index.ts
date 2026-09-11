@@ -79,7 +79,14 @@ export async function getDb(): Promise<{ type: 'pool' | 'pglite'; client: pg.Poo
           }
         }
         console.log(`[Database] Initializing embedded PGlite at directory: ${dataDir}`);
-        pgliteDb = new PGlite(dataDir);
+        try {
+          pgliteDb = new PGlite(dataDir);
+          await pgliteDb.waitReady;
+        } catch (initErr: any) {
+          console.warn(`[Database] PGlite directory initialization warning: ${initErr.message}. Retrying in-memory mode...`);
+          pgliteDb = new PGlite();
+          await pgliteDb.waitReady;
+        }
       } catch (dirErr: any) {
         console.warn(`[Database] Could not write to ${dataDir} (${dirErr.message}), falling back to in-memory mode`);
         pgliteDb = new PGlite();

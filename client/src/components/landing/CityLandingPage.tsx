@@ -107,8 +107,8 @@ export const CityLandingPage: React.FC<CityLandingPageProps> = ({ city, slug }) 
     : `https://rksprime.com/plots/${slug}`;
 
   const pageTitle = currentLocale === 'ta'
-    ? `${city} வீட்டு மனைகள் விற்பனைக்கு | RKS Prime Properties`
-    : `Verified Plots in ${city} for Sale | RKS Prime Properties`;
+    ? `${city} வீட்டு மனைகள் விற்பனைக்கு | RKS Property Hub`
+    : `Verified Plots in ${city} for Sale | RKS Property Hub`;
 
   const pageDesc = currentLocale === 'ta'
     ? `${city}ல் உடனடி கட்டுமானத்திற்கு ஏற்ற பட்டா சர்வே வீட்டு மனைகள். இலவச வாகன தளப் பார்வை வசதியுடன்.`

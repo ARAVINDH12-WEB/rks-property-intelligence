@@ -103,3 +103,47 @@ export const PhoneCallIcon: React.FC<IconProps> = ({ className = '', size = 24 }
     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
   </svg>
 );
+
+export const CommercialBuildingIcon: React.FC<IconProps> = ({ className = '', size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <rect x="4" y="2" width="16" height="20" rx="2" />
+    <path d="M9 22v-4h6v4" />
+    <path d="M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01" />
+  </svg>
+);
+
+export const VillaHouseIcon: React.FC<IconProps> = ({ className = '', size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M3 10l9-7 9 7v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V10z" />
+    <polyline points="9 22 9 12 15 12 15 22" />
+  </svg>
+);
+
+export const ApartmentBuildingIcon: React.FC<IconProps> = ({ className = '', size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <rect x="2" y="6" width="20" height="16" rx="1" />
+    <path d="M6 10h4v12H6zM14 10h4v12h-4zM10 2l4 4" />
+  </svg>
+);
+
+export const AgriculturalLandIcon: React.FC<IconProps> = ({ className = '', size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7z" />
+    <path d="M12 9a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" />
+  </svg>
+);
+
+export const IndustrialFactoryIcon: React.FC<IconProps> = ({ className = '', size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-6 4V8l-6 4V4H2v16z" />
+    <path d="M6 12h.01M6 16h.01" />
+  </svg>
+);
+
+export const DuplexHouseIcon: React.FC<IconProps> = ({ className = '', size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M2 12l10-9 10 9v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-9z" />
+    <line x1="12" y1="3" x2="12" y2="22" />
+    <path d="M6 12h2v4H6zM16 12h2v4h-2z" />
+  </svg>
+);

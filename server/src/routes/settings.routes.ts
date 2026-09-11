@@ -8,6 +8,7 @@ const router = Router();
 export const DEFAULT_SETTINGS: Record<string, string> = {
   // General & Contact
   whatsapp_number: '+919840011223',
+  admin_notification_whatsapp: '+919840011223',
   contact_phone: '+91 98400 11223',
   contact_email: 'info@rksgroup.in',
   contact_address: 'No. 42, GST Road, Guindy, Chennai, Tamil Nadu - 600032',

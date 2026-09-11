@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext.js';
 import { api } from '../../services/api.js';
-import { Property } from '../../types/index.js';
+import { Property, Poster } from '../../types/index.js';
 import { 
   PlotOutlineIcon,
   VerifiedShieldIcon,
@@ -14,9 +14,15 @@ import {
   CabPickupIcon,
   PattaDocumentIcon,
   SurveyPinIcon,
-  WhatsAppIcon
+  WhatsAppIcon,
+  CommercialBuildingIcon,
+  VillaHouseIcon,
+  ApartmentBuildingIcon,
+  AgriculturalLandIcon,
+  IndustrialFactoryIcon,
+  DuplexHouseIcon
 } from '../common/Icons.js';
-import { ArrowRight, MapPin } from 'lucide-react';
+import { ArrowRight, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
 import { PublicNavbar } from '../common/PublicNavbar.js';
 import { PublicFooter } from '../common/PublicFooter.js';
 import { getLocalizedPath, Locale } from '../../utils/locale.js';
@@ -24,6 +30,53 @@ import { getLocalizedPath, Locale } from '../../utils/locale.js';
 interface LandingPageViewProps {
   onExploreProperties?: () => void;
 }
+
+const DEFAULT_POSTERS: Poster[] = [
+  {
+    id: -1,
+    title: 'DTCP & RERA Approved Residential Plots',
+    image_url: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=1600&auto=format&fit=crop',
+    link_url: '/properties?property_type=Residential+Plot',
+    alt_text: 'DTCP & RERA Approved Plots in Tamil Nadu',
+    display_order: 1,
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: -2,
+    title: 'Free Cab Pickup for Site Visit — Book Today',
+    image_url: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?q=80&w=1600&auto=format&fit=crop',
+    link_url: '/contact',
+    alt_text: 'Free Cab Tour Pickup for Property Inspection',
+    display_order: 2,
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: -3,
+    title: 'Commercial & Industrial Corridors across Chennai, Trichy & Hosur',
+    image_url: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1600&auto=format&fit=crop',
+    link_url: '/properties?property_type=Commercial+Plot',
+    alt_text: 'Commercial & Industrial Land Investment',
+    display_order: 3,
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+];
+
+const CATEGORY_ITEMS = [
+  { type: 'Residential Plot', label: 'Residential Plot', labelTa: 'குடியிருப்பு மனை', icon: PlotOutlineIcon },
+  { type: 'Commercial Plot', label: 'Commercial Plot', labelTa: 'வணிக மனை', icon: CommercialBuildingIcon },
+  { type: 'Villa', label: 'Villa & House', labelTa: 'வில்லா & தனி வீடு', icon: VillaHouseIcon },
+  { type: 'Apartment', label: 'Apartment / Flat', labelTa: 'அபார்ட்மெண்ட்', icon: ApartmentBuildingIcon },
+  { type: 'Agricultural Land', label: 'Agricultural Land', labelTa: 'விவசாய நிலம்', icon: AgriculturalLandIcon },
+  { type: 'Industrial', label: 'Industrial Zone', labelTa: 'தொழில்துறை நிலம்', icon: IndustrialFactoryIcon },
+  { type: 'Independent House', label: 'Independent House', labelTa: 'தனி வீடு', icon: KeyHandoverIcon },
+  { type: 'Duplex', label: 'Duplex Home', labelTa: 'டூப்ளக்ஸ் வீடு', icon: DuplexHouseIcon },
+];
 
 export const LandingPageView: React.FC<LandingPageViewProps> = () => {
   const { t, i18n } = useTranslation();
@@ -39,8 +92,14 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
   const [featuredPlots, setFeaturedPlots] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [cityCounts, setCityCounts] = useState<Record<string, number>>({});
+  const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
   const [locationList, setLocationList] = useState<string[]>([]);
   const [whatsappNumber, setWhatsappNumber] = useState('+919840011223');
+
+  // Poster carousel state
+  const [posters, setPosters] = useState<Poster[]>(DEFAULT_POSTERS);
+  const [currentPosterIndex, setCurrentPosterIndex] = useState(0);
+  const [isPosterPaused, setIsPosterPaused] = useState(false);
 
   const [searchLocation, setSearchLocation] = useState('');
   const [searchType, setSearchType] = useState('');
@@ -59,10 +118,16 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
           setCompletedVisits(stats.completedVisits);
           setFeaturedPlots(stats.featuredPlots || []);
           setCityCounts(stats.cityCounts || {});
+          setCategoryCounts(stats.categoryCounts || {});
           setLocationList(stats.locations || []);
           if (stats.settings?.whatsapp_number) {
             setWhatsappNumber(stats.settings.whatsapp_number);
           }
+        }
+
+        const postersRes = await api.getPosters().catch(() => ({ posters: [] }));
+        if (mounted && postersRes.posters && postersRes.posters.length > 0) {
+          setPosters(postersRes.posters);
         }
       } catch (err) {
         console.error('Error fetching landing page data:', err);
@@ -74,6 +139,15 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
     fetchData();
     return () => { mounted = false; };
   }, []);
+
+  // Poster Auto-scroll timer
+  useEffect(() => {
+    if (isPosterPaused || posters.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentPosterIndex((prev) => (prev + 1) % posters.length);
+    }, 4500);
+    return () => clearInterval(interval);
+  }, [isPosterPaused, posters.length]);
 
   // Build city cards dynamically from API data
   const slugify = (name: string) => name.toLowerCase().replace(/\s+/g, '-');
@@ -99,8 +173,8 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
 
   const canonicalUrl = currentLocale === 'ta' ? 'https://rksprime.com/ta' : 'https://rksprime.com/';
   const pageTitle = currentLocale === 'ta' 
-    ? 'RKS Prime Properties — சர்வே சரிபார்க்கப்பட்ட வீட்டு மனைகள்' 
-    : 'RKS Prime Properties — Surveyed Plots with Clear Title';
+    ? 'RKS Property Hub — சர்வே சரிபார்க்கப்பட்ட வீட்டு மனைகள்' 
+    : 'RKS Property Hub — Surveyed Plots with Clear Title';
   const pageDesc = currentLocale === 'ta'
     ? 'சென்னை, திருச்சி, கோவை, ஓசூர் மற்றும் பெங்களூரு காரிடாரில் வில்லங்கமற்ற பட்டா ஆவணங்கள் மற்றும் இலவச வாகன தளப் பார்வையுடன் கூடிய பிரீமியம் வீட்டு மனைகள்.'
     : 'Find verified surveyed plots in Chennai, Trichy, Coimbatore, Hosur & Bangalore Corridor with transparent pricing and clear titles. Book a free cab site visit.';
@@ -125,7 +199,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
             {
               "@context": "https://schema.org",
               "@type": "RealEstateAgent",
-              "name": "RKS Prime Properties",
+              "name": "RKS Property Hub",
               "image": "https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=1200",
               "telephone": "+919876543210",
               "email": "info@rksprime.com",
@@ -240,6 +314,129 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
             >
               {t('hero.searchBtn')}
             </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Landscape Auto-scrolling Poster Carousel */}
+      {posters.length > 0 && (
+        <section 
+          className="py-6 bg-slate-100 dark:bg-[#07090D] border-b border-slate-200 dark:border-slate-800"
+          onMouseEnter={() => setIsPosterPaused(true)}
+          onMouseLeave={() => setIsPosterPaused(false)}
+          onTouchStart={() => setIsPosterPaused(true)}
+          onTouchEnd={() => setIsPosterPaused(false)}
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-brand-navy border border-slate-700/50 aspect-[21/9] sm:aspect-[24/9] md:aspect-[28/9]">
+              <a 
+                href={posters[currentPosterIndex]?.link_url || '#'} 
+                onClick={(e) => {
+                  if (!posters[currentPosterIndex]?.link_url) e.preventDefault();
+                  else if (posters[currentPosterIndex].link_url?.startsWith('/')) {
+                    e.preventDefault();
+                    navigate(posters[currentPosterIndex].link_url!);
+                  }
+                }}
+                className="block w-full h-full relative group cursor-pointer"
+              >
+                <img 
+                  src={posters[currentPosterIndex]?.image_url} 
+                  alt={posters[currentPosterIndex]?.alt_text || posters[currentPosterIndex]?.title || 'RKS Property Hub Banner'} 
+                  className="w-full h-full object-cover transition-opacity duration-700 ease-in-out"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent flex flex-col justify-end p-4 sm:p-8">
+                  {posters[currentPosterIndex]?.title && (
+                    <h3 className="text-white text-lg sm:text-2xl md:text-3xl font-black font-heading tracking-tight drop-shadow-md">
+                      {posters[currentPosterIndex].title}
+                    </h3>
+                  )}
+                  {posters[currentPosterIndex]?.link_url && (
+                    <span className="mt-2 inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-brand-teal bg-white/90 dark:bg-slate-900/90 px-3.5 py-1.5 rounded-full w-fit shadow-md group-hover:bg-brand-teal group-hover:text-white transition-colors">
+                      Explore Offer <ArrowRight className="h-4 w-4" />
+                    </span>
+                  )}
+                </div>
+              </a>
+
+              {/* Prev / Next Arrows */}
+              {posters.length > 1 && (
+                <>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentPosterIndex((prev) => (prev === 0 ? posters.length - 1 : prev - 1));
+                    }}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-sm transition-all cursor-pointer"
+                    aria-label="Previous Poster"
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentPosterIndex((prev) => (prev + 1) % posters.length);
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-sm transition-all cursor-pointer"
+                    aria-label="Next Poster"
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+                  {/* Indicators */}
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10">
+                    {posters.map((_, idx) => (
+                      <button
+                        key={idx}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCurrentPosterIndex(idx);
+                        }}
+                        className={`h-2 rounded-full transition-all cursor-pointer ${idx === currentPosterIndex ? 'w-6 bg-brand-teal' : 'w-2 bg-white/50'}`}
+                        aria-label={`Go to slide ${idx + 1}`}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Icon-Based Category Browsing Grid */}
+      <section className="py-14 bg-white dark:bg-rks-bgDark border-b border-slate-100 dark:border-slate-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl sm:text-3xl font-bold font-heading text-brand-navy dark:text-white">
+              {currentLocale === 'ta' ? 'வகை வாரியாக மனைகள்' : 'Browse Properties by Category'}
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              {currentLocale === 'ta' ? 'அதிகாரப்பூர்வ நேரடி தரவுகளுடன் கூடிய சொத்து பிரிவுகள்' : 'Filter verified listings directly by property type'}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-4">
+            {CATEGORY_ITEMS.map((cat) => {
+              const IconComp = cat.icon;
+              const count = categoryCounts[cat.type] || (cat.type === 'Residential Plot' ? (availablePlots || 40) : 0);
+              return (
+                <button
+                  key={cat.type}
+                  onClick={() => navigate(`${getLocalizedPath('/properties', currentLocale)}?property_type=${encodeURIComponent(cat.type)}`)}
+                  className="group flex flex-col items-center justify-center p-5 rounded-2xl bg-slate-50 dark:bg-[#12161F] border border-slate-200 dark:border-zinc-800 hover:border-brand-teal dark:hover:border-brand-teal hover:shadow-xl transition-all duration-300 cursor-pointer text-center"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-brand-teal/10 text-brand-teal group-hover:bg-brand-teal group-hover:text-white flex items-center justify-center transition-all duration-300 mb-3">
+                    <IconComp size={24} />
+                  </div>
+                  <span className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-brand-teal transition-colors">
+                    {currentLocale === 'ta' ? cat.labelTa : cat.label}
+                  </span>
+                  <span className="text-xs text-slate-400 dark:text-zinc-500 mt-1 font-mono">
+                    {count} {currentLocale === 'ta' ? 'கிடைக்கிறது' : 'available'}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </section>

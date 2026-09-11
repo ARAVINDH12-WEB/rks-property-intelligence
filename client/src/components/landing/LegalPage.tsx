@@ -16,10 +16,10 @@ export const LegalPage: React.FC = () => {
   const currentLocale: Locale = i18n.language === 'ta' ? 'ta' : 'en';
 
   const canonicalUrl = currentLocale === 'ta' ? 'https://rksprime.com/ta/legal' : 'https://rksprime.com/legal';
-  const pageTitle = currentLocale === 'ta' ? 'சட்டத் தகவல்கள் & மறுப்புரைகள் | RKS Prime Properties' : 'Legal Information & Disclaimers | RKS Prime Properties';
+  const pageTitle = currentLocale === 'ta' ? 'சட்டத் தகவல்கள் & மறுப்புரைகள் | RKS Property Hub' : 'Legal Information & Disclaimers | RKS Property Hub';
   const pageDesc = currentLocale === 'ta'
-    ? 'RKS Prime Properties தனியுரிமைக் கொள்கை, சேவை விதிமுறைகள் மற்றும் சொத்து பொறுப்புத்துறப்பு விபரங்கள்.'
-    : 'Legal terms, privacy policy, and survey property disclaimers for RKS Prime Properties.';
+    ? 'RKS Property Hub தனியுரிமைக் கொள்கை, சேவை விதிமுறைகள் மற்றும் சொத்து பொறுப்புத்துறப்பு விபரங்கள்.'
+    : 'Legal terms, privacy policy, and survey property disclaimers for RKS Property Hub.';
 
   return (
     <div className={`min-h-screen font-sans ${theme === 'dark' ? 'dark bg-rks-bgDark text-white' : 'bg-rks-bg text-brand-navy'}`}>
@@ -69,8 +69,8 @@ export const LegalPage: React.FC = () => {
               <p className="text-sm text-slate-500">Last updated: 2026</p>
               <p className="leading-relaxed">
                 {currentLocale === 'ta'
-                  ? 'RKS Prime Properties ("நாங்கள்") உங்கள் தனியுரிமையைப் பாதுகாப்பதில் முழு அர்ப்பணிப்புடன் செயல்படுகிறது. எங்கள் இணையதளத்தின் மூலம் சேகரிக்கப்படும் உங்களின் தனிப்பட்ட விவரங்கள் எவ்வாறு கையாளப்படுகின்றன என்பதை இந்த அறிக்கை விளக்குகிறது.'
-                  : 'RKS Prime Properties ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how your personal information is collected, used, and disclosed by RKS Prime Properties.'}
+                  ? 'RKS Property Hub ("நாங்கள்") உங்கள் தனியுரிமையைப் பாதுகாப்பதில் முழு அர்ப்பணிப்புடன் செயல்படுகிறது. எங்கள் இணையதளத்தின் மூலம் சேகரிக்கப்படும் உங்களின் தனிப்பட்ட விவரங்கள் எவ்வாறு கையாளப்படுகின்றன என்பதை இந்த அறிக்கை விளக்குகிறது.'
+                  : 'RKS Property Hub ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how your personal information is collected, used, and disclosed by RKS Property Hub.'}
               </p>
               <h3 className="text-xl font-bold font-heading pt-4 text-brand-navy dark:text-white">
                 {currentLocale === 'ta' ? 'நாங்கள் சேகரிக்கும் தகவல்கள்' : 'Information We Collect'}

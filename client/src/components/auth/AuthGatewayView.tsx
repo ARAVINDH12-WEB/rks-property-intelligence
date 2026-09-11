@@ -155,7 +155,7 @@ export const AuthGatewayView: React.FC<AuthGatewayViewProps> = ({ onLoginSuccess
   return (
     <div className="min-h-screen w-full flex flex-col md:flex-row bg-[#FAFAF9] dark:bg-zinc-900">
       <Helmet>
-        <title>Admin Portal | RKS Prime Properties</title>
+        <title>Admin Portal | RKS Property Hub</title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
@@ -168,7 +168,7 @@ export const AuthGatewayView: React.FC<AuthGatewayViewProps> = ({ onLoginSuccess
           <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
             <Building2 className="h-6 w-6 text-brand-teal-light" />
           </div>
-          <span className="text-xl font-bold font-heading text-white tracking-widest uppercase">RKS Prime</span>
+          <span className="text-xl font-bold font-heading text-white tracking-widest uppercase">RKS Property Hub</span>
         </div>
 
         {/* Center content */}
@@ -201,7 +201,7 @@ export const AuthGatewayView: React.FC<AuthGatewayViewProps> = ({ onLoginSuccess
           <div className="w-10 h-10 bg-brand-navy rounded-lg flex items-center justify-center shadow-lg">
             <Building2 className="h-5 w-5 text-brand-teal-light" />
           </div>
-          <span className="text-lg font-bold text-brand-navy dark:text-white">RKS Prime</span>
+          <span className="text-lg font-bold text-brand-navy dark:text-white">RKS Property Hub</span>
         </div>
 
         <div className="w-full max-w-sm">

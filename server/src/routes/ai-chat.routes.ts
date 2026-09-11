@@ -314,7 +314,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
 
         if (isTa) {
           reply = `🏡 **${matchedProp.property_code} மனை விவரங்கள் (நேரடி தரவு):**\n\n` +
-            `• **திட்டம்:** ${matchedProp.project_name || 'RKS Prime'}\n` +
+            `• **திட்டம்:** ${matchedProp.project_name || 'RKS Property Hub'}\n` +
             `• **இடம்:** ${matchedProp.city || matchedProp.location_name}\n` +
             `• **பரப்பளவு:** ${formatArea(matchedProp.area_sqft, true)}\n` +
             `• **சதுர அடி விலை:** ₹${matchedProp.rate_per_sqft}\n` +
@@ -327,7 +327,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
           suggestedActions.push(isNegotiation ? 'விற்பனை மேலாளரிடம் பேசுங்கள்' : 'தளப் பார்வை முன்பதிவு', 'வங்கி கடன் உதவி', 'வாட்ஸ்அப் மூலம் தொடர்புகொள்ள');
         } else {
           reply = `🏡 **${matchedProp.property_code} Verified Plot Details (Live Database):**\n\n` +
-            `• **Project:** ${matchedProp.project_name || 'RKS Prime'}\n` +
+            `• **Project:** ${matchedProp.project_name || 'RKS Property Hub'}\n` +
             `• **Location:** ${matchedProp.city || matchedProp.location_name}\n` +
             `• **Area:** ${formatArea(matchedProp.area_sqft)}\n` +
             `• **Rate per Sq.Ft:** ₹${matchedProp.rate_per_sqft} / sq.ft\n` +

@@ -53,6 +53,19 @@ router.get('/public-stats', async (_req: Request, res: Response): Promise<void> 
         locations.push(row.city);
       }
     }
+    // 5b. Per-category (property_type) counts of AVAILABLE properties
+    const typeRes = await query(`
+      SELECT property_type, COUNT(*)::int as count
+      FROM properties
+      WHERE archived = false AND status = 'AVAILABLE' AND property_type IS NOT NULL
+      GROUP BY property_type
+    `);
+    const categoryCounts: Record<string, number> = {};
+    for (const row of typeRes.rows) {
+      if (row.property_type) {
+        categoryCounts[row.property_type] = row.count;
+      }
+    }
 
     // 6. Featured plots (up to 6 AVAILABLE, newest first)
     const featuredRes = await query(`
@@ -95,6 +108,7 @@ router.get('/public-stats', async (_req: Request, res: Response): Promise<void> 
       startingRate,
       completedVisits,
       cityCounts,
+      categoryCounts,
       locations,
       featuredPlots: featuredRes.rows,
       settings,

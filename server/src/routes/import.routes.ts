@@ -246,7 +246,7 @@ router.post('/parse-and-validate', authenticate, requireRole(['ADMIN', 'MANAGER'
       const warnings: string[] = [];
 
       let rawCode = activeMapping.property_code ? String(raw[activeMapping.property_code] || '').trim() : '';
-      const rawProj = (activeMapping.project_name && String(raw[activeMapping.project_name] || '').trim()) || 'RKS Prime Layout';
+      const rawProj = (activeMapping.project_name && String(raw[activeMapping.project_name] || '').trim()) || 'RKS Property Hub Layout';
       const rawLoc = (activeMapping.location_name && String(raw[activeMapping.location_name] || '').trim()) || 'Chennai';
       const rawType = (activeMapping.property_type && String(raw[activeMapping.property_type] || '').trim()) || 'Residential Plot';
       const rawPlotNum = activeMapping.plot_number ? String(raw[activeMapping.plot_number] || '').trim() : '';
@@ -476,7 +476,7 @@ router.post('/commit', authenticate, requireRole(['ADMIN', 'MANAGER', 'EMPLOYEE'
     for (const item of validRows) {
       try {
         const locName = (item.location_name || 'Chennai').trim();
-        const projName = (item.project_name || 'RKS Prime Layout').trim();
+        const projName = (item.project_name || 'RKS Property Hub Layout').trim();
 
         // Resolve or create Location
         let locId: number = locMap.get(locName.toLowerCase()) || 0;

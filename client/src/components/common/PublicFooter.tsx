@@ -41,7 +41,7 @@ export const PublicFooter: React.FC = () => {
           <div>
             <div className="flex items-center gap-2 mb-6 cursor-pointer" onClick={() => navigate(currentLocale === 'ta' ? '/ta' : '/')}>
               <span className="font-heading font-bold text-2xl text-white">RKS</span>
-              <span className="font-heading font-bold text-2xl text-brand-teal">Prime</span>
+              <span className="font-heading font-bold text-2xl text-brand-teal">Property Hub</span>
             </div>
             <p className="text-slate-400 mb-6 max-w-sm leading-relaxed text-sm">
               {t('footer.tagline')}
@@ -127,7 +127,7 @@ export const PublicFooter: React.FC = () => {
         </div>
 
         <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-slate-500">
-          <div>&copy; {new Date().getFullYear()} RKS Prime Properties. {t('footer.rights')}</div>
+          <div>&copy; {new Date().getFullYear()} RKS Property Hub. {t('footer.rights')}</div>
           <div className="flex gap-6 text-xs">
             <button onClick={() => navigate(getLocalizedPath('/legal', currentLocale))} className="hover:text-white transition-colors">
               {t('footer.privacy')}
