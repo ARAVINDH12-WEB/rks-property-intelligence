@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { query } from '../db/index.js';
-import { authenticate } from '../middleware/auth.js';
+import { authenticate, authorize } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -34,8 +34,8 @@ router.post('/', async (req: Request, res: Response) => {
   }
 });
 
-// Protected: List all leads with optional status filter
-router.get('/', authenticate, async (req: Request, res: Response) => {
+// Protected: List all leads with optional status filter (Staff Only)
+router.get('/', authenticate, authorize(['ADMIN', 'MANAGER', 'EMPLOYEE']), async (req: Request, res: Response) => {
   try {
     const { status, limit = '50', offset = '0', q } = req.query as Record<string, string>;
     const conditions: string[] = [];
@@ -65,8 +65,8 @@ router.get('/', authenticate, async (req: Request, res: Response) => {
   }
 });
 
-// Protected: Batch Import Leads (CSV / Excel)
-router.post('/batch', authenticate, async (req: Request, res: Response) => {
+// Protected: Batch Import Leads (CSV / Excel) (Staff Only)
+router.post('/batch', authenticate, authorize(['ADMIN', 'MANAGER', 'EMPLOYEE']), async (req: Request, res: Response) => {
   try {
     const { leads, duplicateMode = 'skip' } = req.body;
     if (!Array.isArray(leads) || leads.length === 0) {
@@ -172,8 +172,8 @@ router.post('/batch', authenticate, async (req: Request, res: Response) => {
   }
 });
 
-// Protected: Update lead status
-router.patch('/:id/status', authenticate, async (req: Request, res: Response) => {
+// Protected: Update lead status (Staff Only)
+router.patch('/:id/status', authenticate, authorize(['ADMIN', 'MANAGER', 'EMPLOYEE']), async (req: Request, res: Response) => {
   try {
     const { status, notes } = req.body;
     const valid = ['NEW', 'CONTACTED', 'SITE_VISIT_SCHEDULED', 'NEGOTIATION', 'CLOSED_WON', 'CLOSED_LOST'];
@@ -188,8 +188,8 @@ router.patch('/:id/status', authenticate, async (req: Request, res: Response) =>
   }
 });
 
-// Protected: Delete a lead
-router.delete('/:id', authenticate, async (req: Request, res: Response) => {
+// Protected: Delete a lead (Admin & Manager Only)
+router.delete('/:id', authenticate, authorize(['ADMIN', 'MANAGER']), async (req: Request, res: Response) => {
   try {
     await query(`DELETE FROM leads WHERE id = $1`, [req.params.id]);
     res.json({ success: true });

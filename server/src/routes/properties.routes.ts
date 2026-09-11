@@ -635,6 +635,10 @@ router.patch('/:id/inline', authenticate, requireRole(['ADMIN', 'MANAGER', 'EMPL
 
     if (field === 'rate_per_sqft') {
       const newRate = Number(value);
+      if (isNaN(newRate) || newRate <= 0) {
+        res.status(400).json({ error: 'Rate per sq.ft must be a positive number greater than 0' });
+        return;
+      }
       const newTotalPrice = calculateTotalPrice(Number(current.area_sqft), newRate);
       updateSql = `UPDATE properties SET rate_per_sqft = $1, total_price = $2, updated_at = CURRENT_TIMESTAMP, updated_by = $3 WHERE id = $4 RETURNING *`;
       updateParams = [newRate, newTotalPrice, userId, id];
@@ -642,6 +646,10 @@ router.patch('/:id/inline', authenticate, requireRole(['ADMIN', 'MANAGER', 'EMPL
       historyDesc = `Rate changed from ₹${current.rate_per_sqft}/sq.ft to ₹${newRate}/sq.ft (Total Price: ₹${newTotalPrice})`;
     } else if (field === 'area_sqft') {
       const newArea = Number(value);
+      if (isNaN(newArea) || newArea <= 0) {
+        res.status(400).json({ error: 'Area in sq.ft must be a positive number greater than 0' });
+        return;
+      }
       const newTotalPrice = calculateTotalPrice(newArea, Number(current.rate_per_sqft));
       const newSqm = Number((newArea * 0.092903).toFixed(2));
       updateSql = `UPDATE properties SET area_sqft = $1, area_sqm = $2, total_price = $3, updated_at = CURRENT_TIMESTAMP, updated_by = $4 WHERE id = $5 RETURNING *`;
@@ -650,6 +658,10 @@ router.patch('/:id/inline', authenticate, requireRole(['ADMIN', 'MANAGER', 'EMPL
       historyDesc = `Area changed from ${current.area_sqft} sq.ft to ${newArea} sq.ft (Total Price: ₹${newTotalPrice})`;
     } else if (field === 'total_price') {
       const newPrice = Number(value);
+      if (isNaN(newPrice) || newPrice <= 0) {
+        res.status(400).json({ error: 'Total price must be a positive number greater than 0' });
+        return;
+      }
       const newRate = Number((newPrice / Number(current.area_sqft)).toFixed(2));
       updateSql = `UPDATE properties SET total_price = $1, rate_per_sqft = $2, updated_at = CURRENT_TIMESTAMP, updated_by = $3 WHERE id = $4 RETURNING *`;
       updateParams = [newPrice, newRate, userId, id];

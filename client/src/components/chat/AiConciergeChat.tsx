@@ -162,8 +162,15 @@ export const AiConciergeChat: React.FC = () => {
     return text
       .split('\n')
       .map((line, i) => {
-        // Simple markdown replacement for bold and italic
-        const formatted = line
+        // Escape raw HTML entities first to neutralize any script/event injection
+        const escaped = line
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+        // Safe inline markdown replacement for bold and italic
+        const formatted = escaped
           .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
           .replace(/\*(.*?)\*/g, '<em>$1</em>');
         return <p key={i} className="text-xs leading-relaxed" dangerouslySetInnerHTML={{ __html: formatted }} />;

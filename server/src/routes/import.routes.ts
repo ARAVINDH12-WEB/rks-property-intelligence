@@ -16,7 +16,7 @@ function parseNumeric(val: any): number {
 }
 
 // SINGLE ENDPOINT: Parse + Validate in one request (Vercel-safe, memory-storage)
-router.post('/parse-and-validate', upload.single('file'), async (req: Request, res: Response): Promise<void> => {
+router.post('/parse-and-validate', authenticate, requireRole(['ADMIN', 'MANAGER', 'EMPLOYEE']), upload.single('file'), async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.file) {
       res.status(400).json({ error: 'No spreadsheet file uploaded.' });
@@ -237,7 +237,7 @@ router.post('/parse-and-validate', upload.single('file'), async (req: Request, r
 });
 
 // LEGACY: Keep /parse for backward compat
-router.post('/parse', upload.single('file'), async (req: Request, res: Response): Promise<void> => {
+router.post('/parse', authenticate, requireRole(['ADMIN', 'MANAGER', 'EMPLOYEE']), upload.single('file'), async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.file) { res.status(400).json({ error: 'No file uploaded' }); return; }
     const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });

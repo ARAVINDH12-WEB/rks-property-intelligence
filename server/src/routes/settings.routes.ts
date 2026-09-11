@@ -174,24 +174,15 @@ router.put('/:key', authenticate, authorize(['ADMIN']), async (req: Request, res
   }
 });
 
-// POST /api/settings/sync-auth - Emergency re-seed & sync admin credentials on production
-router.post('/sync-auth', async (req: Request, res: Response): Promise<void> => {
+// POST /api/settings/sync-auth - Re-seed & sync admin credentials (ADMIN ONLY)
+router.post('/sync-auth', authenticate, authorize(['ADMIN']), async (req: Request, res: Response): Promise<void> => {
   try {
-    const { syncKey } = req.body;
-    // Protect with master secret or server JWT_SECRET or emergency recovery key
-    const masterKey = process.env.JWT_SECRET || 'rks_property_intelligence_super_secret_jwt_key_2026';
-    const emergencyKey = 'rks_master_seed_sync_2026';
-    if (!syncKey || (syncKey !== masterKey && syncKey !== emergencyKey)) {
-      res.status(403).json({ error: 'Unauthorized sync request' });
-      return;
-    }
-
     const { seedDatabase } = await import('../db/seed.js');
     await seedDatabase(true);
 
     res.json({
       success: true,
-      message: 'Production database synchronized and admin credentials re-seeded successfully.',
+      message: 'Database synchronized and admin credentials re-seeded successfully.',
     });
   } catch (err: any) {
     console.error('[Sync Auth Error]:', err);

@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { query } from '../db/index.js';
-import { authenticate } from '../middleware/auth.js';
+import { authenticate, authorize } from '../middleware/auth.js';
 import { dispatchWhatsAppAlert } from '../services/whatsapp.service.js';
 
 const router = Router();
@@ -40,6 +40,15 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
 
     if (!visit_date || !String(visit_date).trim()) {
       res.status(400).json({ error: 'Visit date is required' });
+      return;
+    }
+
+    // Business Logic: Reject dates in the past
+    const selectedDate = new Date(String(visit_date));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (isNaN(selectedDate.getTime()) || selectedDate < today) {
+      res.status(400).json({ error: 'Visit date must be today or a future date' });
       return;
     }
 
@@ -167,7 +176,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
 });
 
 // GET /api/site-visits - List all Site Visits with filters
-router.get('/', authenticate, async (req: Request, res: Response): Promise<void> => {
+router.get('/', authenticate, authorize(['ADMIN', 'MANAGER', 'EMPLOYEE']), async (req: Request, res: Response): Promise<void> => {
   try {
     const { status, date, property_id } = req.query;
 
@@ -235,7 +244,7 @@ router.get('/', authenticate, async (req: Request, res: Response): Promise<void>
 });
 
 // PATCH /api/site-visits/:id/status - Update Status or Assign Agent
-router.patch('/:id/status', authenticate, async (req: Request, res: Response): Promise<void> => {
+router.patch('/:id/status', authenticate, authorize(['ADMIN', 'MANAGER', 'EMPLOYEE']), async (req: Request, res: Response): Promise<void> => {
   try {
     const id = parseInt(req.params.id);
     const { status, assigned_agent_id, assigned_agent_name, notes } = req.body;
@@ -287,7 +296,7 @@ router.patch('/:id/status', authenticate, async (req: Request, res: Response): P
 });
 
 // DELETE /api/site-visits/:id - Delete / Cancel Visit
-router.delete('/:id', authenticate, async (req: Request, res: Response): Promise<void> => {
+router.delete('/:id', authenticate, authorize(['ADMIN', 'MANAGER']), async (req: Request, res: Response): Promise<void> => {
   try {
     const id = parseInt(req.params.id);
     await query('DELETE FROM site_visits WHERE id = $1', [id]);

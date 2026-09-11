@@ -47,7 +47,7 @@ router.get('/guest-token', (_req: Request, res: Response): void => {
 });
 
 // POST /api/auth/login - Sign In with Brute-Force Rate Limiting
-router.post('/login', createRateLimiter(15 * 60 * 1000, 30, 'Too many login attempts. Please wait 15 minutes.'), async (req: Request, res: Response): Promise<void> => {
+router.post('/login', createRateLimiter(15 * 60 * 1000, 5, 'Too many login attempts. Please wait 15 minutes.'), async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
     const clientIp = req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown';
@@ -75,6 +75,16 @@ router.post('/login', createRateLimiter(15 * 60 * 1000, 30, 'Too many login atte
     if (!passwordValid) {
       await logAuthAttempt(email, false, clientIp, 'Invalid password');
       res.status(401).json({ error: 'Invalid email or password' });
+      return;
+    }
+
+    // If user has 2FA enabled, DO NOT return the full session token yet!
+    if (user.two_factor_enabled && user.two_factor_secret) {
+      res.json({
+        requires_2fa: true,
+        userId: user.id,
+        message: 'Password verified. Please submit your 2FA verification code.',
+      });
       return;
     }
 

@@ -87,10 +87,9 @@ export const OfferCard: React.FC<OfferCardProps> = ({
             {offer.title}
           </h3>
 
-          <div
-            className="mt-2 text-xs text-slate-600 dark:text-zinc-300 leading-relaxed line-clamp-3"
-            dangerouslySetInnerHTML={{ __html: offer.description }}
-          />
+          <p className="mt-2 text-xs text-slate-600 dark:text-zinc-300 leading-relaxed line-clamp-3">
+            {offer.description}
+          </p>
         </div>
       </div>
 
