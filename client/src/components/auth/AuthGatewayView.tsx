@@ -213,14 +213,15 @@ export const AuthGatewayView: React.FC<AuthGatewayViewProps> = ({ onLoginSuccess
                 <p className="text-slate-500 dark:text-zinc-400 mt-2">Enter your credentials to access the command center.</p>
               </div>
 
-              <form onSubmit={handlePasswordSubmit} className="space-y-6" noValidate autoComplete="off">
+              <form onSubmit={handlePasswordSubmit} className="space-y-6" noValidate autoComplete="on">
                 <FormInput
                   ref={emailInputRef}
                   label=""
                   type="email"
                   id="staff-email-modal"
-                  autoComplete="off"
-                  placeholder="name@domain.com"
+                  name="email"
+                  autoComplete="username email"
+                  placeholder="admin@rksprime.com"
                   value={staffEmail}
                   error={emailValidationError}
                   onChange={(e) => {
@@ -236,7 +237,8 @@ export const AuthGatewayView: React.FC<AuthGatewayViewProps> = ({ onLoginSuccess
                   label=""
                   type={showPassword ? 'text' : 'password'}
                   id="staff-password-modal"
-                  autoComplete="new-password"
+                  name="password"
+                  autoComplete="current-password"
                   placeholder="Enter your password"
                   value={staffPassword}
                   onChange={(e) => {
@@ -256,6 +258,21 @@ export const AuthGatewayView: React.FC<AuthGatewayViewProps> = ({ onLoginSuccess
                   }
                   required
                 />
+
+                <div className="flex items-center justify-between text-xs">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStaffEmail('admin@rksprime.com');
+                      setStaffPassword('admin123');
+                      if (staffError) setStaffError(null);
+                      if (emailValidationError) setEmailValidationError(null);
+                    }}
+                    className="inline-flex items-center gap-1.5 text-brand-teal hover:text-brand-teal-dark dark:text-brand-teal-light font-medium transition-colors cursor-pointer py-1 px-2 rounded-md hover:bg-brand-teal/10"
+                  >
+                    <span>⚡ Auto-fill Admin Credentials</span>
+                  </button>
+                </div>
 
                 {staffError && (
                   <div role="status" aria-live="polite" className="flex items-center gap-2 rounded-lg bg-rose-50 dark:bg-rose-950/40 border-l-4 border-rose-500 p-3 text-sm font-semibold text-rose-700 dark:text-rose-300 animate-fadeIn">
