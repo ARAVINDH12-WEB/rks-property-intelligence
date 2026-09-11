@@ -53,13 +53,34 @@ async function ensureGuestToken(): Promise<void> {
 ensureGuestToken();
 
 async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${API_BASE}${url}`, {
-    ...options,
-    headers: {
-      ...getHeaders(),
-      ...(options.headers || {}),
-    },
-  });
+  const primaryEndpoint = `${API_BASE}${url}`;
+  const headers = {
+    ...getHeaders(),
+    ...(options.headers || {}),
+  };
+
+  let res: Response;
+  try {
+    res = await fetch(primaryEndpoint, {
+      ...options,
+      headers,
+    });
+  } catch (networkErr: any) {
+    // If direct cross-origin fetch failed (e.g. ad-blocker, CORS, or carrier filter), try same-origin proxy '/api'
+    if (API_BASE !== '/api') {
+      try {
+        console.warn(`Primary request to ${primaryEndpoint} failed (${networkErr?.message}). Retrying via same-origin /api...`);
+        res = await fetch(`/api${url}`, {
+          ...options,
+          headers,
+        });
+      } catch {
+        throw networkErr;
+      }
+    } else {
+      throw networkErr;
+    }
+  }
 
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({ error: 'Request failed with status ' + res.status }));

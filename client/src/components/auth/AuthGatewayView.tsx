@@ -213,14 +213,14 @@ export const AuthGatewayView: React.FC<AuthGatewayViewProps> = ({ onLoginSuccess
                 <p className="text-slate-500 dark:text-zinc-400 mt-2">Enter your credentials to access the command center.</p>
               </div>
 
-              <form onSubmit={handlePasswordSubmit} className="space-y-6" noValidate>
+              <form onSubmit={handlePasswordSubmit} className="space-y-6" noValidate autoComplete="off">
                 <FormInput
                   ref={emailInputRef}
                   label=""
                   type="email"
                   id="staff-email-modal"
-                  autoComplete="username"
-                  placeholder="admin@rksprime.com"
+                  autoComplete="off"
+                  placeholder="name@domain.com"
                   value={staffEmail}
                   error={emailValidationError}
                   onChange={(e) => {
@@ -236,8 +236,8 @@ export const AuthGatewayView: React.FC<AuthGatewayViewProps> = ({ onLoginSuccess
                   label=""
                   type={showPassword ? 'text' : 'password'}
                   id="staff-password-modal"
-                  autoComplete="current-password"
-                  placeholder="Password"
+                  autoComplete="new-password"
+                  placeholder="Enter your password"
                   value={staffPassword}
                   onChange={(e) => {
                     setStaffPassword(e.target.value);
