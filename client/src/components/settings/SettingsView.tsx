@@ -429,42 +429,40 @@ export const SettingsView: React.FC = () => {
                 Manage auto-scrolling landscape promotional banners displayed on the customer landing page.
               </p>
             </div>
-            {isAdmin && (
-              <button
-                onClick={handleCreatePoster}
-                className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-xs font-bold text-white shadow-md transition-all cursor-pointer"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Add Poster Banner</span>
-              </button>
-            )}
+            <button
+              onClick={handleCreatePoster}
+              className="inline-flex items-center gap-2 rounded-xl bg-brand-teal hover:bg-brand-teal-light px-4 py-2 text-xs font-bold text-white shadow-md transition-all cursor-pointer"
+            >
+              <Plus className="h-4 w-4" />
+              <span>+ Add New Poster Banner</span>
+            </button>
           </div>
 
           {loadingPosters ? (
             <div className="text-center py-12 text-slate-400 text-xs font-mono">Loading poster banners...</div>
           ) : posters.length === 0 ? (
-            <div className="text-center py-12 border border-dashed border-slate-200 dark:border-zinc-800 rounded-2xl">
-              <ImageIcon className="h-10 w-10 text-slate-400 mx-auto mb-2" />
-              <h4 className="text-sm font-bold text-slate-700 dark:text-zinc-300">No Posters Created Yet</h4>
-              <p className="text-xs text-slate-500 dark:text-zinc-500 max-w-sm mx-auto mt-1 mb-4">
-                Add landscape banner images to showcase ongoing plot discounts, township launches, or special offers on the homepage carousel.
+            <div className="text-center py-12 border border-dashed border-slate-200 dark:border-zinc-800 rounded-2xl bg-slate-50/50 dark:bg-zinc-900/30">
+              <ImageIcon className="h-10 w-10 text-brand-teal mx-auto mb-2 opacity-80" />
+              <h4 className="text-sm font-bold text-slate-700 dark:text-zinc-300">No Custom Posters Created Yet</h4>
+              <p className="text-xs text-slate-500 dark:text-zinc-400 max-w-sm mx-auto mt-1 mb-5">
+                Add landscape banner images to showcase ongoing plot discounts, township launches, or special offers on the customer homepage carousel.
               </p>
-              {isAdmin && (
+              <div className="flex flex-wrap justify-center gap-3">
                 <button
                   onClick={handleCreatePoster}
-                  className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-xs font-bold text-white shadow-md transition-all cursor-pointer"
+                  className="inline-flex items-center gap-2 rounded-xl bg-brand-teal hover:bg-brand-teal-light px-5 py-2.5 text-xs font-bold text-white shadow-md transition-all cursor-pointer"
                 >
                   <Plus className="h-4 w-4" />
-                  <span>Create First Poster Banner</span>
+                  <span>+ Create First Poster Banner</span>
                 </button>
-              )}
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {posters.map((poster) => (
                 <div
                   key={poster.id}
-                  className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-[#0A0C10] p-4 flex flex-col justify-between space-y-3"
+                  className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-[#0A0C10] p-4 flex flex-col justify-between space-y-3 shadow-xs"
                 >
                   <div className="relative aspect-[21/9] rounded-xl overflow-hidden bg-slate-900 border border-slate-200 dark:border-zinc-800">
                     <img
@@ -493,7 +491,7 @@ export const SettingsView: React.FC = () => {
                       {poster.title || 'Untitled Poster'}
                     </h4>
                     {poster.link_url && (
-                      <p className="text-xs text-indigo-500 truncate font-mono mt-0.5">
+                      <p className="text-xs text-brand-teal truncate font-mono mt-0.5">
                         Link: {poster.link_url}
                       </p>
                     )}
@@ -504,36 +502,35 @@ export const SettingsView: React.FC = () => {
                     )}
                   </div>
 
-                  {isAdmin && (
-                    <div className="flex items-center justify-between border-t border-slate-200 dark:border-zinc-800 pt-3">
+                  <div className="flex items-center justify-between border-t border-slate-200 dark:border-zinc-800 pt-3">
+                    <button
+                      onClick={() => handleTogglePoster(poster.id)}
+                      className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                        poster.is_active
+                          ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20'
+                          : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20'
+                      }`}
+                    >
+                      {poster.is_active ? 'Deactivate' : 'Activate'}
+                    </button>
+                    <div className="flex items-center gap-2">
                       <button
-                        onClick={() => handleTogglePoster(poster.id)}
-                        className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                          poster.is_active
-                            ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20'
-                            : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20'
-                        }`}
+                        onClick={() => handleEditPoster(poster)}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-teal/10 text-brand-teal font-bold text-xs hover:bg-brand-teal/20 transition-colors cursor-pointer"
+                        title="Edit Poster"
                       >
-                        {poster.is_active ? 'Deactivate' : 'Activate'}
+                        <Edit2 className="h-3.5 w-3.5" />
+                        <span>Edit</span>
                       </button>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleEditPoster(poster)}
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors"
-                          title="Edit Poster"
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeletePoster(poster.id)}
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-500/10 transition-colors"
-                          title="Delete Poster"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => handleDeletePoster(poster.id)}
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                        title="Delete Poster"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
-                  )}
+                  </div>
                 </div>
               ))}
             </div>

@@ -222,8 +222,93 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
       {/* A. Navigation Bar */}
       <PublicNavbar />
 
+      {/* Top Landscape Auto-scrolling Poster Carousel */}
+      {posters.length > 0 && (
+        <section 
+          className="pt-24 pb-4 bg-brand-navy border-b border-slate-800"
+          onMouseEnter={() => setIsPosterPaused(true)}
+          onMouseLeave={() => setIsPosterPaused(false)}
+          onTouchStart={() => setIsPosterPaused(true)}
+          onTouchEnd={() => setIsPosterPaused(false)}
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-brand-navy border border-slate-700/50 aspect-[21/9] sm:aspect-[24/9] md:aspect-[28/9]">
+              <a 
+                href={posters[currentPosterIndex]?.link_url || '#'} 
+                onClick={(e) => {
+                  if (!posters[currentPosterIndex]?.link_url) e.preventDefault();
+                  else if (posters[currentPosterIndex].link_url?.startsWith('/')) {
+                    e.preventDefault();
+                    navigate(posters[currentPosterIndex].link_url!);
+                  }
+                }}
+                className="block w-full h-full relative group cursor-pointer"
+              >
+                <img 
+                  src={posters[currentPosterIndex]?.image_url} 
+                  alt={posters[currentPosterIndex]?.alt_text || posters[currentPosterIndex]?.title || 'RKS Property Hub Banner'} 
+                  className="w-full h-full object-cover transition-opacity duration-700 ease-in-out"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent flex flex-col justify-end p-4 sm:p-8">
+                  {posters[currentPosterIndex]?.title && (
+                    <h3 className="text-white text-lg sm:text-2xl md:text-3xl font-black font-heading tracking-tight drop-shadow-md">
+                      {posters[currentPosterIndex].title}
+                    </h3>
+                  )}
+                  {posters[currentPosterIndex]?.link_url && (
+                    <span className="mt-2 inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-brand-teal bg-white/90 dark:bg-slate-900/90 px-3.5 py-1.5 rounded-full w-fit shadow-md group-hover:bg-brand-teal group-hover:text-white transition-colors">
+                      Explore Offer <ArrowRight className="h-4 w-4" />
+                    </span>
+                  )}
+                </div>
+              </a>
+
+              {/* Prev / Next Arrows */}
+              {posters.length > 1 && (
+                <>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentPosterIndex((prev) => (prev === 0 ? posters.length - 1 : prev - 1));
+                    }}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-sm transition-all cursor-pointer"
+                    aria-label="Previous Poster"
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentPosterIndex((prev) => (prev + 1) % posters.length);
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-sm transition-all cursor-pointer"
+                    aria-label="Next Poster"
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+                  {/* Indicators */}
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10">
+                    {posters.map((_, idx) => (
+                      <button
+                        key={idx}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCurrentPosterIndex(idx);
+                        }}
+                        className={`h-2 rounded-full transition-all cursor-pointer ${idx === currentPosterIndex ? 'w-6 bg-brand-teal' : 'w-2 bg-white/50'}`}
+                        aria-label={`Go to slide ${idx + 1}`}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* B. Hero Section */}
-      <section className="relative min-h-screen flex flex-col justify-center pt-24 pb-16">
+      <section className="relative min-h-[85vh] flex flex-col justify-center pt-12 pb-16">
         <div className="absolute inset-0 z-0">
           <img 
             src="https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?ixlib=rb-4.0.3&auto=format&fit=crop&w=2850&q=80" 
@@ -317,91 +402,6 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
           </div>
         </div>
       </section>
-
-      {/* Landscape Auto-scrolling Poster Carousel */}
-      {posters.length > 0 && (
-        <section 
-          className="py-6 bg-slate-100 dark:bg-[#07090D] border-b border-slate-200 dark:border-slate-800"
-          onMouseEnter={() => setIsPosterPaused(true)}
-          onMouseLeave={() => setIsPosterPaused(false)}
-          onTouchStart={() => setIsPosterPaused(true)}
-          onTouchEnd={() => setIsPosterPaused(false)}
-        >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-brand-navy border border-slate-700/50 aspect-[21/9] sm:aspect-[24/9] md:aspect-[28/9]">
-              <a 
-                href={posters[currentPosterIndex]?.link_url || '#'} 
-                onClick={(e) => {
-                  if (!posters[currentPosterIndex]?.link_url) e.preventDefault();
-                  else if (posters[currentPosterIndex].link_url?.startsWith('/')) {
-                    e.preventDefault();
-                    navigate(posters[currentPosterIndex].link_url!);
-                  }
-                }}
-                className="block w-full h-full relative group cursor-pointer"
-              >
-                <img 
-                  src={posters[currentPosterIndex]?.image_url} 
-                  alt={posters[currentPosterIndex]?.alt_text || posters[currentPosterIndex]?.title || 'RKS Property Hub Banner'} 
-                  className="w-full h-full object-cover transition-opacity duration-700 ease-in-out"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent flex flex-col justify-end p-4 sm:p-8">
-                  {posters[currentPosterIndex]?.title && (
-                    <h3 className="text-white text-lg sm:text-2xl md:text-3xl font-black font-heading tracking-tight drop-shadow-md">
-                      {posters[currentPosterIndex].title}
-                    </h3>
-                  )}
-                  {posters[currentPosterIndex]?.link_url && (
-                    <span className="mt-2 inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-brand-teal bg-white/90 dark:bg-slate-900/90 px-3.5 py-1.5 rounded-full w-fit shadow-md group-hover:bg-brand-teal group-hover:text-white transition-colors">
-                      Explore Offer <ArrowRight className="h-4 w-4" />
-                    </span>
-                  )}
-                </div>
-              </a>
-
-              {/* Prev / Next Arrows */}
-              {posters.length > 1 && (
-                <>
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setCurrentPosterIndex((prev) => (prev === 0 ? posters.length - 1 : prev - 1));
-                    }}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-sm transition-all cursor-pointer"
-                    aria-label="Previous Poster"
-                  >
-                    <ChevronLeft className="h-5 w-5" />
-                  </button>
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setCurrentPosterIndex((prev) => (prev + 1) % posters.length);
-                    }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-sm transition-all cursor-pointer"
-                    aria-label="Next Poster"
-                  >
-                    <ChevronRight className="h-5 w-5" />
-                  </button>
-                  {/* Indicators */}
-                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10">
-                    {posters.map((_, idx) => (
-                      <button
-                        key={idx}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setCurrentPosterIndex(idx);
-                        }}
-                        className={`h-2 rounded-full transition-all cursor-pointer ${idx === currentPosterIndex ? 'w-6 bg-brand-teal' : 'w-2 bg-white/50'}`}
-                        aria-label={`Go to slide ${idx + 1}`}
-                      />
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* Icon-Based Category Browsing Grid */}
       <section className="py-14 bg-white dark:bg-rks-bgDark border-b border-slate-100 dark:border-slate-800">
