@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { BrandLogo } from '../common/BrandLogo.js';
 import { useApp } from '../../context/AppContext.js';
 import { api } from '../../services/api.js';
 import { UserRole } from '../../types/index.js';
@@ -164,11 +165,8 @@ export const AuthGatewayView: React.FC<AuthGatewayViewProps> = ({ onLoginSuccess
         <BlueprintPattern opacity={0.15} color="teal" />
         
         {/* Top left logo */}
-        <div className="relative z-10 flex items-center gap-3">
-          <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
-            <Building2 className="h-6 w-6 text-brand-teal-light" />
-          </div>
-          <span className="text-xl font-bold font-heading text-white tracking-widest uppercase">RKS Property Hub</span>
+        <div className="relative z-10">
+          <BrandLogo variant="light" size="lg" showTagline={true} />
         </div>
 
         {/* Center content */}
@@ -197,11 +195,8 @@ export const AuthGatewayView: React.FC<AuthGatewayViewProps> = ({ onLoginSuccess
       {/* RIGHT PANEL - Login Form */}
       <div className="w-full md:w-1/2 min-h-screen flex items-center justify-center p-6 relative">
         {/* Mobile Header (only shows on small screens) */}
-        <div className="md:hidden absolute top-8 left-8 flex items-center gap-3">
-          <div className="w-10 h-10 bg-brand-navy rounded-lg flex items-center justify-center shadow-lg">
-            <Building2 className="h-5 w-5 text-brand-teal-light" />
-          </div>
-          <span className="text-lg font-bold text-brand-navy dark:text-white">RKS Property Hub</span>
+        <div className="md:hidden absolute top-8 left-8">
+          <BrandLogo size="md" />
         </div>
 
         <div className="w-full max-w-sm">

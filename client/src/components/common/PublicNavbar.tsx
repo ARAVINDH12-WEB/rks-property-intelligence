@@ -5,6 +5,8 @@ import { Menu, X, Sun, Moon } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { setLocaleCookie, switchLocalePath, getLocalizedPath, Locale } from '../../utils/locale.js';
 
+import { BrandLogo } from './BrandLogo.js';
+
 export const PublicNavbar: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { theme, toggleTheme, openSiteVisitModal } = useApp();
@@ -38,13 +40,11 @@ export const PublicNavbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center">
           {/* Logo */}
-          <div 
-            className="flex-shrink-0 flex items-center cursor-pointer" 
+          <BrandLogo
+            variant={isScrolled ? 'light' : 'auto'}
+            size="md"
             onClick={() => navigate(currentLocale === 'ta' ? '/ta' : '/')}
-          >
-            <span className={`font-heading font-bold text-2xl mr-1 drop-shadow-md ${isScrolled ? 'text-white' : 'text-brand-navy dark:text-white'}`}>RKS</span>
-            <span className="font-heading font-bold text-2xl text-brand-teal drop-shadow-md">Property Hub</span>
-          </div>
+          />
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-8">

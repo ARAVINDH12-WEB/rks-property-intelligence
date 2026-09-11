@@ -7,6 +7,8 @@ import { WhatsAppIcon, PhoneCallIcon } from './Icons.js';
 import { MapPin } from 'lucide-react';
 import { getLocalizedPath, Locale } from '../../utils/locale.js';
 
+import { BrandLogo } from './BrandLogo.js';
+
 export const PublicFooter: React.FC = () => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
@@ -39,9 +41,13 @@ export const PublicFooter: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-16">
           {/* Column 1 */}
           <div>
-            <div className="flex items-center gap-2 mb-6 cursor-pointer" onClick={() => navigate(currentLocale === 'ta' ? '/ta' : '/')}>
-              <span className="font-heading font-bold text-2xl text-white">RKS</span>
-              <span className="font-heading font-bold text-2xl text-brand-teal">Property Hub</span>
+            <div className="mb-6">
+              <BrandLogo
+                variant="light"
+                size="md"
+                showTagline={true}
+                onClick={() => navigate(currentLocale === 'ta' ? '/ta' : '/')}
+              />
             </div>
             <p className="text-slate-400 mb-6 max-w-sm leading-relaxed text-sm">
               {t('footer.tagline')}

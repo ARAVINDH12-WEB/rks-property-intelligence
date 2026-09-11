@@ -143,16 +143,18 @@ export const Sidebar: React.FC = () => {
       >
         {/* Brand Header */}
         <div className="flex h-16 items-center justify-between px-4 border-b border-slate-200 dark:border-zinc-800/80 bg-slate-50/50 dark:bg-[#090C12] shrink-0">
-          <div className="flex items-center gap-3 overflow-hidden">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-teal via-brand-navy to-black font-black text-white shadow-md border border-brand-teal/30">
-              RKS
-            </div>
+          <div className="flex items-center gap-2.5 overflow-hidden">
+            <img
+              src="/logo.png"
+              alt="RKS Property Hub"
+              className="h-9 w-9 shrink-0 object-contain rounded-lg bg-white p-0.5 border border-slate-200/80 shadow-xs"
+            />
             {!sidebarCollapsed && (
               <div className="flex flex-col truncate">
-                <span className="text-sm font-black tracking-wider text-slate-900 dark:text-white uppercase">
-                  RKS Intelligence
+                <span className="text-xs font-bold tracking-tight text-slate-900 dark:text-white font-heading">
+                  RKS Property Hub
                 </span>
-                <span className="text-[10px] font-semibold tracking-widest text-brand-gold uppercase font-mono">
+                <span className="text-[10px] font-semibold tracking-wider text-brand-teal uppercase font-mono">
                   {activeRole === 'VIEWER' ? 'Customer Portal' : 'Command Center'}
                 </span>
               </div>

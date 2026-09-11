@@ -9,13 +9,13 @@ export default {
     extend: {
       colors: {
         brand: {
-          navy: '#0A1128',
-          'navy-light': '#1a2e4a',
+          navy: '#0A192F',
+          'navy-light': '#1e293b',
           slate: '#1E293B',
-          teal: '#0F766E',
+          teal: '#008080',
           'teal-light': '#14B8A6',
           'teal-dark': '#042F2E',
-          charcoal: '#121212',
+          charcoal: '#333233',
           gold: '#D4AF37',
           'gold-light': '#F4E5B1',
           'gold-dark': '#AA8B2C',
