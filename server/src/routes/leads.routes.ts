@@ -188,7 +188,17 @@ router.patch('/:id/status', authenticate, authorize(['ADMIN', 'MANAGER', 'EMPLOY
   }
 });
 
-// Protected: Delete a lead (Admin & Manager Only)
+// Protected: Clear all leads (Admin & Manager Only)
+router.delete('/', authenticate, authorize(['ADMIN', 'MANAGER']), async (req: Request, res: Response) => {
+  try {
+    await query(`DELETE FROM leads`);
+    res.json({ success: true, message: 'All leads cleared successfully' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Protected: Delete a single lead (Admin & Manager Only)
 router.delete('/:id', authenticate, authorize(['ADMIN', 'MANAGER']), async (req: Request, res: Response) => {
   try {
     await query(`DELETE FROM leads WHERE id = $1`, [req.params.id]);

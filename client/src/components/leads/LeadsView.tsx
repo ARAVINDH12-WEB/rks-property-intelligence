@@ -810,7 +810,7 @@ export const LeadsView: React.FC = () => {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Senthil Nathan"
+                  placeholder="Enter buyer full name"
                   value={newLeadForm.name}
                   onChange={e => setNewLeadForm({ ...newLeadForm, name: e.target.value })}
                   className="w-full rounded-xl border border-slate-700 bg-slate-900/80 px-3.5 py-2.5 text-white outline-none focus:border-brand-teal"
@@ -826,7 +826,7 @@ export const LeadsView: React.FC = () => {
                     type="tel"
                     required
                     maxLength={10}
-                    placeholder="9840011223"
+                    placeholder="9840012345"
                     value={newLeadForm.phone}
                     onChange={e => setNewLeadForm({ ...newLeadForm, phone: e.target.value })}
                     className="w-full rounded-xl border border-slate-700 bg-slate-900/80 px-3.5 py-2.5 text-white outline-none focus:border-brand-teal font-mono"
@@ -838,7 +838,7 @@ export const LeadsView: React.FC = () => {
                   </label>
                   <input
                     type="email"
-                    placeholder="senthil@gmail.com"
+                    placeholder="buyer@example.com"
                     value={newLeadForm.email}
                     onChange={e => setNewLeadForm({ ...newLeadForm, email: e.target.value })}
                     className="w-full rounded-xl border border-slate-700 bg-slate-900/80 px-3.5 py-2.5 text-white outline-none focus:border-brand-teal"

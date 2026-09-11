@@ -261,40 +261,7 @@ export async function seedDatabase(force: boolean = false) {
     ['Monsoon Special', '5% off on all Trichy plots above 1200 sq.ft', 5, '2026-08-01', '2026-10-31', 'ACTIVE', adminId]
   ).catch(() => console.log('Offers table may not have all columns, skipping offers seed'));
 
-  // 9. Seed Realistic Balanced Leads
-  const initialLeads = [
-    { name: 'Senthil Nathan', phone: '9840191234', email: 'senthil.n@gmail.com', source: 'PHONE_INQUIRY', status: 'NEW', propCode: 'RKS-EV-001', notes: 'Inquired for 1200 sq.ft plot along Chennai-Bangalore highway. Immediate buyer.' },
-    { name: 'Deepa Saravanan', phone: '9789012345', email: 'deepa.s@yahoo.com', source: 'WEBSITE', status: 'NEW', propCode: 'RKS-GA-002', notes: 'Submitted enquiry on website. Interested in Trichy ring road gated community.' },
-    { name: 'Karthik Subramani', phone: '9940123456', email: 'karthik.sub@gmail.com', source: 'WHATSAPP', status: 'NEW', propCode: 'RKS-CB-003', notes: 'WhatsApp chat asking about bank loan funding for Coimbatore Kalapatti plot.' },
-    { name: 'Anandhan M', phone: '9444123456', email: null, source: 'WALK_IN', status: 'NEW', propCode: 'RKS-HS-002', notes: 'Walked into Hosur office. Inquired about commercial potential.' },
-    
-    { name: 'Vignesh Kumar', phone: '8801234567', email: 'vignesh.k@gmail.com', source: 'WEBSITE', status: 'CONTACTED', propCode: 'RKS-EV-004', notes: 'Called back by sales rep. Budget around 25 Lakhs, looking for East facing.' },
-    { name: 'Nandini Raj', phone: '7701234567', email: 'nandini.raj@yahoo.com', source: 'REFERRAL', status: 'CONTACTED', propCode: 'RKS-RS-002', notes: 'Referred by existing buyer. Shared brochure & layout copy via WhatsApp.' },
-    { name: 'Selva Pandian', phone: '9884123456', email: 'selva.p@gmail.com', source: 'PHONE_INQUIRY', status: 'CONTACTED', propCode: 'RKS-SC-003', notes: 'Spoke regarding Perungalathur township plots. Follow up next Tuesday.' },
-
-    { name: 'Lakshmi Priya', phone: '9791234567', email: 'lakshmi.p@gmail.com', source: 'SITE_VISIT', status: 'SITE_VISIT_SCHEDULED', propCode: 'RKS-EV-002', notes: 'Cab pickup confirmed for Saturday 10:00 AM from Velachery.' },
-    { name: 'Ravi Chandran', phone: '8861234567', email: null, source: 'WHATSAPP', status: 'SITE_VISIT_SCHEDULED', propCode: 'RKS-GA-005', notes: 'Family visit scheduled for Sunday afternoon at Golden Acres Trichy.' },
-    { name: 'Gopinath V', phone: '9500123456', email: 'gopinath.v@outlook.com', source: 'WEBSITE', status: 'SITE_VISIT_SCHEDULED', propCode: 'RKS-CB-001', notes: 'Visiting Coimbatore Heights on Friday with local architect.' },
-
-    { name: 'Dinesh Anand', phone: '9901234567', email: 'dinesh.anand@gmail.com', source: 'WEBSITE', status: 'NEGOTIATION', propCode: 'RKS-RS-005', notes: 'Negotiating price for 1500 sq.ft plot. Offering ₹880/sq.ft against ₹920 ask.' },
-    { name: 'Meenakshi Sundaram', phone: '9841255555', email: 'meenakshi.s@gmail.com', source: 'REFERRAL', status: 'NEGOTIATION', propCode: 'RKS-SC-005', notes: 'Requested 3% developer discount on corner plot. Manager reviewing token offer.' },
-
-    { name: 'Padma Subramaniam', phone: '9551234567', email: 'padma.s@gmail.com', source: 'WHATSAPP', status: 'CLOSED_WON', propCode: 'RKS-GA-006', notes: 'Deal closed! Paid ₹2 Lakhs token. Registered Plot GA-006.' },
-    { name: 'Arun Sharma', phone: '9841234567', email: 'arun@gmail.com', source: 'WEBSITE', status: 'CLOSED_WON', propCode: 'RKS-EV-003', notes: 'Full payment received via SBI plot loan. Registration complete.' },
-    { name: 'Bala Murugan', phone: '9771234567', email: null, source: 'WALK_IN', status: 'CLOSED_WON', propCode: 'RKS-CB-005', notes: 'Token confirmed. Sale agreement executed with boundary demarcation.' },
-
-    { name: 'Suresh Kumar', phone: '9176123456', email: 'suresh.k@gmail.com', source: 'WEBSITE', status: 'CLOSED_LOST', propCode: 'RKS-HS-005', notes: 'Relocated to Hyderabad. Postponed land purchase plans indefinitely.' }
-  ];
-
-  for (const ld of initialLeads) {
-    await query(
-      `INSERT INTO leads (name, phone, email, source, status, property_code, notes, assigned_to)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-      [ld.name, ld.phone, ld.email, ld.source, ld.status, ld.propCode, ld.notes, emp1Id]
-    );
-  }
-
-  // 10. Mark seed complete
+  // 9. Mark seed complete
   await query(
     `INSERT INTO system_meta (key, value) VALUES ('seed_completed', 'true') ON CONFLICT (key) DO UPDATE SET value = 'true'`
   );
