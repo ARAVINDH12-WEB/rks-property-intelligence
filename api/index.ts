@@ -38,5 +38,11 @@ async function ensureDb(): Promise<void> {
 
 export default async function handler(req: Request, res: Response) {
   await ensureDb();
+  
+  // Normalize req.url for Express when invoked via Vercel Serverless Function
+  if (req.url && !req.url.startsWith('/api') && !req.url.startsWith('/uploads')) {
+    req.url = `/api${req.url}`;
+  }
+
   (app as any)(req, res);
 }

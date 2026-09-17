@@ -83,22 +83,28 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 const uploadsDir = path.join(process.cwd(), 'uploads');
 app.use('/uploads', express.static(uploadsDir));
 
-// API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/properties', propertiesRoutes);
-app.use('/api/projects', projectsRoutes);
-app.use('/api/locations', locationsRoutes);
-app.use('/api/import', importRoutes);
-app.use('/api/export', exportRoutes);
-app.use('/api/reports', reportsRoutes);
-app.use('/api/audit-logs', auditRoutes);
-app.use('/api/site-visits', siteVisitsRoutes);
-app.use('/api/ai-chat', aiChatRoutes);
-app.use('/api/offers', offersRoutes);
-app.use('/api/settings', settingsRoutes);
-app.use('/api/leads', leadsRoutes);
-app.use('/api/posters', postersRoutes);
-app.use('/posters', postersRoutes);
+// API Routes (mounted with both /api prefix and root path for serverless compatibility)
+const routeModules: [string, any][] = [
+  ['/auth', authRoutes],
+  ['/properties', propertiesRoutes],
+  ['/projects', projectsRoutes],
+  ['/locations', locationsRoutes],
+  ['/import', importRoutes],
+  ['/export', exportRoutes],
+  ['/reports', reportsRoutes],
+  ['/audit-logs', auditRoutes],
+  ['/site-visits', siteVisitsRoutes],
+  ['/ai-chat', aiChatRoutes],
+  ['/offers', offersRoutes],
+  ['/settings', settingsRoutes],
+  ['/leads', leadsRoutes],
+  ['/posters', postersRoutes],
+];
+
+for (const [routePath, routerModule] of routeModules) {
+  app.use(`/api${routePath}`, routerModule);
+  app.use(routePath, routerModule);
+}
 
 // Comprehensive Health check endpoint
 app.get('/api/health', async (_req: Request, res: Response) => {
