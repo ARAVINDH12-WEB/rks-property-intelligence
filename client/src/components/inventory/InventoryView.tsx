@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext.js';
 import { api } from '../../services/api.js';
+import { useDebounce } from '../../hooks/useDebounce.js';
 import { Property, Project, Location } from '../../types/index.js';
 import { PropertyTable } from './PropertyTable.js';
 import { PropertyCards } from './PropertyCards.js';
@@ -75,13 +76,15 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ forcedStatusFilter
     api.getLocations().then((res) => setLocations(res.locations)).catch(() => {});
   }, []);
 
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
   // Fetch properties with filters, search, pagination, and sorting
   useEffect(() => {
     setIsLoading(true);
 
     const mergedParams = {
       ...filterParams,
-      q: searchQuery || undefined,
+      q: debouncedSearchQuery || undefined,
       status: forcedStatusFilter || filterParams.status,
       sort_by: sortField,
       sort_order: sortOrder,
@@ -101,7 +104,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ forcedStatusFilter
       .finally(() => {
         setIsLoading(false);
       });
-  }, [searchQuery, filterParams, forcedStatusFilter, sortField, sortOrder, refreshTrigger]);
+  }, [debouncedSearchQuery, filterParams, forcedStatusFilter, sortField, sortOrder, refreshTrigger]);
 
   // Sort handler
   const handleSort = (field: string) => {

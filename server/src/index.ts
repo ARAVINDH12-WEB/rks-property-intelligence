@@ -21,6 +21,7 @@ import offersRoutes from './routes/offers.routes.js';
 import settingsRoutes from './routes/settings.routes.js';
 import leadsRoutes from './routes/leads.routes.js';
 import postersRoutes from './routes/posters.routes.js';
+import uploadRoutes from './routes/upload.routes.js';
 import { createRateLimiter } from './middleware/security.js';
 import helmet from 'helmet';
 
@@ -99,6 +100,7 @@ const routeModules: [string, any][] = [
   ['/settings', settingsRoutes],
   ['/leads', leadsRoutes],
   ['/posters', postersRoutes],
+  ['/upload', uploadRoutes],
 ];
 
 for (const [routePath, routerModule] of routeModules) {

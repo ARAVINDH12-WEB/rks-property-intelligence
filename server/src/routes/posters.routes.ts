@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { query } from '../db/index.js';
 import { authenticate, optionalAuthenticate, authorize } from '../middleware/auth.js';
+import { deleteStorageFile } from '../utils/storage.js';
 
 const router = Router();
 
@@ -133,12 +134,18 @@ router.patch('/:id/toggle', authenticate, authorize(['ADMIN']), async (req: Requ
 router.delete('/:id', authenticate, authorize(['ADMIN']), async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const result = await query(`DELETE FROM posters WHERE id = $1 RETURNING id`, [id]);
 
-    if (result.rowCount === 0) {
+    const existing = await query(`SELECT image_url FROM posters WHERE id = $1`, [id]);
+    if (existing.rowCount === 0) {
       res.status(404).json({ error: 'Poster not found' });
       return;
     }
+
+    if (existing.rows[0].image_url) {
+      await deleteStorageFile(existing.rows[0].image_url);
+    }
+
+    await query(`DELETE FROM posters WHERE id = $1`, [id]);
 
     res.json({ message: 'Poster deleted successfully', id });
   } catch (error: any) {

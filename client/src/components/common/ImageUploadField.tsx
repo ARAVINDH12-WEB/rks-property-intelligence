@@ -122,6 +122,29 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
     return null;
   };
 
+  const uploadToLocalStorage = async (file: File): Promise<string | null> => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch(`${Config.apiUrl}/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.url) {
+          console.log('[ImageUpload Diagnostics] Server Disk Upload SUCCESS:', data.url);
+          return data.url;
+        }
+      }
+    } catch (err) {
+      console.warn('[ImageUpload Diagnostics] Local server disk upload failed:', err);
+    }
+    return null;
+  };
+
   const handleFile = async (file: File) => {
     setError(null);
     if (!file.type.startsWith('image/')) {
@@ -144,7 +167,15 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
         return;
       }
 
-      // 2. Fallback to canvas-compressed lightweight image string (<100KB payload)
+      // 2. Fallback to Express Server Disk Storage (/uploads/filename)
+      const localUrl = await uploadToLocalStorage(file);
+      if (localUrl) {
+        onChange(localUrl);
+        setIsUploading(false);
+        return;
+      }
+
+      // 3. Emergency fallback to canvas-compressed image string
       const compressedUrl = await compressImage(file);
       onChange(compressedUrl);
     } catch {

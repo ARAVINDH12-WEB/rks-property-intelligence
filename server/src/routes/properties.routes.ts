@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { query } from '../db/index.js';
 import { authenticate, optionalAuthenticate, requireRole } from '../middleware/auth.js';
 import { calculateAreaConversions, calculateTotalPrice } from '../utils/calculations.js';
+import { deleteStorageFile } from '../utils/storage.js';
 import {
   CreatePropertySchema,
   UpdatePropertySchema,
@@ -950,6 +951,11 @@ router.post('/bulk', authenticate, requireRole(['ADMIN', 'MANAGER']), async (req
         res.status(403).json({ error: 'Only ADMIN users can permanently delete properties.' });
         return;
       }
+      // Unlink storage files for all deleted properties
+      const imgRes = await query(`SELECT url FROM property_images WHERE property_id = ANY($1::int[])`, [ids]);
+      for (const img of imgRes.rows) {
+        if (img.url) await deleteStorageFile(img.url);
+      }
       const result = await query(
         `DELETE FROM properties WHERE id = ANY($1::int[])`,
         [ids]
@@ -1063,6 +1069,11 @@ router.delete('/:id', authenticate, requireRole(['ADMIN', 'MANAGER']), async (re
       if (req.user?.role !== 'ADMIN') {
         res.status(403).json({ error: 'Permanent deletion requires ADMIN permissions' });
         return;
+      }
+      // Unlink storage files for property
+      const imgRes = await query('SELECT url FROM property_images WHERE property_id = $1', [id]);
+      for (const img of imgRes.rows) {
+        if (img.url) await deleteStorageFile(img.url);
       }
       await query('DELETE FROM properties WHERE id = $1', [id]);
       await query(
