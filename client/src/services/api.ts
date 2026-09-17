@@ -1,7 +1,6 @@
 import { Property, Project, Location, PropertyFilterParams, PaginationMeta, UserRole, Poster } from '../types/index.js';
+import { Config } from '../config/index.js';
 
-const DEFAULT_PRODUCTION_BACKEND = 'https://rks-property-intelligence-production.up.railway.app';
-const envApiUrl = (import.meta as any).env?.VITE_API_URL;
 const isLocal = typeof window !== 'undefined' && (
   window.location.hostname === 'localhost' || 
   window.location.hostname === '127.0.0.1' || 
@@ -15,7 +14,7 @@ const isLocal = typeof window !== 'undefined' && (
 function resolveApiBaseUrl(): string {
   if (isLocal) return '/api';
 
-  let rawUrl = ((import.meta as any).env?.VITE_API_URL as string | undefined)?.trim() || DEFAULT_PRODUCTION_BACKEND;
+  let rawUrl = Config.apiUrl.trim();
   
   // Enforce HTTPS protocol for remote production backends to prevent browser mixed-content blocks
   if (rawUrl.startsWith('http://')) {

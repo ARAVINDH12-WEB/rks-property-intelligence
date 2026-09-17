@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { UploadCloud, X, Image as ImageIcon, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Config } from '../../config/index.js';
 
 interface ImageUploadFieldProps {
   label: string;
@@ -67,12 +68,8 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
   };
 
   const uploadToSupabaseStorage = async (file: File): Promise<string | null> => {
-    const supabaseUrl =
-      (import.meta as any).env?.VITE_SUPABASE_URL ||
-      (import.meta as any).env?.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey =
-      (import.meta as any).env?.VITE_SUPABASE_ANON_KEY ||
-      (import.meta as any).env?.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const supabaseUrl = Config.supabase.url;
+    const supabaseAnonKey = Config.supabase.anonKey;
 
     console.log('[ImageUpload Diagnostics] Environment check:', {
       hasSupabaseUrl: !!supabaseUrl,
