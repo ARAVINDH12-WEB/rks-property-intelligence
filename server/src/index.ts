@@ -98,6 +98,7 @@ app.use('/api/offers', offersRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/leads', leadsRoutes);
 app.use('/api/posters', postersRoutes);
+app.use('/posters', postersRoutes);
 
 // Comprehensive Health check endpoint
 app.get('/api/health', async (_req: Request, res: Response) => {
