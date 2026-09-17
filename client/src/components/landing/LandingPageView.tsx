@@ -22,7 +22,7 @@ import {
   IndustrialFactoryIcon,
   DuplexHouseIcon
 } from '../common/Icons.js';
-import { ArrowRight, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, MapPin, ChevronLeft, ChevronRight, Maximize2, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { PublicNavbar } from '../common/PublicNavbar.js';
 import { PublicFooter } from '../common/PublicFooter.js';
 import { getLocalizedPath, Locale } from '../../utils/locale.js';
@@ -101,8 +101,24 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
   const [currentPosterIndex, setCurrentPosterIndex] = useState(0);
   const [isPosterPaused, setIsPosterPaused] = useState(false);
 
+  // Poster Lightbox Zoom state
+  const [zoomedPoster, setZoomedPoster] = useState<Poster | null>(null);
+  const [zoomScale, setZoomScale] = useState(1);
+
   const [searchLocation, setSearchLocation] = useState('');
   const [searchType, setSearchType] = useState('');
+
+  // ESC key to close lightbox zoom modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setZoomedPoster(null);
+        setZoomScale(1);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -233,22 +249,39 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-brand-navy border border-slate-700/50 aspect-[21/9] sm:aspect-[24/9] md:aspect-[28/9]">
-              <a 
-                href={posters[currentPosterIndex]?.link_url || '#'} 
-                onClick={(e) => {
-                  if (!posters[currentPosterIndex]?.link_url) e.preventDefault();
-                  else if (posters[currentPosterIndex].link_url?.startsWith('/')) {
-                    e.preventDefault();
-                    navigate(posters[currentPosterIndex].link_url!);
+              <div 
+                className="w-full h-full relative group cursor-pointer"
+                onClick={() => {
+                  const currentPoster = posters[currentPosterIndex];
+                  if (currentPoster) {
+                    setZoomedPoster(currentPoster);
+                    setZoomScale(1);
                   }
                 }}
-                className="block w-full h-full relative group cursor-pointer"
               >
                 <img 
                   src={posters[currentPosterIndex]?.image_url} 
                   alt={posters[currentPosterIndex]?.alt_text || posters[currentPosterIndex]?.title || 'RKS Property Hub Banner'} 
-                  className="w-full h-full object-cover transition-opacity duration-700 ease-in-out"
+                  className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                 />
+
+                {/* Zoom Badge overlay button (Top Right) */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const currentPoster = posters[currentPosterIndex];
+                    if (currentPoster) {
+                      setZoomedPoster(currentPoster);
+                      setZoomScale(1);
+                    }
+                  }}
+                  className="absolute top-3 right-3 z-20 inline-flex items-center gap-1.5 text-xs font-bold text-white bg-black/60 hover:bg-black/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 transition-all shadow-md active:scale-95 cursor-pointer"
+                  title="Zoom Banner Image"
+                >
+                  <Maximize2 className="h-3.5 w-3.5 text-brand-gold" />
+                  <span className="hidden sm:inline">Tap to Zoom</span>
+                </button>
+
                 <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent flex flex-col justify-end p-4 sm:p-8">
                   {posters[currentPosterIndex]?.title && (
                     <h3 className="text-white text-lg sm:text-2xl md:text-3xl font-black font-heading tracking-tight drop-shadow-md">
@@ -256,12 +289,23 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
                     </h3>
                   )}
                   {posters[currentPosterIndex]?.link_url && (
-                    <span className="mt-2 inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-brand-teal bg-white/90 dark:bg-slate-900/90 px-3.5 py-1.5 rounded-full w-fit shadow-md group-hover:bg-brand-teal group-hover:text-white transition-colors">
+                    <a
+                      href={posters[currentPosterIndex]?.link_url || '#'}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!posters[currentPosterIndex]?.link_url) e.preventDefault();
+                        else if (posters[currentPosterIndex].link_url?.startsWith('/')) {
+                          e.preventDefault();
+                          navigate(posters[currentPosterIndex].link_url!);
+                        }
+                      }}
+                      className="mt-2 inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-brand-teal bg-white/90 dark:bg-slate-900/90 px-3.5 py-1.5 rounded-full w-fit shadow-md hover:bg-brand-teal hover:text-white transition-colors cursor-pointer"
+                    >
                       Explore Offer <ArrowRight className="h-4 w-4" />
-                    </span>
+                    </a>
                   )}
                 </div>
-              </a>
+              </div>
 
               {/* Prev / Next Arrows */}
               {posters.length > 1 && (
@@ -271,7 +315,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
                       e.stopPropagation();
                       setCurrentPosterIndex((prev) => (prev === 0 ? posters.length - 1 : prev - 1));
                     }}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-sm transition-all cursor-pointer"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-sm transition-all cursor-pointer z-10"
                     aria-label="Previous Poster"
                   >
                     <ChevronLeft className="h-5 w-5" />
@@ -281,7 +325,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
                       e.stopPropagation();
                       setCurrentPosterIndex((prev) => (prev + 1) % posters.length);
                     }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-sm transition-all cursor-pointer"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-sm transition-all cursor-pointer z-10"
                     aria-label="Next Poster"
                   >
                     <ChevronRight className="h-5 w-5" />
@@ -709,6 +753,96 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
 
       {/* H. Footer */}
       <PublicFooter />
+
+      {/* Poster Zoom Lightbox Modal */}
+      {zoomedPoster && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-4 sm:p-6 animate-fade-in select-none"
+          onClick={() => {
+            setZoomedPoster(null);
+            setZoomScale(1);
+          }}
+        >
+          {/* Top Control Bar */}
+          <div 
+            className="absolute top-4 right-4 z-50 flex items-center gap-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Zoom Controls */}
+            <div className="flex items-center bg-slate-900/80 border border-slate-700/80 rounded-full px-3 py-1.5 gap-2 text-white shadow-lg">
+              <button
+                onClick={() => setZoomScale((prev) => Math.max(0.8, prev - 0.25))}
+                className="hover:text-brand-teal transition-colors cursor-pointer p-1"
+                title="Zoom Out"
+              >
+                <ZoomOut className="h-5 w-5" />
+              </button>
+              <span className="text-xs font-semibold w-12 text-center text-slate-300">
+                {Math.round(zoomScale * 100)}%
+              </span>
+              <button
+                onClick={() => setZoomScale((prev) => Math.min(3, prev + 0.25))}
+                className="hover:text-brand-teal transition-colors cursor-pointer p-1"
+                title="Zoom In"
+              >
+                <ZoomIn className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Close Button */}
+            <button
+              onClick={() => {
+                setZoomedPoster(null);
+                setZoomScale(1);
+              }}
+              className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer border border-white/20"
+              aria-label="Close Zoom Modal"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+
+          {/* Main Zoomed Image Container */}
+          <div 
+            className="relative max-w-5xl max-h-[80vh] overflow-auto flex items-center justify-center transition-all rounded-2xl border border-slate-700/60 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img 
+              src={zoomedPoster.image_url} 
+              alt={zoomedPoster.alt_text || zoomedPoster.title || 'Zoomed Poster Banner'} 
+              className="max-w-full max-h-[75vh] object-contain transition-transform duration-300 ease-out rounded-xl"
+              style={{ transform: `scale(${zoomScale})` }}
+            />
+          </div>
+
+          {/* Caption & Navigation CTA */}
+          <div 
+            className="mt-4 max-w-2xl text-center z-50 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 text-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {zoomedPoster.title && (
+              <h4 className="text-lg sm:text-xl font-bold font-heading mb-1 text-white">
+                {zoomedPoster.title}
+              </h4>
+            )}
+            {zoomedPoster.link_url && (
+              <a
+                href={zoomedPoster.link_url}
+                onClick={(e) => {
+                  if (zoomedPoster.link_url?.startsWith('/')) {
+                    e.preventDefault();
+                    setZoomedPoster(null);
+                    navigate(zoomedPoster.link_url);
+                  }
+                }}
+                className="mt-2 inline-flex items-center gap-2 text-sm font-bold text-brand-teal hover:text-brand-teal-light underline transition-colors cursor-pointer"
+              >
+                Explore Offer Details <ArrowRight className="h-4 w-4" />
+              </a>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
