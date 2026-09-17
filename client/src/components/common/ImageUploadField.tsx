@@ -74,13 +74,24 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
       (import.meta as any).env?.VITE_SUPABASE_ANON_KEY ||
       (import.meta as any).env?.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    if (!supabaseUrl || !supabaseAnonKey) return null;
+    console.log('[ImageUpload Diagnostics] Environment check:', {
+      hasSupabaseUrl: !!supabaseUrl,
+      hasSupabaseAnonKey: !!supabaseAnonKey,
+      supabaseUrl: supabaseUrl ? supabaseUrl.replace(/\/+$/, '') : 'NONE',
+    });
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.warn('[ImageUpload Diagnostics] Supabase env variables missing. Falling back to canvas compression.');
+      return null;
+    }
 
     try {
       const ext = file.name.split('.').pop() || 'jpg';
       const fileName = `poster-${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${ext}`;
       const cleanUrl = supabaseUrl.replace(/\/+$/, '');
       const uploadEndpoint = `${cleanUrl}/storage/v1/object/posters/${fileName}`;
+
+      console.log(`[ImageUpload Diagnostics] Uploading ${file.name} to bucket 'posters' at ${uploadEndpoint}`);
 
       const res = await fetch(uploadEndpoint, {
         method: 'POST',
@@ -93,11 +104,22 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
         body: file,
       });
 
+      console.log('[ImageUpload Diagnostics] Supabase Storage HTTP Response:', res.status, res.statusText);
+
       if (res.ok) {
-        return `${cleanUrl}/storage/v1/object/public/posters/${fileName}`;
+        const publicUrl = `${cleanUrl}/storage/v1/object/public/posters/${fileName}`;
+        console.log('[ImageUpload Diagnostics] Supabase Storage Upload SUCCESS:', publicUrl);
+        return publicUrl;
+      } else {
+        const errPayload = await res.text().catch(() => '');
+        console.error('[ImageUpload Diagnostics ERROR] Supabase Storage HTTP Error:', {
+          status: res.status,
+          statusText: res.statusText,
+          responseBody: errPayload,
+        });
       }
-    } catch {
-      // Fallback to canvas compression if Supabase bucket fails
+    } catch (err: any) {
+      console.error('[ImageUpload Diagnostics ERROR] Network/Storage Exception during upload:', err);
     }
 
     return null;

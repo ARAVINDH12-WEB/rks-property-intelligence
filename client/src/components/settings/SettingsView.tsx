@@ -119,19 +119,34 @@ export const SettingsView: React.FC = () => {
       showToast('Validation Error', 'Image URL is required for poster', 'error');
       return;
     }
+    
+    console.log('[Poster Diagnostics] Submitting Poster Payload:', editingPoster);
+    
     try {
+      let result;
       if (editingPoster.id) {
-        await api.updatePoster(editingPoster.id, editingPoster);
+        console.log(`[Poster Diagnostics] Step: Updating Poster ID ${editingPoster.id}`);
+        result = await api.updatePoster(editingPoster.id, editingPoster);
+        console.log('[Poster Diagnostics] Update Poster Success Result:', result);
         showToast('Poster Updated', 'Banner details updated successfully', 'success');
       } else {
-        await api.createPoster(editingPoster);
+        console.log('[Poster Diagnostics] Step: Creating New Poster Record');
+        result = await api.createPoster(editingPoster);
+        console.log('[Poster Diagnostics] Create Poster Success Result:', result);
         showToast('Poster Created', 'New homepage banner created successfully', 'success');
       }
       setShowPosterModal(false);
       setEditingPoster(null);
       fetchPosters();
     } catch (err: any) {
-      showToast('Poster Save Failed', err.message || 'Error saving poster', 'error');
+      console.error('[Poster Diagnostics ERROR] Save Poster Failed:', {
+        message: err?.message || String(err),
+        name: err?.name,
+        stack: err?.stack,
+        fullErrorObject: err,
+        posterPayload: editingPoster,
+      });
+      showToast('Poster Save Failed', err?.message || 'Error saving poster', 'error');
     }
   };
 

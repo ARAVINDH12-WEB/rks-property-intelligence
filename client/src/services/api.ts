@@ -11,11 +11,17 @@ const isLocal = typeof window !== 'undefined' && (
 );
 
 // In local browser, use '/api' to route via Vite dev proxy.
-// In Vercel / production, explicitly connect to the Railway backend API, ensuring '/api' prefix is always included.
+// In Vercel / production, explicitly connect to the Railway backend API via HTTPS, ensuring '/api' prefix is always included.
 function resolveApiBaseUrl(): string {
   if (isLocal) return '/api';
 
-  const rawUrl = ((import.meta as any).env?.VITE_API_URL as string | undefined)?.trim() || DEFAULT_PRODUCTION_BACKEND;
+  let rawUrl = ((import.meta as any).env?.VITE_API_URL as string | undefined)?.trim() || DEFAULT_PRODUCTION_BACKEND;
+  
+  // Enforce HTTPS protocol for remote production backends to prevent browser mixed-content blocks
+  if (rawUrl.startsWith('http://')) {
+    rawUrl = rawUrl.replace(/^http:\/\//i, 'https://');
+  }
+
   const cleanUrl = rawUrl.replace(/\/+$/, '');
   return cleanUrl.endsWith('/api') ? cleanUrl : `${cleanUrl}/api`;
 }
