@@ -20,27 +20,119 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFile = (file: File) => {
+  const [isUploading, setIsUploading] = useState(false);
+
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = reject;
+
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxDim = 1200;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(reader.result as string);
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.75);
+        resolve(compressedDataUrl);
+      };
+
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const uploadToSupabaseStorage = async (file: File): Promise<string | null> => {
+    const supabaseUrl =
+      (import.meta as any).env?.VITE_SUPABASE_URL ||
+      (import.meta as any).env?.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey =
+      (import.meta as any).env?.VITE_SUPABASE_ANON_KEY ||
+      (import.meta as any).env?.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) return null;
+
+    try {
+      const ext = file.name.split('.').pop() || 'jpg';
+      const fileName = `poster-${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${ext}`;
+      const cleanUrl = supabaseUrl.replace(/\/+$/, '');
+      const uploadEndpoint = `${cleanUrl}/storage/v1/object/posters/${fileName}`;
+
+      const res = await fetch(uploadEndpoint, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${supabaseAnonKey}`,
+          apikey: supabaseAnonKey,
+          'Content-Type': file.type || 'image/jpeg',
+          'x-upsert': 'true',
+        },
+        body: file,
+      });
+
+      if (res.ok) {
+        return `${cleanUrl}/storage/v1/object/public/posters/${fileName}`;
+      }
+    } catch {
+      // Fallback to canvas compression if Supabase bucket fails
+    }
+
+    return null;
+  };
+
+  const handleFile = async (file: File) => {
     setError(null);
     if (!file.type.startsWith('image/')) {
       setError('Please select a valid image file (.jpg, .png, .webp, .svg)');
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Image file size must be less than 5MB');
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Image file size must be less than 10MB');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      onChange(result);
-    };
-    reader.onerror = () => {
-      setError('Failed to read image file');
-    };
-    reader.readAsDataURL(file);
+    setIsUploading(true);
+    try {
+      // 1. Attempt direct Supabase Storage Upload
+      const storageUrl = await uploadToSupabaseStorage(file);
+      if (storageUrl) {
+        onChange(storageUrl);
+        setIsUploading(false);
+        return;
+      }
+
+      // 2. Fallback to canvas-compressed lightweight image string (<100KB payload)
+      const compressedUrl = await compressImage(file);
+      onChange(compressedUrl);
+    } catch {
+      setError('Failed to process image file');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -98,7 +190,7 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
           }}
           onDragLeave={() => setIsDragging(false)}
           onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => !isUploading && fileInputRef.current?.click()}
           className={`flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6 text-center cursor-pointer transition-all ${
             isDragging
               ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/20'
@@ -106,13 +198,17 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
           }`}
         >
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-500 mb-2">
-            <UploadCloud className="h-6 w-6" />
+            {isUploading ? (
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
+            ) : (
+              <UploadCloud className="h-6 w-6" />
+            )}
           </div>
           <p className="text-xs font-bold text-slate-800 dark:text-zinc-200">
-            Click to upload or drag & drop photo
+            {isUploading ? 'Uploading & Optimizing Banner...' : 'Click to upload or drag & drop photo'}
           </p>
           <p className="text-[11px] text-slate-400 dark:text-zinc-500 mt-0.5">
-            PNG, JPG, WebP up to 5MB
+            PNG, JPG, WebP up to 10MB (Direct Storage Upload)
           </p>
         </div>
       )}
