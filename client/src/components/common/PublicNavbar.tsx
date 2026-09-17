@@ -36,7 +36,11 @@ export const PublicNavbar: React.FC = () => {
   const onExploreProperties = () => navigate(getLocalizedPath('/properties', currentLocale));
 
   return (
-    <nav className={`fixed w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-brand-navy/95 backdrop-blur-md shadow-luxury-dark py-3' : 'bg-transparent py-5'}`}>
+    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
+      isScrolled 
+        ? 'bg-brand-navy/95 backdrop-blur-md shadow-luxury-dark py-3 border-b border-slate-800/80' 
+        : 'bg-brand-navy/90 backdrop-blur-md py-4 border-b border-slate-800/50'
+    }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center">
           {/* Logo */}
