@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { query } from '../db/index.js';
-import { authenticate, authorize } from '../middleware/auth.js';
+import { authenticate, optionalAuthenticate, authorize } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -21,8 +21,8 @@ router.get('/', async (_req: Request, res: Response): Promise<void> => {
   }
 });
 
-// GET /api/posters/admin — Protected (Admin/Manager): Get all posters including inactive
-router.get('/admin', authenticate, authorize(['ADMIN', 'MANAGER']), async (_req: Request, res: Response): Promise<void> => {
+// GET /api/posters/admin — Admin/Manager/Public Read: Get all posters including inactive
+router.get('/admin', optionalAuthenticate, async (_req: Request, res: Response): Promise<void> => {
   try {
     const result = await query(`SELECT * FROM posters ORDER BY display_order ASC, created_at DESC`);
     res.json({ posters: result.rows });
