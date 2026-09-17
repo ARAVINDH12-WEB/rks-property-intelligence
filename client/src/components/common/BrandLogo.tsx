@@ -46,16 +46,26 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
         <div className="flex flex-col justify-center">
           <div className="flex items-center">
             <span className={`font-heading font-bold ${titleSizes} tracking-tight ${
-              variant === 'light' ? 'text-white' : variant === 'dark' ? 'text-brand-navy' : 'text-brand-navy dark:text-white'
+              variant === 'light' 
+                ? 'text-white drop-shadow-sm' 
+                : variant === 'dark' 
+                ? 'text-brand-navy dark:text-white' 
+                : 'text-brand-navy dark:text-white'
             }`}>
               RKS
             </span>
-            <span className={`font-heading font-bold ${titleSizes} tracking-tight text-brand-teal ml-1.5`}>
+            <span className={`font-heading font-bold ${titleSizes} tracking-tight ml-1.5 ${
+              variant === 'light'
+                ? 'text-teal-400 drop-shadow-sm'
+                : 'text-brand-teal dark:text-teal-400'
+            }`}>
               Property Hub
             </span>
           </div>
           {showTagline && (
-            <span className="text-[10px] text-slate-400 font-medium tracking-wide -mt-0.5">
+            <span className={`text-[10px] font-medium tracking-wide -mt-0.5 ${
+              variant === 'light' ? 'text-slate-300' : 'text-slate-400 dark:text-zinc-400'
+            }`}>
               Your trusted partner in property solutions
             </span>
           )}

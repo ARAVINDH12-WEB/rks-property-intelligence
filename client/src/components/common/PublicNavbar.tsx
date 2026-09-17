@@ -41,7 +41,7 @@ export const PublicNavbar: React.FC = () => {
         <div className="flex justify-between items-center">
           {/* Logo */}
           <BrandLogo
-            variant={isScrolled ? 'light' : 'auto'}
+            variant="light"
             size="md"
             onClick={() => navigate(currentLocale === 'ta' ? '/ta' : '/')}
           />
