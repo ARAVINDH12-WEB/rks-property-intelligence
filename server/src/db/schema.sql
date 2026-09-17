@@ -197,6 +197,32 @@ CREATE TABLE IF NOT EXISTS leads (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS offers (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(200) NOT NULL,
+  description TEXT NOT NULL,
+  discount_type VARCHAR(50) DEFAULT 'PERCENTAGE',
+  discount_value VARCHAR(100) NOT NULL,
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  is_active BOOLEAN DEFAULT true,
+  applicable_properties TEXT DEFAULT 'ALL',
+  banner_image_url TEXT,
+  terms_conditions TEXT,
+  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS system_settings (
+  key VARCHAR(100) PRIMARY KEY,
+  value TEXT NOT NULL,
+  description TEXT,
+  updated_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS chat_conversations (
   id SERIAL PRIMARY KEY,
   session_id VARCHAR(100) NOT NULL,
@@ -205,6 +231,30 @@ CREATE TABLE IF NOT EXISTS chat_conversations (
   detected_intent VARCHAR(50),
   language VARCHAR(10) DEFAULT 'en',
   lead_id INTEGER REFERENCES leads(id) ON DELETE SET NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS posters (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(200),
+  image_url TEXT NOT NULL,
+  link_url TEXT,
+  alt_text VARCHAR(255),
+  display_order INTEGER DEFAULT 0,
+  is_active BOOLEAN DEFAULT true,
+  start_date DATE,
+  end_date DATE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS notification_logs (
+  id SERIAL PRIMARY KEY,
+  type VARCHAR(50) NOT NULL,
+  recipient VARCHAR(50) NOT NULL,
+  payload JSONB,
+  status VARCHAR(30) NOT NULL,
+  error_message TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -222,8 +272,10 @@ CREATE INDEX IF NOT EXISTS idx_property_history_property_id ON property_history(
 CREATE INDEX IF NOT EXISTS idx_site_visits_visit_date ON site_visits(visit_date);
 CREATE INDEX IF NOT EXISTS idx_site_visits_status ON site_visits(status);
 CREATE INDEX IF NOT EXISTS idx_customer_visitors_phone ON customer_visitors(phone);
+CREATE INDEX IF NOT EXISTS idx_offers_dates ON offers(start_date, end_date, is_active);
 CREATE INDEX IF NOT EXISTS idx_leads_status ON leads(status);
 CREATE INDEX IF NOT EXISTS idx_leads_phone ON leads(phone);
 CREATE INDEX IF NOT EXISTS idx_chat_conversations_session ON chat_conversations(session_id);
+ALTER TABLE properties ADD COLUMN IF NOT EXISTS description_ta TEXT;
 
 
