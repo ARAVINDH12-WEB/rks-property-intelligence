@@ -22,6 +22,7 @@ import settingsRoutes from './routes/settings.routes.js';
 import leadsRoutes from './routes/leads.routes.js';
 import postersRoutes from './routes/posters.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
+import pagesRoutes from './routes/pages.routes.js';
 import { createRateLimiter } from './middleware/security.js';
 import helmet from 'helmet';
 
@@ -103,6 +104,7 @@ const routeModules: [string, any][] = [
   ['/leads', leadsRoutes],
   ['/posters', postersRoutes],
   ['/upload', uploadRoutes],
+  ['/pages', pagesRoutes],
 ];
 
 for (const [routePath, routerModule] of routeModules) {
@@ -134,11 +136,24 @@ app.get('/api/health', async (_req: Request, res: Response) => {
   }
 });
 
-// XML Sitemap with Bilingual Support & Hreflang Alternates
+// Robots.txt Route
+app.get('/robots.txt', (_req: Request, res: Response) => {
+  const baseUrl = process.env.PUBLIC_SITE_URL || 'https://rkspropertyhub.in';
+  res.type('text/plain');
+  res.send(`User-agent: *
+Allow: /
+Disallow: /admin/*
+Disallow: /api/*
+
+Sitemap: ${baseUrl}/sitemap.xml
+`);
+});
+
+// Dynamic XML Sitemap with CMS pages, property listings, and lastmod dates
 app.get('/sitemap.xml', async (_req: Request, res: Response) => {
   try {
-    const baseUrl = 'https://rksprime.com';
-    const pages = [
+    const baseUrl = process.env.PUBLIC_SITE_URL || 'https://rkspropertyhub.in';
+    const staticPages = [
       { en: '', ta: '/ta', priority: '1.0' },
       { en: '/properties', ta: '/ta/properties', priority: '0.9' },
       { en: '/plots/chennai', ta: '/ta/plots/chennai', priority: '0.8' },
@@ -154,11 +169,11 @@ app.get('/sitemap.xml', async (_req: Request, res: Response) => {
     const today = new Date().toISOString().split('T')[0];
     const urlEntries: string[] = [];
 
-    for (const page of pages) {
+    // Static pages
+    for (const page of staticPages) {
       const enUrl = `${baseUrl}${page.en || '/'}`;
       const taUrl = `${baseUrl}${page.ta}`;
 
-      // English entry
       urlEntries.push(`  <url>
     <loc>${enUrl}</loc>
     <lastmod>${today}</lastmod>
@@ -168,17 +183,40 @@ app.get('/sitemap.xml', async (_req: Request, res: Response) => {
     <xhtml:link rel="alternate" hreflang="ta" href="${taUrl}" />
     <xhtml:link rel="alternate" hreflang="x-default" href="${enUrl}" />
   </url>`);
+    }
 
-      // Tamil entry
-      urlEntries.push(`  <url>
-    <loc>${taUrl}</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>${page.priority}</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="${enUrl}" />
-    <xhtml:link rel="alternate" hreflang="ta" href="${taUrl}" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="${enUrl}" />
+    // Dynamic CMS pages from "pages" table
+    try {
+      const cmsRes = await query('SELECT slug, updated_at FROM pages WHERE is_published = true');
+      for (const cmsPage of cmsRes.rows) {
+        if (!cmsPage.slug) continue;
+        const pageSlug = cmsPage.slug.startsWith('/') ? cmsPage.slug : `/${cmsPage.slug}`;
+        const lastMod = cmsPage.updated_at ? new Date(cmsPage.updated_at).toISOString().split('T')[0] : today;
+        urlEntries.push(`  <url>
+    <loc>${baseUrl}${pageSlug}</loc>
+    <lastmod>${lastMod}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>`);
+      }
+    } catch {
+      // Pages table fallback
+    }
+
+    // Active Property Listings from "properties" table
+    try {
+      const propsRes = await query('SELECT id, property_code, updated_at FROM properties WHERE status != $1 ORDER BY updated_at DESC', ['DRAFT']);
+      for (const prop of propsRes.rows) {
+        const lastMod = prop.updated_at ? new Date(prop.updated_at).toISOString().split('T')[0] : today;
+        urlEntries.push(`  <url>
+    <loc>${baseUrl}/properties?id=${prop.id}</loc>
+    <lastmod>${lastMod}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>`);
+      }
+    } catch {
+      // Properties fallback
     }
 
     res.header('Content-Type', 'application/xml');

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useApp } from '../../context/AppContext.js';
 import { api } from '../../services/api.js';
 import { Property, PropertyStatus } from '../../types/index.js';
@@ -124,6 +125,56 @@ export const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
           </div>
         ) : (
           <>
+            <Helmet>
+              <title>{`${property.plot_number ? `Plot ${property.plot_number}, ` : ''}${property.project_name || 'RKS'}, ${property.city || 'Tamil Nadu'} – ${formatCurrencyINR(property.total_price)} | RKS Property Hub`}</title>
+              <meta
+                name="description"
+                content={
+                  property.description
+                    ? property.description.length > 155
+                      ? property.description.slice(0, 155) + '...'
+                      : property.description
+                    : `Verified ${property.area_sqft} sq.ft ${property.property_type || 'residential plot'} for sale in ${property.city || 'Tamil Nadu'}. Clear Patta title.`
+                }
+              />
+              <script type="application/ld+json">
+                {JSON.stringify({
+                  '@context': 'https://schema.org',
+                  '@type': 'RealEstateListing',
+                  'name': `${property.plot_number ? `Plot ${property.plot_number}, ` : ''}${property.project_name || 'RKS'}, ${property.city || 'Tamil Nadu'} – ${formatCurrencyINR(property.total_price)}`,
+                  'description': property.description
+                    ? property.description.length > 155
+                      ? property.description.slice(0, 155) + '...'
+                      : property.description
+                    : `Verified ${property.area_sqft} sq.ft ${property.property_type || 'residential plot'} for sale in ${property.city || 'Tamil Nadu'}.`,
+                  'datePosted': property.created_at || new Date().toISOString(),
+                  'url': typeof window !== 'undefined' ? `${window.location.origin}/properties?id=${property.id}` : `https://rkspropertyhub.in/properties?id=${property.id}`,
+                  'offers': {
+                    '@type': 'Offer',
+                    'price': property.total_price,
+                    'priceCurrency': 'INR',
+                    'availability': property.status === 'AVAILABLE' ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+                    'validFrom': property.created_at || new Date().toISOString()
+                  },
+                  'itemOffered': {
+                    '@type': 'SingleFamilyResidence',
+                    'name': property.property_code,
+                    'address': {
+                      '@type': 'PostalAddress',
+                      'addressLocality': property.city || 'Chennai',
+                      'addressRegion': property.state || 'Tamil Nadu',
+                      'addressCountry': 'IN'
+                    },
+                    'floorSize': {
+                      '@type': 'QuantitativeValue',
+                      'value': property.area_sqft,
+                      'unitCode': 'FTK'
+                    }
+                  },
+                  'image': property.images && property.images.length > 0 ? property.images.map((img) => img.url) : ['https://images.unsplash.com/photo-1500382017468-9049fed747ef']
+                })}
+              </script>
+            </Helmet>
             {/* Header */}
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-[#12161F] px-8 py-5">
               <div className="flex items-center gap-4">
@@ -554,7 +605,7 @@ export const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
                         >
                           <img
                             src={img.url}
-                            alt={img.title || 'Property Media'}
+                            alt={img.alt_text || img.title || `${property.property_code} ${img.image_type || 'property image'}`}
                             className="h-64 w-full object-cover transition-transform duration-500 group-hover:scale-105"
                           />
                           <div className="p-3 bg-[#12161F] flex items-center justify-between">

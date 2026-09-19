@@ -1,4 +1,4 @@
-import { Property, Project, Location, PropertyFilterParams, PaginationMeta, UserRole, Poster } from '../types/index.js';
+import { Property, Project, Location, PropertyFilterParams, PaginationMeta, UserRole, Poster, CmsPage } from '../types/index.js';
 import { Config } from '../config/index.js';
 
 const isLocal = typeof window !== 'undefined' && (
@@ -554,5 +554,15 @@ export const api = {
     return request<{ message: string }>(`/posters/${id}`, {
       method: 'DELETE',
     });
+  },
+
+  // CMS Pages
+  async getCmsPages(): Promise<{ pages: CmsPage[] }> {
+    return request<{ pages: CmsPage[] }>('/pages');
+  },
+
+  async getCmsPage(slug: string): Promise<{ page: CmsPage }> {
+    const cleanSlug = slug.replace(/^\/+/, '');
+    return request<{ page: CmsPage }>(`/pages/${cleanSlug}`);
   },
 };

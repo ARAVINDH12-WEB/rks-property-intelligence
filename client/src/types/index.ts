@@ -32,8 +32,20 @@ export interface PropertyImage {
   property_id?: number;
   url: string;
   title?: string;
+  alt_text?: string;
   is_primary?: boolean;
   image_type?: 'PHOTO' | 'FLOOR_PLAN' | 'SITE_PLAN' | 'LAYOUT' | 'LOCATION';
+}
+
+export interface CmsPage {
+  id: number;
+  title: string;
+  slug: string;
+  content?: string;
+  meta_title?: string;
+  meta_description?: string;
+  is_published?: boolean;
+  updated_at?: string;
 }
 
 export interface PropertyDocument {
