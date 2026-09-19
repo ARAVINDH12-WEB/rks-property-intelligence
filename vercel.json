@@ -4,7 +4,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://rks-property-intelligence-production.up.railway.app/api/$1"
+      "destination": "https://rks-property-intelligence.onrender.com/api/$1"
     },
     {
       "source": "/(.*)",
