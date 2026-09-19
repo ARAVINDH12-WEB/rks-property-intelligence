@@ -1,7 +1,7 @@
 // Centralized Application Configuration
 export const Config = {
-  // Primary Backend API URL
-  apiUrl: (import.meta as any).env?.VITE_API_URL || 'https://rks-property-intelligence-production.up.railway.app',
+  // Primary Backend API URL (defaults to relative /api for single-service deployments)
+  apiUrl: (import.meta as any).env?.VITE_API_URL || '/api',
 
   // Supabase Storage Credentials (for direct image uploads)
   supabase: {

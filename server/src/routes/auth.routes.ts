@@ -47,7 +47,7 @@ router.get('/guest-token', (_req: Request, res: Response): void => {
 });
 
 // POST /api/auth/login - Sign In with Brute-Force Rate Limiting
-router.post('/login', createRateLimiter(15 * 60 * 1000, 5, 'Too many login attempts. Please wait 15 minutes.'), async (req: Request, res: Response): Promise<void> => {
+router.post('/login', createRateLimiter(15 * 60 * 1000, 30, 'Too many login attempts. Please wait 15 minutes.'), async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
     const clientIp = req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown';

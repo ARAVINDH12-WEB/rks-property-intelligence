@@ -14,8 +14,12 @@ const isLocal = typeof window !== 'undefined' && (
 function resolveApiBaseUrl(): string {
   if (isLocal) return '/api';
 
-  let rawUrl = Config.apiUrl.trim();
+  let rawUrl = (Config.apiUrl || '/api').trim();
   
+  if (!rawUrl || rawUrl === '/api' || rawUrl.includes('railway.app')) {
+    return '/api';
+  }
+
   // Enforce HTTPS protocol for remote production backends to prevent browser mixed-content blocks
   if (rawUrl.startsWith('http://')) {
     rawUrl = rawUrl.replace(/^http:\/\//i, 'https://');
