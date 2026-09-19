@@ -74,22 +74,39 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
     ...(options.headers || {}),
   };
 
+  const controller = new AbortController();
+  const timeoutMs = 15000; // 15s timeout
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
   let res: Response;
   try {
     res = await fetch(primaryEndpoint, {
       ...options,
       headers,
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
   } catch (networkErr: any) {
+    clearTimeout(timeoutId);
+    if (networkErr.name === 'AbortError') {
+      throw new Error('Request timed out (15s). Please check your connection or try again.');
+    }
     // If direct cross-origin fetch failed (e.g. ad-blocker, CORS, or carrier filter), try same-origin proxy '/api'
     if (API_BASE !== '/api') {
       try {
         console.warn(`Primary request to ${primaryEndpoint} failed (${networkErr?.message}). Retrying via same-origin /api...`);
+        const retryController = new AbortController();
+        const retryTimeoutId = setTimeout(() => retryController.abort(), timeoutMs);
         res = await fetch(`/api${url}`, {
           ...options,
           headers,
+          signal: retryController.signal,
         });
-      } catch {
+        clearTimeout(retryTimeoutId);
+      } catch (retryErr: any) {
+        if (retryErr.name === 'AbortError') {
+          throw new Error('Request timed out (15s). Please check your connection or try again.');
+        }
         throw networkErr;
       }
     } else {

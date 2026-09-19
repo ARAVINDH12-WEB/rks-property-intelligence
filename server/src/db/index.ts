@@ -1,7 +1,4 @@
-import { PGlite } from '@electric-sql/pglite';
 import pg from 'pg';
-import fs from 'fs';
-import path from 'path';
 import dotenv from 'dotenv';
 import { SCHEMA_SQL } from './schema.js';
 
@@ -9,13 +6,6 @@ dotenv.config();
 
 const { Pool } = pg;
 
-const baseDir = typeof __dirname !== 'undefined' ? __dirname : process.cwd();
-// If running from server/ or server/src or server/dist, resolve root directory
-const projectRootDir = baseDir.includes('server')
-  ? path.resolve(baseDir.split('server')[0])
-  : baseDir;
-
-let pgliteDb: PGlite | null = null;
 let pgPool: pg.Pool | null = null;
 let initPromise: Promise<void> | null = null;
 
@@ -40,126 +30,49 @@ export function getConnectionString(): string {
 
 export const isRemotePostgres = true;
 
-export async function getDb(): Promise<{ type: 'pool' | 'pglite'; client: pg.Pool | PGlite }> {
+export async function getDb(): Promise<{ type: 'pool'; client: pg.Pool }> {
   if (initPromise) {
     await initPromise;
-    if (pgPool) return { type: 'pool', client: pgPool };
-    if (pgliteDb) return { type: 'pglite', client: pgliteDb };
+    return { type: 'pool', client: pgPool! };
   }
 
   initPromise = (async () => {
     const connectionString = getConnectionString();
     const isProduction = process.env.NODE_ENV === 'production' || !!process.env.RENDER || !!process.env.RAILWAY_ENVIRONMENT;
 
-    let poolSuccess = false;
-    if (connectionString) {
-      try {
-        console.log('[Database] Connecting to PostgreSQL Pool via connection string...');
-        const useSsl = connectionString.includes('sslmode=') || connectionString.includes('neon.tech') || (isProduction && !connectionString.includes('localhost') && !connectionString.includes('127.0.0.1'));
-        
-        const tempPool = new Pool({
-          connectionString,
-          ssl: useSsl ? { rejectUnauthorized: false } : undefined,
-          max: 20,
-          idleTimeoutMillis: 30000,
-          connectionTimeoutMillis: 3000,
-        });
+    console.log('[Database] Connecting to PostgreSQL Pool via connection string...');
+    const useSsl = connectionString.includes('sslmode=') || connectionString.includes('neon.tech') || (isProduction && !connectionString.includes('localhost') && !connectionString.includes('127.0.0.1'));
+    
+    pgPool = new Pool({
+      connectionString,
+      ssl: useSsl ? { rejectUnauthorized: false } : undefined,
+      max: 20,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 5000,
+    });
 
-        // Test connection with strict 3-second timeout
-        const connectPromise = tempPool.connect();
-        const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Connection attempt timed out after 3000ms')), 3000)
-        );
-        const client = await Promise.race([connectPromise, timeoutPromise]);
-        try {
-          await client.query('SELECT 1');
-          let maskedHost = 'localhost';
-          try {
-            const parsedUrl = new URL(connectionString);
-            const hostname = parsedUrl.hostname;
-            if (hostname.includes('render.com') || hostname.includes('neon.tech')) {
-              const parts = hostname.split('.');
-              const prefix = parts[0];
-              const maskedPrefix = prefix.length > 5 ? `${prefix.slice(0, 5)}...` : prefix;
-              maskedHost = `${maskedPrefix}.${parts.slice(1).join('.')}`;
-            } else {
-              maskedHost = hostname;
-            }
-          } catch {
-            maskedHost = 'PostgreSQL Host';
-          }
-          console.log(`[Database Safety] Connected to PostgreSQL Host: ${maskedHost} (Mode: Production Pool) ✅`);
-        } finally {
-          client.release();
-        }
-
-        pgPool = tempPool;
-        await initSchema();
-        poolSuccess = true;
-      } catch (poolErr: any) {
-        console.warn(`⚠️ [Database Warning] Failed to connect to PostgreSQL Pool (${poolErr.message}). Falling back to embedded PGlite...`);
-        pgPool = null;
-      }
+    // Test connection with 5-second timeout
+    const connectPromise = pgPool.connect();
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('PostgreSQL connection attempt timed out (5000ms)')), 5000)
+    );
+    const client = await Promise.race([connectPromise, timeoutPromise]);
+    try {
+      await client.query('SELECT 1');
+      console.log('[Database Safety] Connected to PostgreSQL Host (Mode: Production Pool) ✅');
+    } finally {
+      client.release();
     }
 
-    if (!poolSuccess) {
-      console.log('[Database] No remote DATABASE_URL provided. Initializing embedded PGlite engine...');
-      const isCloud = isProduction || !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NOW_REGION || process.env.RENDER);
-      let dataDir = process.env.DATA_DIR;
-
-      if (!dataDir || dataDir === './data/postgres') {
-        dataDir = isCloud
-          ? path.join('/tmp', 'rks-postgres-data')
-          : path.join(projectRootDir, 'data', 'postgres');
-      } else if (!path.isAbsolute(dataDir)) {
-        dataDir = path.resolve(projectRootDir, dataDir);
-      }
-
-      let initialized = false;
-      try {
-        if (!fs.existsSync(dataDir)) {
-          fs.mkdirSync(dataDir, { recursive: true });
-        } else {
-          // Clean stale lockfiles from previous terminated instances
-          try {
-            const pidFile = path.join(dataDir, 'postmaster.pid');
-            if (fs.existsSync(pidFile)) fs.unlinkSync(pidFile);
-            const lockFile = path.join(dataDir, '.s.PGSQL.5432.lock.out');
-            if (fs.existsSync(lockFile)) fs.unlinkSync(lockFile);
-          } catch (e: any) {
-            console.warn('[Database] Note cleaning lockfiles:', e.message);
-          }
-        }
-        console.log(`[Database] Initializing PGlite at directory: ${dataDir}`);
-        try {
-          const diskDb = new PGlite(dataDir);
-          const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Directory init timeout')), 3000));
-          await Promise.race([diskDb.waitReady, timeout]);
-          pgliteDb = diskDb;
-          initialized = true;
-        } catch (initErr: any) {
-          console.warn(`[Database] PGlite directory initialization notice (${initErr.message}). Switching to fast in-memory mode...`);
-        }
-      } catch (dirErr: any) {
-        console.warn(`[Database] Could not write to ${dataDir} (${dirErr.message}), falling back to in-memory mode`);
-      }
-
-      if (!initialized) {
-        pgliteDb = new PGlite();
-        await pgliteDb.waitReady;
-      }
-
-      await initSchema();
-      console.log('[Database] Embedded PGlite PostgreSQL Engine Ready & Schema Verified ✅');
-    }
+    await initSchema();
   })().catch((err) => {
     initPromise = null;
+    console.error('⚠️ [Database Error]:', err?.message || err);
     throw err;
   });
 
   await initPromise;
-  if (pgPool) return { type: 'pool', client: pgPool };
-  return { type: 'pglite', client: pgliteDb! };
+  return { type: 'pool', client: pgPool! };
 }
 
 export async function query<T = any>(sql: string, params: any[] = []): Promise<{ rows: T[]; rowCount: number }> {
@@ -170,12 +83,6 @@ export async function query<T = any>(sql: string, params: any[] = []): Promise<{
       return {
         rows: (result.rows || []) as T[],
         rowCount: result.rowCount || 0,
-      };
-    } else if (pgliteDb) {
-      const result = await pgliteDb.query(sql, params);
-      return {
-        rows: (result.rows || []) as T[],
-        rowCount: result.rows ? result.rows.length : 0,
       };
     }
     throw new Error('Database instance not initialized');
@@ -194,9 +101,6 @@ export async function initSchema(): Promise<void> {
     if (pgPool) {
       await pgPool.query(SCHEMA_SQL);
       console.log('✅ Remote PostgreSQL Schema initialized successfully.');
-    } else if (pgliteDb) {
-      await pgliteDb.exec(SCHEMA_SQL);
-      console.log('✅ Embedded PostgreSQL Schema initialized successfully.');
     }
 
     // Ensure CMS pages table exists and is populated
@@ -220,20 +124,17 @@ export async function initSchema(): Promise<void> {
         for (const page of cmsPages) {
           await query(
             `INSERT INTO pages (title, slug, meta_title, meta_description, is_published) 
-             VALUES ($1, $2, $3, $4, true) 
-             ON CONFLICT (slug) DO UPDATE SET title = EXCLUDED.title, meta_title = EXCLUDED.meta_title, meta_description = EXCLUDED.meta_description`,
+             VALUES ($1, $2, $3, $4, true)
+             ON CONFLICT (slug) DO NOTHING`,
             [page.title, page.slug, page.meta_title, page.meta_description]
           );
         }
+        console.log('[Schema] CMS pages seeded successfully.');
       }
-    } catch (e: any) {
-      console.warn('[Schema Notice] CMS pages auto-seed warning:', e?.message || e);
+    } catch {
+      // Ignore fallback if table not yet created
     }
-  } catch (error: any) {
-    if (error.message && (error.message.includes('already exists') || error.message.includes('duplicate key'))) {
-      console.log('ℹ️ PostgreSQL Schema already initialized.');
-    } else {
-      console.warn('⚠️ Schema initialization warning:', error?.message || error);
-    }
+  } catch (err: any) {
+    console.error('❌ Remote PostgreSQL Schema initialization error:', err.message);
   }
 }
