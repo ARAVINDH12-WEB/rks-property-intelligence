@@ -51,37 +51,37 @@ export const Sidebar: React.FC = () => {
       label: activeRole === 'VIEWER' ? 'Explore Plots' : 'All Properties',
       icon: <PlotOutlineIcon size={16} />,
       badge: badgeCounts.total,
-      badgeColor: 'bg-zinc-800 text-zinc-300',
+      badgeColor: 'bg-slate-200 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300',
     },
     {
       id: 'available',
       label: 'Available Plots',
-      icon: <CheckCircle2 className="h-4 w-4 text-emerald-400" />,
+      icon: <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />,
       badge: badgeCounts.available,
-      badgeColor: 'bg-emerald-950/60 text-emerald-300 border border-emerald-500/30',
+      badgeColor: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-500/30',
     },
     {
       id: 'reserved',
       label: 'Reserved Plots',
-      icon: <Clock className="h-4 w-4 text-amber-400" />,
+      icon: <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />,
       badge: badgeCounts.reserved,
-      badgeColor: 'bg-amber-950/60 text-amber-300 border border-amber-500/30',
+      badgeColor: 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-500/30',
       staffOnly: true,
     },
     {
       id: 'sold',
       label: 'Registered & Sold',
-      icon: <CheckCheck className="h-4 w-4 text-rose-400" />,
+      icon: <CheckCheck className="h-4 w-4 text-rose-600 dark:text-rose-400" />,
       badge: badgeCounts.sold,
-      badgeColor: 'bg-rose-950/60 text-rose-300 border border-rose-500/30',
+      badgeColor: 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-500/30',
       staffOnly: true,
     },
     {
       id: 'site-visits',
       label: activeRole === 'VIEWER' ? 'Book Site Tour' : 'Site Tours & Cabs',
-      icon: <CabPickupIcon size={16} className="text-cyan-400" />,
+      icon: <CabPickupIcon size={16} className="text-cyan-600 dark:text-cyan-400" />,
       badge: activeRole !== 'VIEWER' ? badgeCounts.siteVisits : undefined,
-      badgeColor: 'bg-cyan-950/60 text-cyan-300 border border-cyan-500/30',
+      badgeColor: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-950/60 dark:text-cyan-300 border border-cyan-500/30',
     },
     {
       id: 'leads',
@@ -196,7 +196,7 @@ export const Sidebar: React.FC = () => {
                 }
                 className={`group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 cursor-pointer ${
                   isActive
-                    ? 'bg-brand-teal/15 text-white border border-brand-teal/40 shadow-sm font-bold'
+                    ? 'bg-brand-teal/15 text-slate-900 dark:text-white border border-brand-teal/40 shadow-sm font-bold'
                     : 'text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800/60 hover:text-slate-900 dark:hover:text-zinc-200'
                 } ${sidebarCollapsed ? 'justify-center md:justify-center' : 'justify-between'}`}
                 title={sidebarCollapsed ? item.label : undefined}

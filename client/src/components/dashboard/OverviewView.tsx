@@ -43,6 +43,7 @@ export const OverviewView: React.FC = () => {
     setSelectedPropertyId,
     activeRole,
     openSiteVisitModal,
+    theme,
   } = useApp();
   const [reportsData, setReportsData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -269,15 +270,19 @@ export const OverviewView: React.FC = () => {
                 }))}
                 margin={{ top: 10, right: 30, left: 40, bottom: 0 }}
               >
-                <XAxis type="number" stroke="#94a3b8" fontSize={11} unit="Cr" />
-                <YAxis dataKey="name" type="category" stroke="#94a3b8" fontSize={11} width={80} />
+                <XAxis type="number" stroke={theme === 'dark' ? '#94a3b8' : '#64748b'} fontSize={11} unit="Cr" />
+                <YAxis dataKey="name" type="category" stroke={theme === 'dark' ? '#94a3b8' : '#64748b'} fontSize={11} width={80} />
                 <Tooltip
                   cursor={{fill: 'transparent'}}
-                  contentStyle={{ backgroundColor: '#181B24', borderColor: '#3f3f46', borderRadius: '8px', color: '#fff' }}
+                  contentStyle={
+                    theme === 'dark'
+                      ? { backgroundColor: '#181B24', borderColor: '#3f3f46', borderRadius: '8px', color: '#fff' }
+                      : { backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '8px', color: '#0f172a', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }
+                  }
                   formatter={(val: any) => [`₹${val} Cr`, 'Value']}
                 />
                 <Bar dataKey="value" fill="#0F766E" radius={[0, 4, 4, 0]} barSize={24}>
-                  <LabelList dataKey="value" position="right" formatter={(v: any) => `₹${v}Cr`} style={{ fill: '#64748b', fontSize: 11, fontWeight: 500 }} />
+                  <LabelList dataKey="value" position="right" formatter={(v: any) => `₹${v}Cr`} style={{ fill: theme === 'dark' ? '#94a3b8' : '#64748b', fontSize: 11, fontWeight: 500 }} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -309,7 +314,11 @@ export const OverviewView: React.FC = () => {
                   ))}
                 </Pie>
                 <Tooltip
-                  contentStyle={{ backgroundColor: '#181B24', borderColor: '#3f3f46', borderRadius: '8px', color: '#fff' }}
+                  contentStyle={
+                    theme === 'dark'
+                      ? { backgroundColor: '#181B24', borderColor: '#3f3f46', borderRadius: '8px', color: '#fff' }
+                      : { backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '8px', color: '#0f172a', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }
+                  }
                 />
               </PieChart>
             </ResponsiveContainer>

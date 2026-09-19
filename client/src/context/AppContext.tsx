@@ -101,7 +101,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Theme Management
   const [theme, setThemeState] = useState<'dark' | 'light'>(() => {
-    return (localStorage.getItem('rks_theme') as 'dark' | 'light') || 'dark';
+    const saved = localStorage.getItem('rks_theme') as 'dark' | 'light';
+    if (saved) return saved;
+    return typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark'
+      : 'light';
   });
 
   const setTheme = (t: 'dark' | 'light') => {

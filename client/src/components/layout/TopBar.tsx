@@ -247,16 +247,16 @@ export const TopBar: React.FC = () => {
           ) : (
             <div className="flex items-center gap-2.5">
               {/* Bespoke RKS Admin Crest Badge */}
-              <div className="flex items-center gap-2 pl-2.5 pr-3 py-1 rounded-xl bg-gradient-to-r from-brand-teal/20 via-slate-900 to-[#12161F] border border-brand-teal/40 shadow-inner">
-                <div className="relative flex items-center justify-center text-brand-gold">
-                  <Shield className="h-3.5 w-3.5 fill-brand-gold/20 stroke-brand-gold" />
-                  <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <div className="flex items-center gap-2 pl-2.5 pr-3 py-1 rounded-xl bg-slate-100 dark:bg-gradient-to-r dark:from-brand-teal/20 dark:via-slate-900 dark:to-[#12161F] border border-slate-200 dark:border-brand-teal/40 shadow-inner">
+                <div className="relative flex items-center justify-center text-amber-600 dark:text-brand-gold">
+                  <Shield className="h-3.5 w-3.5 fill-amber-500/20 stroke-amber-600 dark:fill-brand-gold/20 dark:stroke-brand-gold" />
+                  <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[9px] font-mono tracking-widest uppercase text-brand-gold-light font-bold leading-none">
+                  <span className="text-[9px] font-mono tracking-widest uppercase text-amber-700 dark:text-brand-gold-light font-bold leading-none">
                     RKS · {activeRole}
                   </span>
-                  <span className="text-[8px] text-slate-400 font-mono leading-tight mt-0.5">
+                  <span className="text-[8px] text-slate-600 dark:text-slate-400 font-mono leading-tight mt-0.5">
                     Authorized
                   </span>
                 </div>
@@ -264,7 +264,7 @@ export const TopBar: React.FC = () => {
 
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-100 dark:bg-[#12161F] px-3 py-1.5 text-xs text-slate-600 dark:text-zinc-400 hover:bg-rose-500/10 hover:text-rose-400 hover:border-rose-500/30 transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-100 dark:bg-[#12161F] px-3 py-1.5 text-xs text-slate-600 dark:text-zinc-400 hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-500/30 transition-colors cursor-pointer"
                 title="Log Out to Login Gateway"
               >
                 <LogOut className="h-3.5 w-3.5" />
@@ -276,13 +276,13 @@ export const TopBar: React.FC = () => {
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
-            className="rounded-xl border border-zinc-800 bg-[#12161F] p-2 text-zinc-400 hover:border-zinc-700 hover:text-white transition-colors"
+            className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-100 dark:bg-[#12161F] p-2 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
             title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
           >
             {theme === 'dark' ? (
               <Sun className="h-4 w-4 text-amber-400" />
             ) : (
-              <Moon className="h-4 w-4 text-zinc-200" />
+              <Moon className="h-4 w-4 text-slate-700" />
             )}
           </button>
         </div>

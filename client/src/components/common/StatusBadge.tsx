@@ -23,29 +23,29 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
   
   switch (upperStatus) {
     case 'AVAILABLE':
-      badgeStyles = 'border-l-emerald-500 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400';
+      badgeStyles = 'border-l-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300';
       Icon = CheckCircle2;
       break;
     case 'RESERVED':
-      badgeStyles = 'border-l-amber-500 bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400';
+      badgeStyles = 'border-l-amber-500 bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300';
       Icon = Clock;
       break;
     case 'SOLD':
-      badgeStyles = 'border-l-rose-500 bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-400';
+      badgeStyles = 'border-l-rose-500 bg-rose-50 dark:bg-rose-950/30 text-rose-800 dark:text-rose-300';
       Icon = CheckCheck;
       break;
     case 'BLOCKED':
     case 'HOLD':
-      badgeStyles = 'border-l-slate-400 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-400';
+      badgeStyles = 'border-l-slate-500 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300';
       Icon = Lock;
       break;
     case 'UPCOMING':
     case 'DRAFT':
-      badgeStyles = 'border-l-cyan-500 bg-cyan-50 dark:bg-cyan-950/20 text-cyan-700 dark:text-cyan-400';
+      badgeStyles = 'border-l-cyan-500 bg-cyan-50 dark:bg-cyan-950/30 text-cyan-800 dark:text-cyan-300';
       Icon = Eye;
       break;
     default:
-      badgeStyles = 'border-l-slate-400 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-400';
+      badgeStyles = 'border-l-slate-400 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300';
       Icon = XCircle;
   }
 
