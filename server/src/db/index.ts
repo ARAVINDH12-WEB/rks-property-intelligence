@@ -43,44 +43,54 @@ export async function getDb(): Promise<{ type: 'pool' | 'pglite'; client: pg.Poo
     const connectionString = getConnectionString();
     const isProduction = process.env.NODE_ENV === 'production' || !!process.env.RENDER || !!process.env.RAILWAY_ENVIRONMENT;
 
+    let poolSuccess = false;
     if (connectionString) {
-      console.log('[Database] Connecting to PostgreSQL Pool via connection string...');
-      pgPool = new Pool({
-        connectionString,
-        ssl: isProduction && !connectionString.includes('localhost') && !connectionString.includes('127.0.0.1')
-          ? { rejectUnauthorized: false }
-          : undefined,
-        max: 20,
-        idleTimeoutMillis: 30000,
-        connectionTimeoutMillis: 10000,
-      });
-
-      // Test connection
-      const client = await pgPool.connect();
       try {
-        await client.query('SELECT 1');
-        let maskedHost = 'localhost';
-        try {
-          const parsedUrl = new URL(connectionString);
-          const hostname = parsedUrl.hostname;
-          if (hostname.includes('render.com')) {
-            const parts = hostname.split('.');
-            const prefix = parts[0];
-            const maskedPrefix = prefix.length > 5 ? `${prefix.slice(0, 5)}...` : prefix;
-            maskedHost = `${maskedPrefix}.${parts.slice(1).join('.')}`;
-          } else {
-            maskedHost = hostname;
-          }
-        } catch {
-          maskedHost = 'PostgreSQL Host';
-        }
-        console.log(`[Database Safety] Connected to PostgreSQL Host: ${maskedHost} (Mode: Production Pool) ✅`);
-      } finally {
-        client.release();
-      }
+        console.log('[Database] Connecting to PostgreSQL Pool via connection string...');
+        const useSsl = connectionString.includes('sslmode=') || connectionString.includes('neon.tech') || (isProduction && !connectionString.includes('localhost') && !connectionString.includes('127.0.0.1'));
+        
+        const tempPool = new Pool({
+          connectionString,
+          ssl: useSsl ? { rejectUnauthorized: false } : undefined,
+          max: 20,
+          idleTimeoutMillis: 30000,
+          connectionTimeoutMillis: 10000,
+        });
 
-      await initSchema();
-    } else {
+        // Test connection
+        const client = await tempPool.connect();
+        try {
+          await client.query('SELECT 1');
+          let maskedHost = 'localhost';
+          try {
+            const parsedUrl = new URL(connectionString);
+            const hostname = parsedUrl.hostname;
+            if (hostname.includes('render.com') || hostname.includes('neon.tech')) {
+              const parts = hostname.split('.');
+              const prefix = parts[0];
+              const maskedPrefix = prefix.length > 5 ? `${prefix.slice(0, 5)}...` : prefix;
+              maskedHost = `${maskedPrefix}.${parts.slice(1).join('.')}`;
+            } else {
+              maskedHost = hostname;
+            }
+          } catch {
+            maskedHost = 'PostgreSQL Host';
+          }
+          console.log(`[Database Safety] Connected to PostgreSQL Host: ${maskedHost} (Mode: Production Pool) ✅`);
+        } finally {
+          client.release();
+        }
+
+        pgPool = tempPool;
+        await initSchema();
+        poolSuccess = true;
+      } catch (poolErr: any) {
+        console.warn(`⚠️ [Database Warning] Failed to connect to PostgreSQL Pool (${poolErr.message}). Falling back to embedded PGlite...`);
+        pgPool = null;
+      }
+    }
+
+    if (!poolSuccess) {
       console.log('[Database] No remote DATABASE_URL provided. Initializing embedded PGlite engine...');
       const isCloud = isProduction || !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NOW_REGION || process.env.RENDER);
       let dataDir = process.env.DATA_DIR;
