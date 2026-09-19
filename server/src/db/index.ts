@@ -139,6 +139,37 @@ export async function initSchema(): Promise<void> {
       await pgliteDb.exec(SCHEMA_SQL);
       console.log('✅ Embedded PostgreSQL Schema initialized successfully.');
     }
+
+    // Ensure CMS pages table exists and is populated
+    try {
+      const pageCheck = await query(`SELECT count(*)::int as count FROM pages`);
+      if ((pageCheck.rows[0]?.count || 0) === 0) {
+        console.log('[Schema] Seeding initial CMS pages...');
+        const cmsPages = [
+          { title: 'Home | RKS Property Hub', slug: '/', meta_title: 'DTCP & RERA Approved Residential Plots in Tamil Nadu | RKS Property Hub', meta_description: 'Explore DTCP & RERA approved residential & commercial plots across Chennai, Trichy, Coimbatore & Hosur with clear Patta titles and free cab site visits.' },
+          { title: 'Property Listings | RKS Property Hub', slug: '/properties', meta_title: 'Verified Land & Residential Plot Inventory | RKS Property Hub', meta_description: 'Browse transparent DTCP approved plots, villas, commercial & agricultural land listings with live pricing and interactive search.' },
+          { title: 'Plots in Chennai | RKS Property Hub', slug: '/plots/chennai', meta_title: 'DTCP Approved Plots in Chennai & Perungalathur | RKS Property Hub', meta_description: 'Discover prime residential plots and commercial land for sale in Chennai and Perungalathur growth corridors with 100% clear titles.' },
+          { title: 'Plots in Trichy | RKS Property Hub', slug: '/plots/trichy', meta_title: 'Plots for Sale in Trichy & Thiruverumbur | RKS Property Hub', meta_description: 'Buy premium plots in Trichy near ring roads and riverfront locations. Clear Patta titles and immediate construction readiness.' },
+          { title: 'Plots in Coimbatore | RKS Property Hub', slug: '/plots/coimbatore', meta_title: 'Residential Plots in Coimbatore & Kalapatti | RKS Property Hub', meta_description: 'Invest in elevated plots near Kalapatti IT Corridor in Coimbatore. Gated community amenities and panoramic hill views.' },
+          { title: 'Plots in Hosur | RKS Property Hub', slug: '/plots/hosur', meta_title: 'Plots in Hosur Electronic City Corridor | RKS Property Hub', meta_description: 'Strategic plotted land investment along Hosur Road industrial and tech hub. High appreciation potential.' },
+          { title: 'Plots in Bangalore Corridor | RKS Property Hub', slug: '/plots/bangalore-corridor', meta_title: 'Plots along Chennai-Bangalore Industrial Highway | RKS Property Hub', meta_description: 'High-yield plotted developments along NH-48 Chennai-Bangalore industrial corridor.' },
+          { title: 'About Us | RKS Property Hub', slug: '/about', meta_title: 'About RKS Property Hub | Trusted Real Estate Developers', meta_description: 'Over 15 years of excellence delivering DTCP & RERA verified plots and land across Tamil Nadu with 100% legal transparency.' },
+          { title: 'Contact Us | RKS Property Hub', slug: '/contact', meta_title: 'Contact RKS Property Hub | Site Visit & Enquiry Desk', meta_description: 'Get in touch with RKS Property Hub advisors or book a free cab pickup for your property site inspection.' },
+          { title: 'Legal & Compliance | RKS Property Hub', slug: '/legal', meta_title: 'Legal Terms & Title Verification | RKS Property Hub', meta_description: 'Our commitment to clear titles, DTCP & RERA layout approvals, Patta documentation, and transparent buyer protections.' }
+        ];
+
+        for (const page of cmsPages) {
+          await query(
+            `INSERT INTO pages (title, slug, meta_title, meta_description, is_published) 
+             VALUES ($1, $2, $3, $4, true) 
+             ON CONFLICT (slug) DO UPDATE SET title = EXCLUDED.title, meta_title = EXCLUDED.meta_title, meta_description = EXCLUDED.meta_description`,
+            [page.title, page.slug, page.meta_title, page.meta_description]
+          );
+        }
+      }
+    } catch (e: any) {
+      console.warn('[Schema Notice] CMS pages auto-seed warning:', e?.message || e);
+    }
   } catch (error: any) {
     if (error.message && (error.message.includes('already exists') || error.message.includes('duplicate key'))) {
       console.log('ℹ️ PostgreSQL Schema already initialized.');

@@ -283,5 +283,20 @@ CREATE INDEX IF NOT EXISTS idx_offers_dates ON offers(start_date, end_date, is_a
 CREATE INDEX IF NOT EXISTS idx_leads_status ON leads(status);
 CREATE INDEX IF NOT EXISTS idx_leads_phone ON leads(phone);
 CREATE INDEX IF NOT EXISTS idx_chat_conversations_session ON chat_conversations(session_id);
+CREATE TABLE IF NOT EXISTS pages (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(200) NOT NULL,
+  slug VARCHAR(100) UNIQUE NOT NULL,
+  content TEXT,
+  meta_title VARCHAR(200),
+  meta_description VARCHAR(255),
+  is_published BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_pages_slug ON pages(slug);
 ALTER TABLE properties ADD COLUMN IF NOT EXISTS description_ta TEXT;
+ALTER TABLE property_images ADD COLUMN IF NOT EXISTS alt_text VARCHAR(255);
+ALTER TABLE pages ADD COLUMN IF NOT EXISTS meta_description VARCHAR(255);
 `;
