@@ -54,11 +54,15 @@ export async function getDb(): Promise<{ type: 'pool' | 'pglite'; client: pg.Poo
           ssl: useSsl ? { rejectUnauthorized: false } : undefined,
           max: 20,
           idleTimeoutMillis: 30000,
-          connectionTimeoutMillis: 10000,
+          connectionTimeoutMillis: 3000,
         });
 
-        // Test connection
-        const client = await tempPool.connect();
+        // Test connection with strict 3-second timeout
+        const connectPromise = tempPool.connect();
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Connection attempt timed out after 3000ms')), 3000)
+        );
+        const client = await Promise.race([connectPromise, timeoutPromise]);
         try {
           await client.query('SELECT 1');
           let maskedHost = 'localhost';
