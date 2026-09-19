@@ -52,31 +52,9 @@ app.use(helmet({
 app.use('/api', createRateLimiter(60000, 200, 'Rate limit exceeded. Please slow down your requests.'));
 
 // CORS & Parsing Middleware
-const allowedOrigins = [
-  'https://rkspropertyhub.in',
-  'https://www.rkspropertyhub.in',
-  'https://rksprime.com',
-  'https://www.rksprime.com',
-  'http://localhost:5173',
-  'http://localhost:3000',
-  'http://localhost:5000',
-  process.env.CLIENT_URL,
-].filter(Boolean);
-
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow non-browser requests (curl, mobile, server-to-server)
-    if (!origin) return callback(null, true);
-    if (
-      allowedOrigins.includes(origin) ||
-      /\.vercel\.app$/.test(origin) ||
-      /\.railway\.app$/.test(origin) ||
-      process.env.NODE_ENV !== 'production'
-    ) {
-      return callback(null, true);
-    }
-    return callback(new Error(`CORS policy does not allow access from ${origin}`));
-  },
+  origin: true,
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-demo-role'],
 }));
