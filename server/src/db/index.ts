@@ -19,18 +19,26 @@ let pgliteDb: PGlite | null = null;
 let pgPool: pg.Pool | null = null;
 let initPromise: Promise<void> | null = null;
 
-export function getConnectionString(): string | null {
-  const conn = (
+const DEFAULT_NEON_URL = 'postgresql://neondb_owner:npg_uIB07yjwYUtp@ep-blue-band-b4dmhdz8-pooler.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require';
+
+export function getConnectionString(): string {
+  let conn = (
     process.env.DATABASE_URL ||
     process.env.INTERNAL_DATABASE_URL ||
     process.env.POSTGRES_URL ||
     process.env.DATABASE_PRIVATE_URL ||
-    ''
+    DEFAULT_NEON_URL
   ).trim();
-  return conn || null;
+
+  // Strip unsupported channel_binding parameter for node-postgres (pg) compatibility
+  conn = conn.replace(/[?&]channel_binding=[^&]+/gi, '');
+  if (conn.includes('&') && !conn.includes('?')) {
+    conn = conn.replace('&', '?');
+  }
+  return conn;
 }
 
-export const isRemotePostgres = !!getConnectionString();
+export const isRemotePostgres = true;
 
 export async function getDb(): Promise<{ type: 'pool' | 'pglite'; client: pg.Pool | PGlite }> {
   if (initPromise) {
