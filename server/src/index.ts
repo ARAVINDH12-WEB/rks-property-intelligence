@@ -285,8 +285,8 @@ async function startServer() {
   });
 }
 
-const isMainModule = process.argv[1] && (process.argv[1].endsWith('index.ts') || process.argv[1].endsWith('index.js'));
-if (isMainModule && !process.env.VERCEL && !process.env.NOW_REGION) {
+// Execute server listener for standard web services (Render, Railway, Docker, Local)
+if (!process.env.VERCEL && !process.env.NOW_REGION && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
   startServer();
 }
 
