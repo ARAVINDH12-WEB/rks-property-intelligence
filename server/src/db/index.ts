@@ -99,8 +99,18 @@ export async function query<T = any>(sql: string, params: any[] = []): Promise<{
 export async function initSchema(): Promise<void> {
   try {
     if (pgPool) {
-      await pgPool.query(SCHEMA_SQL);
-      console.log('✅ Remote PostgreSQL Schema initialized successfully.');
+      // Check if schema already exists before running 300-line SCHEMA_SQL script
+      const tableCheck = await pgPool.query(
+        "SELECT 1 FROM information_schema.tables WHERE table_name = 'users'"
+      ).catch(() => ({ rowCount: 0 }));
+
+      if (tableCheck.rowCount === 0) {
+        console.log('[Schema] Initializing database schema tables...');
+        await pgPool.query(SCHEMA_SQL);
+        console.log('✅ Remote PostgreSQL Schema initialized successfully.');
+      } else {
+        console.log('✅ Database schema verified (tables exist). Skipping heavy SCHEMA_SQL execution.');
+      }
     }
 
     // Ensure CMS pages table exists and is populated
