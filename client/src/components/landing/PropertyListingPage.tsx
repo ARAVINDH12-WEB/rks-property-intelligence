@@ -148,7 +148,7 @@ export const PropertyListingPage: React.FC<PropertyListingPageProps> = ({ cityFi
     return `₹ ${(price / 100000).toFixed(2)} Lakhs`;
   };
 
-  const canonicalUrl = currentLocale === 'ta' ? 'https://rksprime.com/ta/properties' : 'https://rksprime.com/properties';
+  const canonicalUrl = currentLocale === 'ta' ? 'https://www.rkspropertyhub.in/ta/properties' : 'https://www.rkspropertyhub.in/properties';
   const pageTitle = currentLocale === 'ta' 
     ? 'விற்பனைக்கு உள்ள மனைகள் | RKS Property Hub' 
     : 'Verified Surveyed Plots for Sale | RKS Property Hub';

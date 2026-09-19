@@ -15,7 +15,7 @@ export const LegalPage: React.FC = () => {
 
   const currentLocale: Locale = i18n.language === 'ta' ? 'ta' : 'en';
 
-  const canonicalUrl = currentLocale === 'ta' ? 'https://rksprime.com/ta/legal' : 'https://rksprime.com/legal';
+  const canonicalUrl = currentLocale === 'ta' ? 'https://www.rkspropertyhub.in/ta/legal' : 'https://www.rkspropertyhub.in/legal';
   const pageTitle = currentLocale === 'ta' ? 'சட்டத் தகவல்கள் & மறுப்புரைகள் | RKS Property Hub' : 'Legal Information & Disclaimers | RKS Property Hub';
   const pageDesc = currentLocale === 'ta'
     ? 'RKS Property Hub தனியுரிமைக் கொள்கை, சேவை விதிமுறைகள் மற்றும் சொத்து பொறுப்புத்துறப்பு விபரங்கள்.'
@@ -28,9 +28,9 @@ export const LegalPage: React.FC = () => {
         <title>{pageTitle}</title>
         <meta name="description" content={pageDesc} />
         <link rel="canonical" href={canonicalUrl} />
-        <link rel="alternate" hrefLang="en" href="https://rksprime.com/legal" />
-        <link rel="alternate" hrefLang="ta" href="https://rksprime.com/ta/legal" />
-        <link rel="alternate" hrefLang="x-default" href="https://rksprime.com/legal" />
+        <link rel="alternate" hrefLang="en" href="https://www.rkspropertyhub.in/legal" />
+        <link rel="alternate" hrefLang="ta" href="https://www.rkspropertyhub.in/ta/legal" />
+        <link rel="alternate" hrefLang="x-default" href="https://www.rkspropertyhub.in/legal" />
       </Helmet>
       
       <PublicNavbar />

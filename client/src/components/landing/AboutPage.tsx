@@ -23,7 +23,7 @@ export const AboutPage: React.FC = () => {
     { name: 'Bangalore Corridor', slug: 'bangalore-corridor' }
   ];
 
-  const canonicalUrl = currentLocale === 'ta' ? 'https://rksprime.com/ta/about' : 'https://rksprime.com/about';
+  const canonicalUrl = currentLocale === 'ta' ? 'https://www.rkspropertyhub.in/ta/about' : 'https://www.rkspropertyhub.in/about';
   const pageTitle = currentLocale === 'ta' ? 'எங்களை பற்றி | RKS Property Hub' : 'About Us | RKS Property Hub';
   const pageDesc = currentLocale === 'ta'
     ? 'RKS Property Hub பற்றி அறியவும் — 500-க்கும் மேற்பட்ட ஏக்கர் தெளிவான பட்டா மனைகளை உருவாக்கி மேம்படுத்திய நிறுவனம்.'
@@ -36,9 +36,9 @@ export const AboutPage: React.FC = () => {
         <title>{pageTitle}</title>
         <meta name="description" content={pageDesc} />
         <link rel="canonical" href={canonicalUrl} />
-        <link rel="alternate" hrefLang="en" href="https://rksprime.com/about" />
-        <link rel="alternate" hrefLang="ta" href="https://rksprime.com/ta/about" />
-        <link rel="alternate" hrefLang="x-default" href="https://rksprime.com/about" />
+        <link rel="alternate" hrefLang="en" href="https://www.rkspropertyhub.in/about" />
+        <link rel="alternate" hrefLang="ta" href="https://www.rkspropertyhub.in/ta/about" />
+        <link rel="alternate" hrefLang="x-default" href="https://www.rkspropertyhub.in/about" />
       </Helmet>
       
       <PublicNavbar />

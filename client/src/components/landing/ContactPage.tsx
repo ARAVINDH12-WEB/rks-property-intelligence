@@ -78,7 +78,7 @@ export const ContactPage: React.FC = () => {
     }
   };
 
-  const canonicalUrl = currentLocale === 'ta' ? 'https://rksprime.com/ta/contact' : 'https://rksprime.com/contact';
+  const canonicalUrl = currentLocale === 'ta' ? 'https://www.rkspropertyhub.in/ta/contact' : 'https://www.rkspropertyhub.in/contact';
   const pageTitle = currentLocale === 'ta' ? 'தொடர்பு கொள்ள | RKS Property Hub' : 'Contact Us | RKS Property Hub';
   const pageDesc = currentLocale === 'ta'
     ? 'மனை விசாரணைகள், சட்ட ஆவண சரிபார்ப்பு மற்றும் இலவச வாகன தளப் பார்வைக்கு RKS Property Hub ஆலோசகர்களைத் தொடர்பு கொள்ளவும்.'
@@ -91,9 +91,9 @@ export const ContactPage: React.FC = () => {
         <title>{pageTitle}</title>
         <meta name="description" content={pageDesc} />
         <link rel="canonical" href={canonicalUrl} />
-        <link rel="alternate" hrefLang="en" href="https://rksprime.com/contact" />
-        <link rel="alternate" hrefLang="ta" href="https://rksprime.com/ta/contact" />
-        <link rel="alternate" hrefLang="x-default" href="https://rksprime.com/contact" />
+        <link rel="alternate" hrefLang="en" href="https://www.rkspropertyhub.in/contact" />
+        <link rel="alternate" hrefLang="ta" href="https://www.rkspropertyhub.in/ta/contact" />
+        <link rel="alternate" hrefLang="x-default" href="https://www.rkspropertyhub.in/contact" />
       </Helmet>
       
       <PublicNavbar />

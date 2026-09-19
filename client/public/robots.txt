@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin
 Disallow: /api/
 
-Sitemap: https://rksprime.com/sitemap.xml
+Sitemap: https://www.rkspropertyhub.in/sitemap.xml

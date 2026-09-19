@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://rkspropertyhub.in';
+  const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.rkspropertyhub.in').replace(/\/+$/, '');
 
   // Static CMS and main portal routes
   const staticRoutes = [

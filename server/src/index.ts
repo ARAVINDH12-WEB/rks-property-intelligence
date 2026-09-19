@@ -128,7 +128,7 @@ app.get('/api/health', async (_req: Request, res: Response) => {
 
 // Robots.txt Route
 app.get('/robots.txt', (_req: Request, res: Response) => {
-  const baseUrl = process.env.PUBLIC_SITE_URL || 'https://rkspropertyhub.in';
+  const baseUrl = (process.env.PUBLIC_SITE_URL || 'https://www.rkspropertyhub.in').replace(/\/+$/, '');
   res.type('text/plain');
   res.send(`User-agent: *
 Allow: /
@@ -142,7 +142,7 @@ Sitemap: ${baseUrl}/sitemap.xml
 // Dynamic XML Sitemap with CMS pages, property listings, and lastmod dates
 app.get('/sitemap.xml', async (_req: Request, res: Response) => {
   try {
-    const baseUrl = process.env.PUBLIC_SITE_URL || 'https://rkspropertyhub.in';
+    const baseUrl = (process.env.PUBLIC_SITE_URL || 'https://www.rkspropertyhub.in').replace(/\/+$/, '');
     const staticPages = [
       { en: '', ta: '/ta', priority: '1.0' },
       { en: '/properties', ta: '/ta/properties', priority: '0.9' },

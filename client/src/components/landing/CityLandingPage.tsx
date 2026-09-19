@@ -103,8 +103,8 @@ export const CityLandingPage: React.FC<CityLandingPageProps> = ({ city, slug }) 
   const faqs = currentLocale === 'ta' ? cityFaqsTa : cityFaqsEn;
 
   const canonicalUrl = currentLocale === 'ta' 
-    ? `https://rksprime.com/ta/plots/${slug}` 
-    : `https://rksprime.com/plots/${slug}`;
+    ? `https://www.rkspropertyhub.in/ta/plots/${slug}` 
+    : `https://www.rkspropertyhub.in/plots/${slug}`;
 
   const pageTitle = currentLocale === 'ta'
     ? `${city} வீட்டு மனைகள் விற்பனைக்கு | RKS Property Hub`
@@ -121,9 +121,9 @@ export const CityLandingPage: React.FC<CityLandingPageProps> = ({ city, slug }) 
         <title>{pageTitle}</title>
         <meta name="description" content={pageDesc} />
         <link rel="canonical" href={canonicalUrl} />
-        <link rel="alternate" hrefLang="en" href={`https://rksprime.com/plots/${slug}`} />
-        <link rel="alternate" hrefLang="ta" href={`https://rksprime.com/ta/plots/${slug}`} />
-        <link rel="alternate" hrefLang="x-default" href={`https://rksprime.com/plots/${slug}`} />
+        <link rel="alternate" hrefLang="en" href={`https://www.rkspropertyhub.in/plots/${slug}`} />
+        <link rel="alternate" hrefLang="ta" href={`https://www.rkspropertyhub.in/ta/plots/${slug}`} />
+        <link rel="alternate" hrefLang="x-default" href={`https://www.rkspropertyhub.in/plots/${slug}`} />
       </Helmet>
 
       <PublicNavbar />

@@ -148,7 +148,7 @@ export const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
                       : property.description
                     : `Verified ${property.area_sqft} sq.ft ${property.property_type || 'residential plot'} for sale in ${property.city || 'Tamil Nadu'}.`,
                   'datePosted': property.created_at || new Date().toISOString(),
-                  'url': typeof window !== 'undefined' ? `${window.location.origin}/properties?id=${property.id}` : `https://rkspropertyhub.in/properties?id=${property.id}`,
+                  'url': typeof window !== 'undefined' ? `${window.location.origin}/properties?id=${property.id}` : `https://www.rkspropertyhub.in/properties?id=${property.id}`,
                   'offers': {
                     '@type': 'Offer',
                     'price': property.total_price,

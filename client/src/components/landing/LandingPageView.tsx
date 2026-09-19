@@ -187,7 +187,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
 
 
 
-  const canonicalUrl = currentLocale === 'ta' ? 'https://rksprime.com/ta' : 'https://rksprime.com/';
+  const canonicalUrl = currentLocale === 'ta' ? 'https://www.rkspropertyhub.in/ta' : 'https://www.rkspropertyhub.in/';
   const pageTitle = currentLocale === 'ta' 
     ? 'RKS Property Hub — சர்வே சரிபார்க்கப்பட்ட வீட்டு மனைகள்' 
     : 'RKS Property Hub — Surveyed Plots with Clear Title';
@@ -202,9 +202,9 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
         <title>{pageTitle}</title>
         <meta name="description" content={pageDesc} />
         <link rel="canonical" href={canonicalUrl} />
-        <link rel="alternate" hrefLang="en" href="https://rksprime.com/" />
-        <link rel="alternate" hrefLang="ta" href="https://rksprime.com/ta" />
-        <link rel="alternate" hrefLang="x-default" href="https://rksprime.com/" />
+        <link rel="alternate" hrefLang="en" href="https://www.rkspropertyhub.in/" />
+        <link rel="alternate" hrefLang="ta" href="https://www.rkspropertyhub.in/ta" />
+        <link rel="alternate" hrefLang="x-default" href="https://www.rkspropertyhub.in/" />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDesc} />
         <meta property="og:type" content="website" />
