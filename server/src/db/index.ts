@@ -9,7 +9,7 @@ const { Pool } = pg;
 let pgPool: pg.Pool | null = null;
 let initPromise: Promise<void> | null = null;
 
-const DEFAULT_NEON_URL = 'postgresql://neondb_owner:npg_uIB07yjwYUtp@ep-blue-band-b4dmhdz8-pooler.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require';
+const DEFAULT_NEON_URL = 'postgresql://neondb_owner:npg_nAQNzmldfx07@ep-blue-band-b4dmhdz8.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require';
 
 export function getConnectionString(): string {
   let conn = (
