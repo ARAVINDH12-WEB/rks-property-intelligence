@@ -1,13 +1,14 @@
 {
+  "version": 2,
   "buildCommand": "npm run build",
   "outputDirectory": "client/dist",
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "https://rks-property-intelligence.onrender.com/api/$1"
+      "source": "/api/:path*",
+      "destination": "https://rks-property-intelligence.onrender.com/api/:path*"
     },
     {
-      "source": "/(.*)",
+      "source": "/:path*",
       "destination": "/index.html"
     }
   ]
