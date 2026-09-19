@@ -39,8 +39,9 @@ export function createRateLimiter(
     const clientIp = typeof rawForwarded === 'string'
       ? rawForwarded.split(',')[0].trim()
       : (Array.isArray(rawForwarded) ? rawForwarded[0] : null);
-    const ip = req.ip || clientIp || req.socket.remoteAddress || 'unknown';
-    const key = `${req.baseUrl || req.path}:${String(ip)}`;
+    const ip = req.ip || clientIp || req.socket?.remoteAddress || 'unknown';
+    const identifier = req.body?.email ? `email:${String(req.body.email).toLowerCase().trim()}` : `ip:${String(ip)}`;
+    const key = `${req.baseUrl || req.path}:${identifier}`;
     const now = Date.now();
 
     const record = rateLimitStore.get(key);
