@@ -182,22 +182,43 @@ router.post('/parse-and-validate', authenticate, requireRole(['ADMIN', 'MANAGER'
       return;
     }
 
-    // Pick the sheet with the most rows in case the first sheet is a cover/readme
-    let rawRows: any[] = [];
+    // Pick the best sheet and smart detect header row if title rows exist
+    let bestRows: any[] = [];
+    let bestHeaders: string[] = [];
+
     for (const name of workbook.SheetNames) {
       const sheet = workbook.Sheets[name];
-      const rows: any[] = xlsx.utils.sheet_to_json(sheet, { defval: '' });
-      if (rows.length > rawRows.length) {
-        rawRows = rows;
+      if (!sheet) continue;
+
+      // Convert sheet to array of arrays to inspect header row offset
+      const matrix: any[][] = xlsx.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+      if (!matrix || matrix.length === 0) continue;
+
+      // Find first row with at least 2 non-empty string cells as header row
+      let headerRowIndex = 0;
+      for (let r = 0; r < Math.min(10, matrix.length); r++) {
+        const rowCells = matrix[r].filter(c => c !== null && c !== undefined && String(c).trim() !== '');
+        if (rowCells.length >= 2) {
+          headerRowIndex = r;
+          break;
+        }
+      }
+
+      // Convert from detected header row
+      const rows: any[] = xlsx.utils.sheet_to_json(sheet, { range: headerRowIndex, defval: '' });
+      if (rows.length > bestRows.length) {
+        bestRows = rows;
+        bestHeaders = Object.keys(rows[0] || {});
       }
     }
 
-    if (rawRows.length === 0) {
+    if (bestRows.length === 0) {
       res.status(400).json({ error: 'The uploaded spreadsheet is empty or contains no tabular data.' });
       return;
     }
 
-    const headers = Object.keys(rawRows[0]);
+    const rawRows = bestRows;
+    const headers = bestHeaders;
     const suggestedMapping: Record<string, string> = {};
 
     for (const header of headers) {

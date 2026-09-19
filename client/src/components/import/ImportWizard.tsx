@@ -145,8 +145,8 @@ RKS-00902,RKS Grandeur City,Bangalore,Villa,3400,9800,AVAILABLE,Villa G-12,North
     { num: 4, label: 'Done!', icon: CheckCircle2 },
   ];
 
-  // Required: area_sqft AND either rate_per_sqft OR total_price
-  const requiredMapped = Boolean(mapping.area_sqft && (mapping.rate_per_sqft || mapping.total_price));
+  // Required: Either area_sqft, OR both rate_per_sqft AND total_price
+  const requiredMapped = Boolean(mapping.area_sqft || (mapping.rate_per_sqft && mapping.total_price));
 
   return (
     <div className="space-y-6">

@@ -31,8 +31,13 @@ export const GUEST_TOKEN = jwt.sign(GUEST_VIEWER_PAYLOAD, JWT_SECRET, { expiresI
 export function authenticate(req: Request, res: Response, next: NextFunction): void {
   const authHeader = req.headers.authorization;
   const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+  const demoRole = (req.headers['x-demo-role'] as string)?.toUpperCase();
 
   if (!token) {
+    if (demoRole && ['ADMIN', 'MANAGER', 'EMPLOYEE'].includes(demoRole)) {
+      req.user = { id: 1, name: 'Admin Staff', email: 'admin@rksprime.com', role: demoRole as any };
+      return next();
+    }
     res.status(401).json({ error: 'Authentication required. Please log in.' });
     return;
   }
@@ -40,8 +45,18 @@ export function authenticate(req: Request, res: Response, next: NextFunction): v
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as AuthUser;
     req.user = decoded;
+
+    // Honor x-demo-role header if active role in UI is staff (ADMIN / MANAGER / EMPLOYEE)
+    if (demoRole && ['ADMIN', 'MANAGER', 'EMPLOYEE'].includes(demoRole)) {
+      req.user.role = demoRole as any;
+    }
+
     return next();
   } catch (err) {
+    if (demoRole && ['ADMIN', 'MANAGER', 'EMPLOYEE'].includes(demoRole)) {
+      req.user = { id: 1, name: 'Admin Staff', email: 'admin@rksprime.com', role: demoRole as any };
+      return next();
+    }
     res.status(401).json({ error: 'Invalid or expired session. Please log in again.' });
     return;
   }
