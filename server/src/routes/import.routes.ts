@@ -7,36 +7,58 @@ import { calculateTotalPrice } from '../utils/calculations.js';
 
 const router = Router();
 
-// Helper to safely parse numeric values (handles commas, Indian Lakhs/Crores, Rs. currency, sqft units)
+// Helper to safely parse numeric values (handles commas, Indian Lakhs/Crores, Rs. currency, sqft, cents, grounds, acres)
 function parseNumeric(val: any): number {
   if (val === null || val === undefined || val === '') return NaN;
   if (typeof val === 'number') return isNaN(val) ? NaN : val;
   let str = String(val).trim();
   if (!str) return NaN;
 
-  // Check Lakhs / Lacs / L: e.g. "45 Lakhs", "45.5 L", "45 Lacs"
+  // 1. Strip currency prefixes and symbols FIRST (e.g. 'Rs.', 'INR', '₹', '$')
+  str = str.replace(/(?:rs\.?|inr|₹|\$)/gi, '').trim();
+
+  // 2. Check Lakhs / Lacs / L: e.g. "45 Lakhs", "45.5 L", "45 Lacs"
   const lakhMatch = str.match(/^([\d,.]+)\s*(?:lakh|lakhs|lac|lacs|l)\b/i);
   if (lakhMatch) {
     const num = parseFloat(lakhMatch[1].replace(/,/g, ''));
     return isNaN(num) ? NaN : Math.round(num * 100000);
   }
 
-  // Check Crores / Cr: e.g. "1.5 Cr", "1.5 Crore", "2 Crores"
+  // 3. Check Crores / Cr: e.g. "1.5 Cr", "1.5 Crore", "2 Crores"
   const croreMatch = str.match(/^([\d,.]+)\s*(?:crore|crores|cr)\b/i);
   if (croreMatch) {
     const num = parseFloat(croreMatch[1].replace(/,/g, ''));
     return isNaN(num) ? NaN : Math.round(num * 10000000);
   }
 
-  // Check Thousands (k): e.g. "850k", "50 k"
+  // 4. Check Thousands (k): e.g. "850k", "50 k"
   const kMatch = str.match(/^([\d,.]+)\s*k\b/i);
   if (kMatch) {
     const num = parseFloat(kMatch[1].replace(/,/g, ''));
     return isNaN(num) ? NaN : Math.round(num * 1000);
   }
 
-  // Strip currency prefixes and symbols (e.g. 'Rs.', 'INR', '₹', '$')
-  str = str.replace(/(?:rs\.?|inr|₹|\$)/gi, '');
+  // 5. Check Cents: e.g. "2.5 Cents", "2 Cents" (1 Cent = 435.6 sqft)
+  const centMatch = str.match(/^([\d,.]+)\s*(?:cent|cents)\b/i);
+  if (centMatch) {
+    const num = parseFloat(centMatch[1].replace(/,/g, ''));
+    return isNaN(num) ? NaN : Math.round(num * 435.6);
+  }
+
+  // 6. Check Grounds: e.g. "1 Ground", "2 Grounds" (1 Ground = 2400 sqft)
+  const groundMatch = str.match(/^([\d,.]+)\s*(?:ground|grounds)\b/i);
+  if (groundMatch) {
+    const num = parseFloat(groundMatch[1].replace(/,/g, ''));
+    return isNaN(num) ? NaN : Math.round(num * 2400);
+  }
+
+  // 7. Check Acres: e.g. "1 Acre", "2.5 Acres" (1 Acre = 43560 sqft)
+  const acreMatch = str.match(/^([\d,.]+)\s*(?:acre|acres)\b/i);
+  if (acreMatch) {
+    const num = parseFloat(acreMatch[1].replace(/,/g, ''));
+    return isNaN(num) ? NaN : Math.round(num * 43560);
+  }
+
   // Strip unit abbreviations (e.g. 'sq.ft.', 'sqft', '/sqft', 'sqm', 'per sqft')
   str = str.replace(/(?:\/?\s*(?:sq\.?\s*ft\.?|sqft|sqm|per\s*sq\.?\s*ft\.?))/gi, '');
   // Remove commas
@@ -72,7 +94,7 @@ const mappingHeuristics: Record<string, RegExp[]> = {
     /^city$/i,
     /^place$/i,
     /^town$/i,
-    /^area$/i,
+    /^area[\s_-]?name$/i,
     /^address$/i,
     /^zone$/i,
     /^region$/i,
@@ -90,6 +112,9 @@ const mappingHeuristics: Record<string, RegExp[]> = {
     /extent/i,
     /size/i,
     /dimension/i,
+    /cents?/i,
+    /grounds?/i,
+    /acres?/i,
   ],
   rate_per_sqft: [
     /rate/i,
@@ -97,14 +122,20 @@ const mappingHeuristics: Record<string, RegExp[]> = {
     /sqft[\s_-]?rate/i,
     /price[\s_-]?per/i,
     /base[\s_-]?rate/i,
+    /sqft[\s_-]?price/i,
   ],
   total_price: [
     /total/i,
-    /price/i,
-    /cost/i,
-    /amount/i,
-    /value/i,
-    /budget/i,
+    /final[\s_-]?price/i,
+    /total[\s_-]?price/i,
+    /total[\s_-]?cost/i,
+    /total[\s_-]?amount/i,
+    /total[\s_-]?val/i,
+    /^price$/i,
+    /^cost$/i,
+    /^amount$/i,
+    /^value$/i,
+    /^budget$/i,
     /consideration/i,
   ],
   status: [
@@ -120,8 +151,8 @@ const mappingHeuristics: Record<string, RegExp[]> = {
   ],
   survey_number: [
     /survey/i,
-    /s[\s._-]?no/i,
     /sf[\s._-]?no/i,
+    /sy[\s._-]?no/i,
     /patta/i,
     /khata/i,
   ],
@@ -332,19 +363,25 @@ router.post('/parse-and-validate', authenticate, requireRole(['ADMIN', 'MANAGER'
         }
       }
 
-      // Validate Area
-      if (isNaN(rawArea) || rawArea <= 0) {
-        errors.push('Invalid Area (must be positive number, e.g. 1200 or 1,200 sqft)');
+      // Auto-derive missing metrics if 2 of (Area, Rate, Price) are available
+      if ((isNaN(rawArea) || rawArea <= 0) && !isNaN(rawPrice) && rawPrice > 0 && !isNaN(rawRate) && rawRate > 0) {
+        rawArea = Math.round(rawPrice / rawRate);
+        warnings.push(`Area calculated as ${rawArea.toLocaleString('en-IN')} sq.ft from total price and rate`);
       }
 
-      // Auto-derive Rate per sqft if missing but Total Price and Area are available
+      if ((isNaN(rawRate) || rawRate <= 0) && !isNaN(rawPrice) && rawPrice > 0 && !isNaN(rawArea) && rawArea > 0) {
+        rawRate = Math.round(rawPrice / rawArea);
+        warnings.push(`Rate calculated as Rs.${rawRate.toLocaleString('en-IN')}/sq.ft from total price and area`);
+      }
+
+      // Validate Area
+      if (isNaN(rawArea) || rawArea <= 0) {
+        errors.push('Invalid Area (must be positive number, e.g. 1200 sqft or 2.5 Cents)');
+      }
+
+      // Validate Rate
       if (isNaN(rawRate) || rawRate <= 0) {
-        if (!isNaN(rawPrice) && rawPrice > 0 && !isNaN(rawArea) && rawArea > 0) {
-          rawRate = Math.round(rawPrice / rawArea);
-          warnings.push(`Rate calculated as Rs.${rawRate}/sq.ft from total price`);
-        } else {
-          errors.push('Invalid Rate per Sq.Ft (could not determine from rate or total price)');
-        }
+        errors.push('Invalid Rate per Sq.Ft (could not determine from rate or total price)');
       }
 
       // Auto-calculate Total Price if missing

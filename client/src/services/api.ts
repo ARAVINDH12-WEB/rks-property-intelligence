@@ -409,10 +409,61 @@ export const api = {
   },
 
   async commitImport(rows: any[], filename: string): Promise<any> {
-    return request('/import/commit', {
-      method: 'POST',
-      body: JSON.stringify({ rows, filename }),
-    });
+    const token = sessionStorage.getItem('rks_auth_token') || localStorage.getItem('rks_auth_token');
+    const activeRole = sessionStorage.getItem('rks_active_role') || localStorage.getItem('rks_active_role') || 'ADMIN';
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'x-demo-role': activeRole,
+    };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const controller = new AbortController();
+    const timeoutMs = 60000; // 60s extended timeout for bulk import commit
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    const primaryEndpoint = `${API_BASE}/import/commit`;
+    let res: Response;
+    try {
+      res = await fetch(primaryEndpoint, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ rows, filename }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+    } catch (networkErr: any) {
+      clearTimeout(timeoutId);
+      if (networkErr.name === 'AbortError') {
+        throw new Error('Import commit timed out after 60s. Please try again with a smaller batch.');
+      }
+      if (API_BASE !== '/api') {
+        try {
+          const retryController = new AbortController();
+          const retryTimeoutId = setTimeout(() => retryController.abort(), timeoutMs);
+          res = await fetch('/api/import/commit', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ rows, filename }),
+            signal: retryController.signal,
+          });
+          clearTimeout(retryTimeoutId);
+        } catch (retryErr: any) {
+          if (retryErr.name === 'AbortError') {
+            throw new Error('Import commit timed out after 60s.');
+          }
+          throw networkErr;
+        }
+      } else {
+        throw networkErr;
+      }
+    }
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Import failed with status ' + res.status }));
+      throw new Error(err.error || 'Import failed');
+    }
+
+    return res.json();
   },
 
   // Site Visits
