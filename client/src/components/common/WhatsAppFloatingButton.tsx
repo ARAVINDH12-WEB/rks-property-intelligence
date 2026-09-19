@@ -1,13 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { api } from '../../services/api.js';
+import { useDraggable } from '../../hooks/useDraggable.js';
 
 export const WhatsAppFloatingButton: React.FC = () => {
   const [whatsappNumber, setWhatsappNumber] = useState<string>('+919840011223');
-  const [defaultMessage, setDefaultMessage] = useState<string>(
+  const [defaultMessage] = useState<string>(
     "Hi, I'm interested in learning more about your properties."
   );
   const [isEnabled, setIsEnabled] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
+
+  const getDefaultPos = useCallback(() => ({
+    x: typeof window !== 'undefined' ? window.innerWidth - 72 : 300,
+    y: typeof window !== 'undefined' ? window.innerHeight - 72 : 500,
+  }), []);
+
+  const { isDragging, bind, handleClick } = useDraggable({
+    storageKey: 'rks_pos_whatsapp',
+    getDefaultPosition: getDefaultPos,
+    elementWidth: 56,
+    elementHeight: 56,
+  });
 
   useEffect(() => {
     api
@@ -32,10 +45,13 @@ export const WhatsAppFloatingButton: React.FC = () => {
   const whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodedMsg}`;
 
   return (
-    <div className="fixed bottom-6 right-6 z-40 flex items-center gap-3">
+    <div
+      {...bind}
+      className="flex items-center gap-3 cursor-grab active:cursor-grabbing transition-shadow"
+    >
       {/* Tooltip Pill */}
-      {isHovered && (
-        <div className="hidden sm:flex items-center gap-2 rounded-2xl bg-white dark:bg-[#12161F] px-4 py-2 text-xs font-bold text-slate-800 dark:text-zinc-100 shadow-2xl border border-slate-200 dark:border-zinc-800 animate-fadeIn">
+      {isHovered && !isDragging && (
+        <div className="hidden sm:flex items-center gap-2 rounded-2xl bg-white dark:bg-[#12161F] px-4 py-2 text-xs font-bold text-slate-800 dark:text-zinc-100 shadow-2xl border border-slate-200 dark:border-zinc-800 animate-fadeIn pointer-events-none">
           <span>Chat with us on WhatsApp</span>
         </div>
       )}
@@ -45,18 +61,21 @@ export const WhatsAppFloatingButton: React.FC = () => {
         href={whatsappUrl}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={(e) => handleClick(e)}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        className="group relative flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-2xl shadow-emerald-500/40 hover:bg-[#20bd5a] hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer"
+        className="group relative flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-2xl shadow-emerald-500/40 hover:bg-[#20bd5a] transition-transform duration-200 active:scale-95"
         aria-label="Chat with us on WhatsApp"
-        title="Chat with us on WhatsApp"
+        title="Drag to reposition | Click to chat on WhatsApp"
       >
         {/* Soft pulse ping */}
-        <span className="absolute -inset-1 rounded-full bg-[#25D366]/40 animate-ping opacity-60 pointer-events-none" />
+        {!isDragging && (
+          <span className="absolute -inset-1 rounded-full bg-[#25D366]/40 animate-ping opacity-60 pointer-events-none" />
+        )}
 
         {/* WhatsApp Icon */}
         <svg
-          className="h-7 w-7 fill-current relative z-10 transition-transform duration-300 group-hover:rotate-6"
+          className="h-7 w-7 fill-current relative z-10 transition-transform duration-300 group-hover:rotate-6 pointer-events-none"
           viewBox="0 0 24 24"
           xmlns="http://www.w3.org/2000/svg"
         >

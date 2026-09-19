@@ -99,31 +99,46 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
       }
     }
 
-    // 2. Fetch Live Database Context (Source of Truth)
-    // Fetch all active properties with project & location details
-    const livePropsRes = await query(
-      `SELECT p.id, p.property_code, p.plot_number, p.area_sqft, p.rate_per_sqft, p.total_price,
-              p.status, p.facing, p.survey_number, p.approval_number, p.ownership, p.amenities,
-              p.description, p.description_ta, prj.name as project_name, prj.code as project_code,
-              loc.city, loc.name as location_name
-       FROM properties p
-       LEFT JOIN projects prj ON p.project_id = prj.id
-       LEFT JOIN locations loc ON p.location_id = loc.id
-       WHERE p.archived = false
-       ORDER BY p.id ASC`
-    );
+    // 2. Fetch Live Database Context concurrently (Source of Truth for Listings, Settings & CMS)
+    const [livePropsRes, settingsRes, pagesRes] = await Promise.all([
+      query(
+        `SELECT p.id, p.property_code, p.plot_number, p.area_sqft, p.rate_per_sqft, p.total_price,
+                p.status, p.facing, p.survey_number, p.approval_number, p.ownership, p.amenities,
+                p.description, p.description_ta, prj.name as project_name, prj.code as project_code,
+                loc.city, loc.name as location_name
+         FROM properties p
+         LEFT JOIN projects prj ON p.project_id = prj.id
+         LEFT JOIN locations loc ON p.location_id = loc.id
+         WHERE p.archived = false
+         ORDER BY p.id ASC`
+      ),
+      query(`SELECT key, value FROM system_settings`),
+      query(`SELECT title, slug, content FROM pages WHERE is_published = true`),
+    ]);
+
     const properties = livePropsRes.rows;
     const availablePlots = properties.filter((p: any) => p.status === 'AVAILABLE');
     const availableCount = availablePlots.length;
 
-    // Fetch configured whatsapp number
-    let cleanWa = '919840011223';
-    try {
-      const settingsRes = await query("SELECT value FROM system_settings WHERE key = 'whatsapp_number'");
-      if (settingsRes.rows[0]?.value) {
-        cleanWa = settingsRes.rows[0].value.replace(/[^0-9]/g, '');
+    // Build settings map from DB with fallback defaults
+    const settingsMap: Record<string, string> = {
+      whatsapp_number: '+919840011223',
+      contact_phone: '+91 98400 11223',
+      contact_email: 'info@rksgroup.in',
+      contact_address: 'No. 42, GST Road, Guindy, Chennai, Tamil Nadu - 600032',
+      stat_base_rate: '₹850/sq.ft',
+    };
+    for (const sRow of settingsRes.rows) {
+      if (sRow.key && sRow.value) {
+        settingsMap[sRow.key] = sRow.value;
       }
-    } catch {}
+    }
+
+    const cleanWa = settingsMap.whatsapp_number.replace(/[^0-9]/g, '');
+    const livePhone = settingsMap.contact_phone;
+    const liveEmail = settingsMap.contact_email;
+    const liveAddress = settingsMap.contact_address;
+    const cmsPages = pagesRes.rows;
 
     // 3. Intent Detection & Live RAG Routing
     let reply = '';
@@ -203,6 +218,12 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
       lowerMsg.includes('brokerage') || lowerMsg.includes('commission') || lowerMsg.includes('loan') ||
       lowerMsg.includes('bank') || lowerMsg.includes('emi') || lowerMsg.includes('வங்கி') ||
       lowerMsg.includes('தரகர்') || lowerMsg.includes('கடன்');
+
+    // Contact / Office Address intent
+    const isContactQuery =
+      lowerMsg.includes('contact') || lowerMsg.includes('phone') || lowerMsg.includes('email') ||
+      lowerMsg.includes('address') || lowerMsg.includes('office') || lowerMsg.includes('location') ||
+      lowerMsg.includes('தொடர்பு') || lowerMsg.includes('தொலைபேசி') || lowerMsg.includes('முகவரி');
 
     // Helper to find property by plot number or property code
     const findPropertyMatch = (queryStr: string, numStr?: string) => {
@@ -406,7 +427,28 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
         }
       }
 
-    // Intent E: Free Cab Site Visit
+    // Intent E: Direct Contact / Office Address Query
+    } else if (isContactQuery) {
+      detectedIntent = 'CONTACT_INFO';
+      if (isTa) {
+        reply = `📞 **RKS Property Hub தொடர்பு விவரங்கள் (நேரடி தரவு):**\n\n` +
+          `• **தொலைபேசி:** ${livePhone}\n` +
+          `• **மின்னஞ்சல்:** ${liveEmail}\n` +
+          `• **அலுவலக முகவரி:** ${liveAddress}\n` +
+          `• **வாட்ஸ்அப்:** [வாட்ஸ்அப்பில் தொடர்புகொள்ள](https://wa.me/${cleanWa})\n\n` +
+          `எங்கள் குழு காலை 9:00 முதல் மாலை 7:00 வரை உங்கள் சேவைக்கு தயார் நிலையில் உள்ளது.`;
+        suggestedActions.push('தளப் பார்வை முன்பதிவு', 'கிடைக்கும் மனைகள்', 'வாட்ஸ்அப் உதவி');
+      } else {
+        reply = `📞 **RKS Property Hub Live Contact Information:**\n\n` +
+          `• **Phone:** ${livePhone}\n` +
+          `• **Email:** ${liveEmail}\n` +
+          `• **Office Address:** ${liveAddress}\n` +
+          `• **WhatsApp:** [Chat on WhatsApp](https://wa.me/${cleanWa})\n\n` +
+          `Our senior advisors are available 7 days a week (9:00 AM – 7:00 PM). How else can I assist you?`;
+        suggestedActions.push('Book Free Site Visit', 'Browse Available Plots', 'WhatsApp Support');
+      }
+
+    // Intent F: Free Cab Site Visit
     } else if (isSiteVisit) {
       detectedIntent = 'SITE_VISIT';
       if (isTa) {
@@ -467,7 +509,8 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
           `உங்கள் கோரிக்கை எங்கள் மூத்த விற்பனை மேலாளருக்கு உடனடி வாட்ஸ்அப் எச்சரிக்கையாக அனுப்பப்பட்டுள்ளது.\n\n` +
           `நேரடியாக பேச விரும்பினால்:\n` +
           `• **வாட்ஸ்அப்:** [வாட்ஸ்அப் அரட்டை](https://wa.me/${cleanWa}?text=${encodeURIComponent('Vanakkam, I would like to speak with a sales advisor.')})\n` +
-          `• **தொலைபேசி:** +91 98400 11223\n\n` +
+          `• **தொலைபேசி:** ${livePhone}\n` +
+          `• **மின்னஞ்சல்:** ${liveEmail}\n\n` +
           (detectedPhone ? `உங்கள் எண்ணான **${detectedPhone}**-ல் எங்கள் குழு விரைவில் உங்களை அழைக்கும்.` : `உங்கள் தொலைபேசி எண்ணை பகிர்ந்தால் உடனடியாக உங்களுக்கு அழைப்போம்.`);
         suggestedActions.push('தளப் பார்வை முன்பதிவு', 'கிடைக்கும் மனைகள்', 'வாட்ஸ்அப் உதவி');
       } else {
@@ -475,7 +518,9 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
           `I have dispatched an urgent notification to our sales desk regarding your inquiry: *${escalationReason}*.\n\n` +
           `You can reach our team directly via:\n` +
           `• **WhatsApp:** [Chat on WhatsApp](https://wa.me/${cleanWa}?text=${encodeURIComponent('Hi, I am chatting with the RKS AI Assistant and would like to speak with an advisor.')})\n` +
-          `• **Direct Phone:** +91 98400 11223 (Mon–Sun 9 AM – 7 PM)\n\n` +
+          `• **Direct Phone:** ${livePhone}\n` +
+          `• **Email:** ${liveEmail}\n` +
+          `• **Office Address:** ${liveAddress}\n\n` +
           (detectedPhone ? `Our executive will call you shortly at **${detectedPhone}**.` : `You may also share your mobile number here, and an advisor will contact you within 15 minutes.`);
         suggestedActions.push('Book Free Site Visit', 'Browse Available Plots', 'WhatsApp Support');
       }

@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApp } from '../../context/AppContext.js';
 import { api } from '../../services/api.js';
+import { useDraggable } from '../../hooks/useDraggable.js';
 import {
   Bot, Send, X, Sparkles, User, CheckCircle2,
   Calendar, PhoneCall, MessageCircle, Minimize2, Maximize2,
@@ -30,6 +31,18 @@ export const AiConciergeChat: React.FC = () => {
   const [inputMsg, setInputMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSearchingDb, setIsSearchingDb] = useState(false);
+
+  const getDefaultPos = useCallback(() => ({
+    x: typeof window !== 'undefined' ? Math.max(8, window.innerWidth - 210) : 200,
+    y: typeof window !== 'undefined' ? Math.max(8, window.innerHeight - 80) : 500,
+  }), []);
+
+  const { isDragging, bind, handleClick } = useDraggable({
+    storageKey: 'rks_pos_aichat',
+    getDefaultPosition: getDefaultPos,
+    elementWidth: 180,
+    elementHeight: 52,
+  });
 
   // Initialize session ID
   const [sessionId] = useState<string>(() => {
@@ -177,21 +190,21 @@ export const AiConciergeChat: React.FC = () => {
       });
   };
 
-  // Coordinated Mobile & Desktop Positioning:
-  // On desktop: bottom-6 right-24 (smoothly beside bottom-6 right-6 WhatsApp button)
-  // On mobile: bottom-20 right-4 (stacked cleanly above sticky WhatsApp floating button)
   if (!isOpen) {
     return (
-      <button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-20 right-4 md:bottom-6 md:right-24 z-40 flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl shadow-luxury-dark transition-all hover:scale-105 active:scale-95 bg-gradient-to-r from-[#0B1424] via-[#0E1D2D] to-brand-teal/40 border border-brand-teal/60 backdrop-blur-md group"
-        title="Open RKS Grounded AI Assistant"
+      <div
+        {...bind}
+        onClick={(e) => handleClick(e, () => setIsOpen(true))}
+        className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl shadow-luxury-dark transition-all bg-gradient-to-r from-[#0B1424] via-[#0E1D2D] to-brand-teal/40 border border-brand-teal/60 backdrop-blur-md cursor-grab active:cursor-grabbing group hover:scale-105 active:scale-95"
+        title="Drag to reposition | Click to open RKS Grounded AI Assistant"
       >
-        <div className="relative flex h-8 w-8 items-center justify-center rounded-xl bg-brand-teal/25 border border-brand-teal/50 text-brand-teal-light group-hover:bg-brand-teal group-hover:text-white transition-colors">
+        <div className="relative flex h-8 w-8 items-center justify-center rounded-xl bg-brand-teal/25 border border-brand-teal/50 text-brand-teal-light group-hover:bg-brand-teal group-hover:text-white transition-colors pointer-events-none">
           <Bot className="h-4 w-4" />
-          <span className="absolute -top-1 -right-1 flex h-2 w-2 rounded-full bg-emerald-400 ring-2 ring-brand-navy animate-pulse" />
+          {!isDragging && (
+            <span className="absolute -top-1 -right-1 flex h-2 w-2 rounded-full bg-emerald-400 ring-2 ring-brand-navy animate-pulse" />
+          )}
         </div>
-        <div className="text-left hidden sm:block">
+        <div className="text-left hidden sm:block pointer-events-none">
           <div className="flex items-center gap-1.5">
             <span className="text-xs font-bold text-white tracking-wide">RKS Assistant</span>
             <span className="text-[8px] uppercase font-mono px-1 py-0.2 rounded bg-brand-gold/20 text-brand-gold-light border border-brand-gold/30">
@@ -200,7 +213,7 @@ export const AiConciergeChat: React.FC = () => {
           </div>
           <p className="text-[10px] text-slate-400">Ask rates, DTCP & plots</p>
         </div>
-      </button>
+      </div>
     );
   }
 
