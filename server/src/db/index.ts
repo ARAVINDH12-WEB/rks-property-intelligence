@@ -19,7 +19,18 @@ let pgliteDb: PGlite | null = null;
 let pgPool: pg.Pool | null = null;
 let initPromise: Promise<void> | null = null;
 
-export const isRemotePostgres = !!process.env.DATABASE_URL;
+export function getConnectionString(): string | null {
+  const conn = (
+    process.env.DATABASE_URL ||
+    process.env.INTERNAL_DATABASE_URL ||
+    process.env.POSTGRES_URL ||
+    process.env.DATABASE_PRIVATE_URL ||
+    ''
+  ).trim();
+  return conn || null;
+}
+
+export const isRemotePostgres = !!getConnectionString();
 
 export async function getDb(): Promise<{ type: 'pool' | 'pglite'; client: pg.Pool | PGlite }> {
   if (initPromise) {
@@ -29,12 +40,14 @@ export async function getDb(): Promise<{ type: 'pool' | 'pglite'; client: pg.Poo
   }
 
   initPromise = (async () => {
-    if (process.env.DATABASE_URL) {
-      console.log('[Database] Connecting to PostgreSQL via DATABASE_URL on Railway/Cloud...');
-      const isProduction = process.env.NODE_ENV === 'production';
+    const connectionString = getConnectionString();
+    const isProduction = process.env.NODE_ENV === 'production' || !!process.env.RENDER || !!process.env.RAILWAY_ENVIRONMENT;
+
+    if (connectionString) {
+      console.log('[Database] Connecting to PostgreSQL Pool via connection string...');
       pgPool = new Pool({
-        connectionString: process.env.DATABASE_URL,
-        ssl: isProduction && !process.env.DATABASE_URL.includes('localhost')
+        connectionString,
+        ssl: isProduction && !connectionString.includes('localhost') && !connectionString.includes('127.0.0.1')
           ? { rejectUnauthorized: false }
           : undefined,
         max: 20,
@@ -52,6 +65,10 @@ export async function getDb(): Promise<{ type: 'pool' | 'pglite'; client: pg.Poo
       }
 
       await initSchema();
+    } else if (isProduction) {
+      console.warn('⚠️ [Database Warning] Running in cloud/production environment without a valid DATABASE_URL or INTERNAL_DATABASE_URL.');
+      console.warn('⚠️ PGlite is disabled in production to prevent container crashes. Please add DATABASE_URL in Render environment settings.');
+      throw new Error('DATABASE_URL or INTERNAL_DATABASE_URL is required in production environment.');
     } else {
       const isServerless = !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NOW_REGION);
       let dataDir = process.env.DATA_DIR;

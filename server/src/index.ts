@@ -264,33 +264,42 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
 // Boot and seed if required
 async function startServer() {
-  try {
-    console.log('[Server Startup] Verifying environment & database...');
-    await getDb();
-    const userCheck = await query('SELECT count(*)::int as count FROM users');
-    
-    if ((userCheck.rows[0]?.count || 0) === 0 || process.env.FORCE_DB_RESET === 'true') {
-      console.log('Running database cleanup/seed script...');
-      await seedDatabase(true);
-    }
+  const HOST = '0.0.0.0';
+  const listenPort = Number(PORT);
 
-    const HOST = '0.0.0.0';
-    app.listen(Number(PORT), HOST, () => {
-      console.log(`
+  // Bind Express server to 0.0.0.0 immediately for Render/cloud port detection
+  const server = app.listen(listenPort, HOST, async () => {
+    console.log(`
   ╔═══════════════════════════════════════════════════════════╗
   ║               RKS PROPERTY INTELLIGENCE                   ║
   ║         Real Estate Inventory Command Center              ║
   ║                                                           ║
-  ║  📡 Public Website / Server: http://${HOST}:${PORT}          ║
-  ║  💾 Database:                PostgreSQL Engine Ready      ║
+  ║  📡 Public Website / Server: http://${HOST}:${listenPort}          ║
+  ║  💾 Database:                Initializing DB connection... ║
   ║  🛡️  Environment:             ${process.env.NODE_ENV || 'production'}                      ║
   ╚═══════════════════════════════════════════════════════════╝
-      `);
-    });
-  } catch (error: any) {
-    console.error('Failed to start server:', error?.stack || error);
+    `);
+
+    try {
+      console.log('[Server Startup] Connecting to database...');
+      await getDb();
+      const userCheck = await query('SELECT count(*)::int as count FROM users');
+      
+      if ((userCheck.rows[0]?.count || 0) === 0 || process.env.FORCE_DB_RESET === 'true') {
+        console.log('Running database cleanup/seed script...');
+        await seedDatabase(true);
+      }
+      console.log('[Server Startup] Database connection & schema verified ✅');
+    } catch (error: any) {
+      console.error('⚠️ [Server Startup Database Exception]:', error?.message || error);
+      console.error('⚠️ Verify DATABASE_URL / INTERNAL_DATABASE_URL is set in Render environment settings.');
+    }
+  });
+
+  server.on('error', (err: any) => {
+    console.error('Failed to bind server port:', err);
     process.exit(1);
-  }
+  });
 }
 
 const isMainModule = process.argv[1] && (process.argv[1].endsWith('index.ts') || process.argv[1].endsWith('index.js'));
