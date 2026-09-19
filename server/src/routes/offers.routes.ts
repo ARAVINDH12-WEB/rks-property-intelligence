@@ -211,6 +211,7 @@ router.post('/', authenticate, requireRole(['ADMIN']), async (req: Request, res:
       [userId, userName, createdOffer.id, `Created promotional offer '${createdOffer.title}' (${createdOffer.discount_value})`]
     );
 
+    invalidateOffersCache();
     res.status(201).json({
       message: 'Promotional offer created successfully!',
       offer: createdOffer,

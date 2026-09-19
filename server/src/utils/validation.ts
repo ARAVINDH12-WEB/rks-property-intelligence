@@ -23,8 +23,8 @@ export const PropertyTypeEnum = z.enum([
 
 export const CreatePropertySchema = z.object({
   property_code: z.string().min(2, 'Property ID is required').max(50),
-  project_id: z.number().int().positive('Valid Project is required'),
-  location_id: z.number().int().positive('Valid Location is required'),
+  project_id: z.number().int().optional().nullable(),
+  location_id: z.number().int().optional().nullable(),
   property_type: z.string().min(1, 'Property type is required'),
   category: z.string().optional().default('Standard'),
   status: PropertyStatusEnum.default('AVAILABLE'),

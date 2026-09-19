@@ -466,7 +466,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
         reply = `🤝 **விற்பனை மேலாளருடன் நேரடி உரையாடல்:**\n\n` +
           `உங்கள் கோரிக்கை எங்கள் மூத்த விற்பனை மேலாளருக்கு உடனடி வாட்ஸ்அப் எச்சரிக்கையாக அனுப்பப்பட்டுள்ளது.\n\n` +
           `நேரடியாக பேச விரும்பினால்:\n` +
-          `• **வாட்ஸ்அப்:** [வாட்ஸ்அப் அரட்டை](https://wa.me/919840011223?text=${encodeURIComponent('Vanakkam, I would like to speak with a sales advisor.')})\n` +
+          `• **வாட்ஸ்அப்:** [வாட்ஸ்அப் அரட்டை](https://wa.me/${cleanWa}?text=${encodeURIComponent('Vanakkam, I would like to speak with a sales advisor.')})\n` +
           `• **தொலைபேசி:** +91 98400 11223\n\n` +
           (detectedPhone ? `உங்கள் எண்ணான **${detectedPhone}**-ல் எங்கள் குழு விரைவில் உங்களை அழைக்கும்.` : `உங்கள் தொலைபேசி எண்ணை பகிர்ந்தால் உடனடியாக உங்களுக்கு அழைப்போம்.`);
         suggestedActions.push('தளப் பார்வை முன்பதிவு', 'கிடைக்கும் மனைகள்', 'வாட்ஸ்அப் உதவி');
@@ -474,7 +474,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
         reply = `🤝 **Connecting You with a Senior Property Advisor:**\n\n` +
           `I have dispatched an urgent notification to our sales desk regarding your inquiry: *${escalationReason}*.\n\n` +
           `You can reach our team directly via:\n` +
-          `• **WhatsApp:** [Chat on WhatsApp](https://wa.me/919840011223?text=${encodeURIComponent('Hi, I am chatting with the RKS AI Assistant and would like to speak with an advisor.')})\n` +
+          `• **WhatsApp:** [Chat on WhatsApp](https://wa.me/${cleanWa}?text=${encodeURIComponent('Hi, I am chatting with the RKS AI Assistant and would like to speak with an advisor.')})\n` +
           `• **Direct Phone:** +91 98400 11223 (Mon–Sun 9 AM – 7 PM)\n\n` +
           (detectedPhone ? `Our executive will call you shortly at **${detectedPhone}**.` : `You may also share your mobile number here, and an advisor will contact you within 15 minutes.`);
         suggestedActions.push('Book Free Site Visit', 'Browse Available Plots', 'WhatsApp Support');

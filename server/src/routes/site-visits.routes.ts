@@ -47,7 +47,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     const selectedDate = new Date(String(visit_date));
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    if (isNaN(selectedDate.getTime()) || selectedDate < today) {
+    if (isNaN(selectedDate.getTime()) || selectedDate.getTime() + 86400000 < today.getTime()) {
       res.status(400).json({ error: 'Visit date must be today or a future date' });
       return;
     }
