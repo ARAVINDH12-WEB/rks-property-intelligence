@@ -59,7 +59,22 @@ export async function getDb(): Promise<{ type: 'pool' | 'pglite'; client: pg.Poo
       const client = await pgPool.connect();
       try {
         await client.query('SELECT 1');
-        console.log('[Database] PostgreSQL Pool Connected Successfully ✅');
+        let maskedHost = 'localhost';
+        try {
+          const parsedUrl = new URL(connectionString);
+          const hostname = parsedUrl.hostname;
+          if (hostname.includes('render.com')) {
+            const parts = hostname.split('.');
+            const prefix = parts[0];
+            const maskedPrefix = prefix.length > 5 ? `${prefix.slice(0, 5)}...` : prefix;
+            maskedHost = `${maskedPrefix}.${parts.slice(1).join('.')}`;
+          } else {
+            maskedHost = hostname;
+          }
+        } catch {
+          maskedHost = 'PostgreSQL Host';
+        }
+        console.log(`[Database Safety] Connected to PostgreSQL Host: ${maskedHost} (Mode: Production Pool) ✅`);
       } finally {
         client.release();
       }

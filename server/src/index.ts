@@ -284,10 +284,16 @@ async function startServer() {
       console.log('[Server Startup] Connecting to database...');
       await getDb();
       const userCheck = await query('SELECT count(*)::int as count FROM users');
-      
-      if ((userCheck.rows[0]?.count || 0) === 0 || process.env.FORCE_DB_RESET === 'true') {
-        console.log('Running database cleanup/seed script...');
+      const isProduction = process.env.NODE_ENV === 'production' || !!process.env.RENDER;
+
+      if (process.env.FORCE_DB_RESET === 'true') {
+        console.log('[Database Safety] FORCE_DB_RESET is true. Executing database re-initialization...');
         await seedDatabase(true);
+      } else if (!isProduction && (userCheck.rows[0]?.count || 0) === 0) {
+        console.log('[Database Safety] Local database is empty. Running initial development seed...');
+        await seedDatabase(false);
+      } else {
+        console.log('[Database Safety] Existing database preserved. Zero auto-resets on startup ✅');
       }
       console.log('[Server Startup] Database connection & schema verified ✅');
     } catch (error: any) {
