@@ -115,7 +115,7 @@ export async function initSchema(): Promise<void> {
 
     // Ensure CMS pages table exists and is populated
     try {
-      const pageCheck = await query(`SELECT count(*)::int as count FROM pages`);
+      const pageCheck = await pgPool!.query(`SELECT count(*)::int as count FROM pages`);
       if ((pageCheck.rows[0]?.count || 0) === 0) {
         console.log('[Schema] Seeding initial CMS pages...');
         const cmsPages = [
@@ -132,7 +132,7 @@ export async function initSchema(): Promise<void> {
         ];
 
         for (const page of cmsPages) {
-          await query(
+          await pgPool!.query(
             `INSERT INTO pages (title, slug, meta_title, meta_description, is_published) 
              VALUES ($1, $2, $3, $4, true)
              ON CONFLICT (slug) DO NOTHING`,
