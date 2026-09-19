@@ -93,6 +93,7 @@ export async function getDb(): Promise<{ type: 'pool' | 'pglite'; client: pg.Poo
         dataDir = path.resolve(projectRootDir, dataDir);
       }
 
+      let initialized = false;
       try {
         if (!fs.existsSync(dataDir)) {
           fs.mkdirSync(dataDir, { recursive: true });
@@ -109,15 +110,19 @@ export async function getDb(): Promise<{ type: 'pool' | 'pglite'; client: pg.Poo
         }
         console.log(`[Database] Initializing PGlite at directory: ${dataDir}`);
         try {
-          pgliteDb = new PGlite(dataDir);
-          await pgliteDb.waitReady;
+          const diskDb = new PGlite(dataDir);
+          const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Directory init timeout')), 3000));
+          await Promise.race([diskDb.waitReady, timeout]);
+          pgliteDb = diskDb;
+          initialized = true;
         } catch (initErr: any) {
-          console.warn(`[Database] PGlite directory initialization warning: ${initErr.message}. Retrying in-memory mode...`);
-          pgliteDb = new PGlite();
-          await pgliteDb.waitReady;
+          console.warn(`[Database] PGlite directory initialization notice (${initErr.message}). Switching to fast in-memory mode...`);
         }
       } catch (dirErr: any) {
         console.warn(`[Database] Could not write to ${dataDir} (${dirErr.message}), falling back to in-memory mode`);
+      }
+
+      if (!initialized) {
         pgliteDb = new PGlite();
         await pgliteDb.waitReady;
       }
@@ -125,7 +130,10 @@ export async function getDb(): Promise<{ type: 'pool' | 'pglite'; client: pg.Poo
       await initSchema();
       console.log('[Database] Embedded PGlite PostgreSQL Engine Ready & Schema Verified ✅');
     }
-  })();
+  })().catch((err) => {
+    initPromise = null;
+    throw err;
+  });
 
   await initPromise;
   if (pgPool) return { type: 'pool', client: pgPool };
