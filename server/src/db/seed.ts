@@ -3,18 +3,13 @@ import crypto from 'crypto';
 import { getDb, query } from './index.js';
 
 export async function seedDatabase(force: boolean = false) {
-  if (process.env.NODE_ENV === 'production' && !force) {
-    console.log('Production environment. Skipping seed.');
-    return;
-  }
-
   await getDb();
 
   if (!force) {
     try {
-      const metaCheck = await query("SELECT value FROM system_meta WHERE key = 'seed_completed'");
-      if (metaCheck.rowCount > 0 && metaCheck.rows[0]?.value === 'true') {
-        console.log('Database already seeded. Skipping.');
+      const userCheck = await query('SELECT count(*)::int as count FROM users');
+      if ((userCheck.rows[0]?.count || 0) > 0) {
+        console.log('[Database Seed] Users already exist in database. Skipping seed to protect existing data.');
         return;
       }
     } catch {

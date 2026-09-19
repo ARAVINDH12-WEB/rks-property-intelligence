@@ -80,16 +80,13 @@ export async function getDb(): Promise<{ type: 'pool' | 'pglite'; client: pg.Poo
       }
 
       await initSchema();
-    } else if (isProduction) {
-      console.warn('⚠️ [Database Warning] Running in cloud/production environment without a valid DATABASE_URL or INTERNAL_DATABASE_URL.');
-      console.warn('⚠️ PGlite is disabled in production to prevent container crashes. Please add DATABASE_URL in Render environment settings.');
-      throw new Error('DATABASE_URL or INTERNAL_DATABASE_URL is required in production environment.');
     } else {
-      const isServerless = !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NOW_REGION);
+      console.log('[Database] No remote DATABASE_URL provided. Initializing embedded PGlite engine...');
+      const isCloud = isProduction || !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NOW_REGION || process.env.RENDER);
       let dataDir = process.env.DATA_DIR;
 
       if (!dataDir || dataDir === './data/postgres') {
-        dataDir = isServerless
+        dataDir = isCloud
           ? path.join('/tmp', 'rks-postgres-data')
           : path.join(projectRootDir, 'data', 'postgres');
       } else if (!path.isAbsolute(dataDir)) {
@@ -110,7 +107,7 @@ export async function getDb(): Promise<{ type: 'pool' | 'pglite'; client: pg.Poo
             console.warn('[Database] Note cleaning lockfiles:', e.message);
           }
         }
-        console.log(`[Database] Initializing embedded PGlite at directory: ${dataDir}`);
+        console.log(`[Database] Initializing PGlite at directory: ${dataDir}`);
         try {
           pgliteDb = new PGlite(dataDir);
           await pgliteDb.waitReady;
@@ -122,11 +119,11 @@ export async function getDb(): Promise<{ type: 'pool' | 'pglite'; client: pg.Poo
       } catch (dirErr: any) {
         console.warn(`[Database] Could not write to ${dataDir} (${dirErr.message}), falling back to in-memory mode`);
         pgliteDb = new PGlite();
+        await pgliteDb.waitReady;
       }
 
-      await pgliteDb.waitReady;
       await initSchema();
-      console.log('[Database] Local PostgreSQL Engine Ready & Schema Verified ✅');
+      console.log('[Database] Embedded PGlite PostgreSQL Engine Ready & Schema Verified ✅');
     }
   })();
 
