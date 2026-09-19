@@ -52,6 +52,8 @@ app.use('/api', createRateLimiter(60000, 200, 'Rate limit exceeded. Please slow 
 
 // CORS & Parsing Middleware
 const allowedOrigins = [
+  'https://rkspropertyhub.in',
+  'https://www.rkspropertyhub.in',
   'https://rksprime.com',
   'https://www.rksprime.com',
   'http://localhost:5173',
