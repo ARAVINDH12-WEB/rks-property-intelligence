@@ -36,7 +36,7 @@ export async function seedDatabase(force: boolean = false) {
   const adminEmail = process.env.INITIAL_ADMIN_EMAIL || 'admin@rksprime.com';
   let adminPassword = process.env.INITIAL_ADMIN_PASSWORD || 'admin123';
   let generatedPassword = false;
-  const adminHash = await bcrypt.hash(adminPassword, 10);
+  const adminHash = await bcrypt.hash(adminPassword, 8);
   const adminRes = await query(
     `INSERT INTO users (name, email, password_hash, role, phone, avatar_url) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
     ['Rajesh Kumar S', adminEmail, adminHash, 'ADMIN', '+91 98400 12345', 'https://api.dicebear.com/7.x/initials/svg?seed=Rajesh Kumar S']
@@ -44,7 +44,7 @@ export async function seedDatabase(force: boolean = false) {
   const adminId = adminRes.rows[0].id;
 
   // 3. Seed staff
-  const staffHash = await bcrypt.hash('rks_staff_2026', 10);
+  const staffHash = await bcrypt.hash('rks_staff_2026', 8);
   const mgr = await query(
     `INSERT INTO users (name, email, password_hash, role, phone, avatar_url) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
     ['Priya Venkatesh', 'priya@rksprime.com', staffHash, 'MANAGER', '+91 98400 22222', 'https://api.dicebear.com/7.x/initials/svg?seed=Priya Venkatesh']
