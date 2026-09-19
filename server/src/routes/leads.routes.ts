@@ -161,7 +161,7 @@ router.post('/batch', authenticate, authorize(['ADMIN', 'MANAGER', 'EMPLOYEE']),
     try {
       const user = (req as any).user;
       await query(
-        `INSERT INTO audit_logs (user_id, action, entity_type, entity_id, new_values, ip_address)
+        `INSERT INTO audit_logs (user_id, action, entity_type, entity_id, new_value, ip_address)
          VALUES ($1, 'LEADS_BULK_IMPORTED', 'LEAD', NULL, $2, $3)`,
         [
           user?.id || null,

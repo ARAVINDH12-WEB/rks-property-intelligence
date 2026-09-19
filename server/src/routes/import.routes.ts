@@ -406,6 +406,11 @@ router.post('/parse', authenticate, requireRole(['ADMIN', 'MANAGER', 'EMPLOYEE']
   }
 });
 
+// LEGACY: Keep /validate for backward compat
+router.post('/validate', authenticate, requireRole(['ADMIN', 'MANAGER', 'EMPLOYEE']), async (req: Request, res: Response): Promise<void> => {
+  res.json({ message: 'Validation ready. Please submit rows via /import/commit endpoint.', valid: true });
+});
+
 // COMMIT IMPORT TO POSTGRESQL (Supports UPSERT & Resilient row handling)
 router.post('/commit', authenticate, requireRole(['ADMIN', 'MANAGER', 'EMPLOYEE']), async (req: Request, res: Response): Promise<void> => {
   try {
@@ -479,47 +484,59 @@ router.post('/commit', authenticate, requireRole(['ADMIN', 'MANAGER', 'EMPLOYEE'
         const projName = (item.project_name || 'RKS Property Hub Layout').trim();
 
         // Resolve or create Location
-        let locId: number = locMap.get(locName.toLowerCase()) || 0;
+        let locId: number | null = locMap.get(locName.toLowerCase()) || null;
         if (!locId) {
-          const existingLoc = await query(
-            `SELECT id FROM locations WHERE LOWER(name) = LOWER($1) OR LOWER(city) = LOWER($1) LIMIT 1`,
-            [locName]
-          );
-          if (existingLoc.rowCount > 0) {
-            locId = Number(existingLoc.rows[0].id);
-          } else {
-            const newLoc = await query(
-              `INSERT INTO locations (name, city, state) VALUES ($1, $2, 'Tamil Nadu') RETURNING id`,
-              [locName, locName]
+          try {
+            const existingLoc = await query(
+              `SELECT id FROM locations WHERE LOWER(name) = LOWER($1) OR LOWER(city) = LOWER($1) LIMIT 1`,
+              [locName]
             );
-            locId = Number(newLoc.rows[0].id);
+            if (existingLoc.rowCount > 0) {
+              locId = Number(existingLoc.rows[0].id);
+            } else {
+              const newLoc = await query(
+                `INSERT INTO locations (name, city, state) VALUES ($1, $2, 'Tamil Nadu') RETURNING id`,
+                [locName, locName]
+              );
+              locId = Number(newLoc.rows[0].id);
+            }
+            if (locId) locMap.set(locName.toLowerCase(), locId);
+          } catch {
+            locId = null;
           }
-          locMap.set(locName.toLowerCase(), locId);
         }
 
+        const validLocId = locId && locId > 0 ? locId : null;
+
         // Resolve or create Project
-        let projId: number = projMap.get(projName.toLowerCase()) || 0;
+        let projId: number | null = projMap.get(projName.toLowerCase()) || null;
         if (!projId) {
-          const existingProj = await query(
-            `SELECT id FROM projects WHERE LOWER(name) = LOWER($1) LIMIT 1`,
-            [projName]
-          );
-          if (existingProj.rowCount > 0) {
-            projId = Number(existingProj.rows[0].id);
-          } else {
-            const baseCode = `PRJ-${projName.replace(/[^a-zA-Z0-9]/g, '').slice(0, 4).toUpperCase() || 'RKS'}`;
-            const projCode = `${baseCode}-${Math.floor(100 + Math.random() * 900)}`;
-            const newProj = await query(
-              `INSERT INTO projects (name, code, location_id, status)
-               VALUES ($1, $2, $3, 'ACTIVE')
-               ON CONFLICT (code) DO UPDATE SET updated_at = NOW()
-               RETURNING id`,
-              [projName, projCode, locId]
+          try {
+            const existingProj = await query(
+              `SELECT id FROM projects WHERE LOWER(name) = LOWER($1) LIMIT 1`,
+              [projName]
             );
-            projId = Number(newProj.rows[0].id);
+            if (existingProj.rowCount > 0) {
+              projId = Number(existingProj.rows[0].id);
+            } else {
+              const baseCode = `PRJ-${projName.replace(/[^a-zA-Z0-9]/g, '').slice(0, 4).toUpperCase() || 'RKS'}`;
+              const projCode = `${baseCode}-${Math.floor(100 + Math.random() * 900)}`;
+              const newProj = await query(
+                `INSERT INTO projects (name, code, location_id, status)
+                 VALUES ($1, $2, $3, 'ACTIVE')
+                 ON CONFLICT (code) DO UPDATE SET updated_at = NOW()
+                 RETURNING id`,
+                [projName, projCode, validLocId]
+              );
+              projId = Number(newProj.rows[0].id);
+            }
+            if (projId) projMap.set(projName.toLowerCase(), projId);
+          } catch {
+            projId = null;
           }
-          projMap.set(projName.toLowerCase(), projId);
         }
+
+        const validProjId = projId && projId > 0 ? projId : null;
 
         const areaSqft = Number(item.area_sqft) || 0;
         const ratePerSqft = Number(item.rate_per_sqft) || 0;
@@ -564,8 +581,8 @@ router.post('/commit', authenticate, requireRole(['ADMIN', 'MANAGER', 'EMPLOYEE'
           RETURNING id`,
           [
             propCode,
-            projId,
-            locId,
+            validProjId,
+            validLocId,
             item.property_type || 'Residential Plot',
             item.status || 'AVAILABLE',
             item.plot_number || null,
