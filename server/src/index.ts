@@ -92,16 +92,23 @@ for (const [routePath, routerModule] of routeModules) {
 
 // Comprehensive Health check endpoint
 app.get('/api/health', async (_req: Request, res: Response) => {
+  const startTime = Date.now();
   try {
-    const dbRes = await query('SELECT count(*)::int as count FROM properties');
-    const userRes = await query('SELECT count(*)::int as count FROM users');
+    const testRes = await query('SELECT 1 as ping');
+    const userRes = await query('SELECT count(*)::int as count FROM users').catch(() => ({ rows: [{ count: 0 }] }));
+    const propRes = await query('SELECT count(*)::int as count FROM properties').catch(() => ({ rows: [{ count: 0 }] }));
+    
     res.json({
       status: 'OK',
+      connected: true,
       timestamp: new Date().toISOString(),
       service: 'RKS Property Intelligence API',
-      database: 'PostgreSQL (PGlite)',
-      propertiesCount: dbRes.rows[0]?.count || 0,
-      usersCount: userRes.rows[0]?.count || 0,
+      database: 'Neon PostgreSQL (Direct Pool)',
+      queryTimeMs: Date.now() - startTime,
+      stats: {
+        usersCount: userRes.rows[0]?.count || 0,
+        propertiesCount: propRes.rows[0]?.count || 0,
+      },
       environment: {
         nodeEnv: process.env.NODE_ENV || 'production',
         isServerless: !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NOW_REGION),
@@ -110,7 +117,12 @@ app.get('/api/health', async (_req: Request, res: Response) => {
     });
   } catch (err: any) {
     console.error('[Health Check Error]:', err?.stack || err);
-    res.status(500).json({ status: 'ERROR', error: err?.message || 'Database unavailable' });
+    res.status(500).json({
+      status: 'ERROR',
+      connected: false,
+      error: err?.message || 'Database unavailable',
+      queryTimeMs: Date.now() - startTime,
+    });
   }
 });
 
