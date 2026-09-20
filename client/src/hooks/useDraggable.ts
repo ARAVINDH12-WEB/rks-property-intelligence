@@ -74,9 +74,6 @@ export function useDraggable({
       };
 
       setIsDragging(true);
-      try {
-        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-      } catch {}
     },
     [position]
   );
@@ -105,13 +102,9 @@ export function useDraggable({
   );
 
   const onPointerUp = useCallback(
-    (e: React.PointerEvent) => {
+    () => {
       if (!isDragging) return;
       setIsDragging(false);
-
-      try {
-        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-      } catch {}
 
       try {
         localStorage.setItem(storageKey, JSON.stringify(position));
