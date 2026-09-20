@@ -13,6 +13,7 @@ import {
 } from '../common/Icons.js';
 import { LeadImportModal } from './LeadImportModal.js';
 import { formatCurrencyINR } from '../../utils/formatters.js';
+import { openWhatsApp } from '../../utils/whatsapp.js';
 
 function formatRelativeTime(dateStr: string): string {
   try {
@@ -165,10 +166,8 @@ export const LeadsView: React.FC = () => {
   };
 
   const handleWhatsApp = (phone: string, name: string, propCode?: string | null) => {
-    const text = encodeURIComponent(
-      `Vanakkam ${name}, greeting from RKS Property Hub. Following up regarding your inquiry for ${propCode || 'our surveyed plots'}. When would be convenient for a brief call or site visit?`
-    );
-    window.open(`https://wa.me/91${phone}?text=${text}`, '_blank');
+    const text = `Vanakkam ${name}, greeting from RKS Property Hub. Following up regarding your inquiry for ${propCode || 'our surveyed plots'}. When would be convenient for a brief call or site visit?`;
+    openWhatsApp(phone, text);
   };
 
   const handleCall = (phone: string) => {

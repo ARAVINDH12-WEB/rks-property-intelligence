@@ -11,6 +11,7 @@ import {
   formatDate,
   formatDateTime,
 } from '../../utils/formatters.js';
+import { getWhatsAppUrl } from '../../utils/whatsapp.js';
 import {
   X,
   Edit2,
@@ -374,7 +375,7 @@ export const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
                         </button>
 
                         <a
-                          href={`https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=Hi%2C%20I%20am%20interested%20in%20property%20${encodeURIComponent(property.property_code)}%20-%20${encodeURIComponent(property.project_name || '')}%20in%20${encodeURIComponent(property.city || '')}.`}
+                          href={getWhatsAppUrl(whatsappNumber, `Hi, I am interested in property ${property.property_code} - ${property.project_name || ''} in ${property.city || ''}.`)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-xs font-bold text-emerald-400 hover:bg-emerald-500/20 transition-colors cursor-pointer"

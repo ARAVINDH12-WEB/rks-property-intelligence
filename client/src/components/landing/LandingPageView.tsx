@@ -23,6 +23,7 @@ import {
   DuplexHouseIcon
 } from '../common/Icons.js';
 import { ArrowRight, MapPin, ChevronLeft, ChevronRight, Maximize2, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { getWhatsAppUrl } from '../../utils/whatsapp.js';
 import { PublicNavbar } from '../common/PublicNavbar.js';
 import { PublicFooter } from '../common/PublicFooter.js';
 import { getLocalizedPath, Locale } from '../../utils/locale.js';
@@ -738,7 +739,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
                 {t('siteVisitBanner.bookBtn')}
               </button>
               <a 
-                href={`https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(t('whatsapp.general'))}`} 
+                href={getWhatsAppUrl(whatsappNumber, t('whatsapp.general'))} 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="bg-[#25D366] hover:bg-[#20bd5a] text-white px-8 py-4 rounded-xl font-bold text-base sm:text-lg transition-colors shadow-elevated flex items-center justify-center gap-2"

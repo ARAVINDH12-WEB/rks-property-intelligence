@@ -10,6 +10,7 @@ import { MapPin, Filter, X, ArrowUp, LayoutGrid, List } from 'lucide-react';
 import { WhatsAppIcon } from '../common/Icons.js';
 import { useNavigate } from 'react-router-dom';
 import { getLocalizedPath, Locale } from '../../utils/locale.js';
+import { openWhatsApp } from '../../utils/whatsapp.js';
 
 interface PropertyListingPageProps {
   cityFilter?: string;
@@ -133,14 +134,12 @@ export const PropertyListingPage: React.FC<PropertyListingPageProps> = ({ cityFi
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
   const handleWhatsApp = (plot: Property) => {
     const message = t('whatsapp.plotInquiry', { 
       code: plot.property_code, 
       city: plot.city || plot.location_name || 'Tamil Nadu' 
     });
-    const cleanWa = whatsappNumber.replace(/[^0-9]/g, '');
-    window.open(`https://wa.me/${cleanWa}?text=${encodeURIComponent(message)}`, '_blank');
+    openWhatsApp(whatsappNumber, message);
   };
 
   const formatPrice = (price: number) => {

@@ -148,7 +148,7 @@ export function useDraggable({
         top: `${position.y}px`,
         touchAction: 'none' as const,
         userSelect: 'none' as const,
-        zIndex: 50,
+        zIndex: 9990,
       },
     },
     handleClick,

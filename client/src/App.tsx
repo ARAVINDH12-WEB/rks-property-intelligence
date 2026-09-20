@@ -191,12 +191,6 @@ const MainLayout: React.FC = () => {
         onCancel={() => setPropToDelete(null)}
       />
 
-      {/* AI Property Concierge Floating Chatbot */}
-      <AiConciergeChat />
-
-      {/* Customer WhatsApp Connect Floating Action Button */}
-      {activeRole === 'VIEWER' && <WhatsAppFloatingButton />}
-
       {/* Global Toast System */}
       <ToastContainer />
     </div>

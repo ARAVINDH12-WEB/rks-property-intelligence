@@ -7,6 +7,7 @@ import { useApp } from '../../context/AppContext.js';
 import { Phone, Mail, MapPin, CheckCircle, AlertCircle } from 'lucide-react';
 import { WhatsAppIcon } from '../common/Icons.js';
 import { api } from '../../services/api.js';
+import { getWhatsAppUrl } from '../../utils/whatsapp.js';
 import { Locale } from '../../utils/locale.js';
 
 export const ContactPage: React.FC = () => {
@@ -156,7 +157,7 @@ export const ContactPage: React.FC = () => {
 
             <div className="mt-12 pt-8 border-t border-white/10">
               <a 
-                href={`https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(t('whatsapp.general'))}`} 
+                href={getWhatsAppUrl(whatsappNumber, t('whatsapp.general'))} 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="inline-flex items-center justify-center gap-2 w-full bg-[#25D366] hover:bg-[#20bd5a] text-white py-3.5 px-6 rounded-xl font-bold transition-colors shadow-elevated"
