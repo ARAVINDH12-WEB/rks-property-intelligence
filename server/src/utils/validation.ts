@@ -50,6 +50,8 @@ export const CreatePropertySchema = z.object({
   assigned_to: z.number().int().optional().nullable(),
   description: z.string().optional().nullable(),
   description_ta: z.string().optional().nullable(),
+  seo_title: z.string().optional().nullable(),
+  seo_description: z.string().optional().nullable(),
   internal_notes: z.string().optional().nullable(),
   latitude: z.number().optional().nullable(),
   longitude: z.number().optional().nullable(),

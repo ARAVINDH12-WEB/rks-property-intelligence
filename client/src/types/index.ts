@@ -153,6 +153,8 @@ export interface Property {
   assigned_user_email?: string;
   description?: string;
   description_ta?: string;
+  seo_title?: string;
+  seo_description?: string;
   internal_notes?: string;
   latitude?: number;
   longitude?: number;

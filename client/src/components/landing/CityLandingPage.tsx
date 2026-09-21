@@ -124,6 +124,40 @@ export const CityLandingPage: React.FC<CityLandingPageProps> = ({ city, slug }) 
         <link rel="alternate" hrefLang="en" href={`https://www.rkspropertyhub.in/plots/${slug}`} />
         <link rel="alternate" hrefLang="ta" href={`https://www.rkspropertyhub.in/ta/plots/${slug}`} />
         <link rel="alternate" hrefLang="x-default" href={`https://www.rkspropertyhub.in/plots/${slug}`} />
+        <script type="application/ld+json">
+          {JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            'itemListElement': [
+              {
+                '@type': 'ListItem',
+                'position': 1,
+                'name': 'Home',
+                'item': 'https://www.rkspropertyhub.in/'
+              },
+              {
+                '@type': 'ListItem',
+                'position': 2,
+                'name': `Plots in ${city}`,
+                'item': `https://www.rkspropertyhub.in/plots/${slug}`
+              }
+            ]
+          })}
+        </script>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            'mainEntity': faqs.map(f => ({
+              '@type': 'Question',
+              'name': f.q,
+              'acceptedAnswer': {
+                '@type': 'Answer',
+                'text': f.a
+              }
+            }))
+          })}
+        </script>
       </Helmet>
 
       <PublicNavbar />

@@ -127,15 +127,16 @@ export const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
         ) : (
           <>
             <Helmet>
-              <title>{`${property.plot_number ? `Plot ${property.plot_number}, ` : ''}${property.project_name || 'RKS'}, ${property.city || 'Tamil Nadu'} – ${formatCurrencyINR(property.total_price)} | RKS Property Hub`}</title>
+              <title>{property.seo_title || `${property.plot_number ? `Plot ${property.plot_number}, ` : ''}${property.project_name || 'RKS'}, ${property.city || 'Tamil Nadu'} – ${formatCurrencyINR(property.total_price)} | RKS Property Hub`}</title>
               <meta
                 name="description"
                 content={
-                  property.description
+                  property.seo_description ||
+                  (property.description
                     ? property.description.length > 155
                       ? property.description.slice(0, 155) + '...'
                       : property.description
-                    : `Verified ${property.area_sqft} sq.ft ${property.property_type || 'residential plot'} for sale in ${property.city || 'Tamil Nadu'}. Clear Patta title.`
+                    : `Verified ${property.area_sqft} sq.ft ${property.property_type || 'residential plot'} for sale in ${property.city || 'Tamil Nadu'}. Clear Patta title.`)
                 }
               />
               <script type="application/ld+json">

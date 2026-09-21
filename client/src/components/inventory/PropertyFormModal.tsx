@@ -66,6 +66,8 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
     assigned_to: '',
     description: '',
     description_ta: '',
+    seo_title: '',
+    seo_description: '',
     internal_notes: '',
     latitude: '',
     longitude: '',
@@ -73,7 +75,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formTab, setFormTab] = useState<'basic' | 'pricing' | 'specs' | 'notes'>('basic');
+  const [formTab, setFormTab] = useState<'basic' | 'pricing' | 'specs' | 'notes' | 'seo'>('basic');
 
   useEffect(() => {
     if (property) {
@@ -106,6 +108,8 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
         assigned_to: property.assigned_to || '',
         description: property.description || '',
         description_ta: property.description_ta || '',
+        seo_title: property.seo_title || '',
+        seo_description: property.seo_description || '',
         internal_notes: property.internal_notes || '',
         latitude: property.latitude || '',
         longitude: property.longitude || '',
@@ -277,6 +281,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
             { id: 'pricing', label: '2. Dimensions & Pricing', icon: <DollarSign className="h-4 w-4" /> },
             { id: 'specs', label: '3. Technical Specs', icon: <Tag className="h-4 w-4" /> },
             { id: 'notes', label: '4. Description & Notes', icon: <FileText className="h-4 w-4" /> },
+            { id: 'seo', label: '5. Search Engine SEO', icon: <Link2 className="h-4 w-4 text-amber-400" /> },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -646,6 +651,49 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
                     placeholder="Parent documents, token advance notes, seller negotiations..."
                     className="mt-1.5 w-full rounded-xl border border-zinc-800 bg-[#12161F] p-3 text-sm text-white font-mono outline-none focus:border-amber-500"
                   />
+                </div>
+              </div>
+            )}
+
+            {/* TAB 5: SEARCH ENGINE SEO */}
+            {formTab === 'seo' && (
+              <div className="space-y-4">
+                <div className="p-3.5 rounded-xl border border-amber-500/30 bg-amber-500/10 text-xs text-amber-300">
+                  <span className="font-bold">SEO Auto-Generation:</span> If left blank, RKS system automatically generates an optimized Google search title and meta description based on plot size, project name, micro-market city, and approval status.
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-zinc-300">
+                    Custom SEO Meta Title (Google Search Result Title)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.seo_title || ''}
+                    onChange={(e) => setFormData({ ...formData, seo_title: e.target.value })}
+                    placeholder="e.g. Verified 1200 Sq.Ft Plot for Sale in Chennai | RKS Property Hub"
+                    className="mt-1.5 w-full rounded-xl border border-zinc-800 bg-[#12161F] px-3.5 py-2.5 text-sm text-white outline-none focus:border-amber-500 font-sans"
+                  />
+                  <div className="mt-1 text-[11px] text-zinc-500 flex justify-between">
+                    <span>Recommended length: 50–60 characters</span>
+                    <span>{formData.seo_title?.length || 0} / 60</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-zinc-300">
+                    Custom SEO Meta Description (Google Search Snippet)
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={formData.seo_description || ''}
+                    onChange={(e) => setFormData({ ...formData, seo_description: e.target.value })}
+                    placeholder="e.g. Explore DTCP-approved 1200 sq.ft plot for sale. Clear Patta title, transparent rate. Book a free cab site tour today."
+                    className="mt-1.5 w-full rounded-xl border border-zinc-800 bg-[#12161F] p-3 text-sm text-white outline-none focus:border-amber-500 font-sans"
+                  />
+                  <div className="mt-1 text-[11px] text-zinc-500 flex justify-between">
+                    <span>Recommended length: 140–160 characters</span>
+                    <span>{formData.seo_description?.length || 0} / 160</span>
+                  </div>
                 </div>
               </div>
             )}

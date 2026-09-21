@@ -198,11 +198,17 @@ app.get('/sitemap.xml', async (_req: Request, res: Response) => {
       const propsRes = await query('SELECT id, property_code, updated_at FROM properties WHERE status != $1 ORDER BY updated_at DESC', ['DRAFT']);
       for (const prop of propsRes.rows) {
         const lastMod = prop.updated_at ? new Date(prop.updated_at).toISOString().split('T')[0] : today;
+        const propPath = prop.property_code ? `/plots/${prop.property_code.toLowerCase()}` : `/properties?id=${prop.id}`;
+        const enUrl = `${baseUrl}${propPath}`;
+        const taUrl = `${baseUrl}/ta${propPath}`;
         urlEntries.push(`  <url>
-    <loc>${baseUrl}/properties?id=${prop.id}</loc>
+    <loc>${enUrl}</loc>
     <lastmod>${lastMod}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="${enUrl}" />
+    <xhtml:link rel="alternate" hreflang="ta" href="${taUrl}" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="${enUrl}" />
   </url>`);
       }
     } catch {

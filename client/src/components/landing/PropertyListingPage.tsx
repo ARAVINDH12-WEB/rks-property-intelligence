@@ -162,9 +162,31 @@ export const PropertyListingPage: React.FC<PropertyListingPageProps> = ({ cityFi
         <title>{pageTitle}</title>
         <meta name="description" content={pageDesc} />
         <link rel="canonical" href={canonicalUrl} />
-        <link rel="alternate" hrefLang="en" href="https://rksprime.com/properties" />
-        <link rel="alternate" hrefLang="ta" href="https://rksprime.com/ta/properties" />
-        <link rel="alternate" hrefLang="x-default" href="https://rksprime.com/properties" />
+        <link rel="alternate" hrefLang="en" href="https://www.rkspropertyhub.in/properties" />
+        <link rel="alternate" hrefLang="ta" href="https://www.rkspropertyhub.in/ta/properties" />
+        <link rel="alternate" hrefLang="x-default" href="https://www.rkspropertyhub.in/properties" />
+        <script type="application/ld+json">
+          {`
+            {
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "Home",
+                  "item": "https://www.rkspropertyhub.in/"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": "Properties",
+                  "item": "https://www.rkspropertyhub.in/properties"
+                }
+              ]
+            }
+          `}
+        </script>
       </Helmet>
 
       {!hideNavFooter && <PublicNavbar />}
