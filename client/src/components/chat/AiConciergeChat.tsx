@@ -24,9 +24,12 @@ const CHAT_STORAGE_KEY = 'rks_assistant_conversation';
 const SESSION_ID_KEY = 'rks_assistant_session_id';
 
 export const AiConciergeChat: React.FC = () => {
-  const { openSiteVisitModal, setActiveTab } = useApp();
+  const { openSiteVisitModal, setActiveTab, activeRole } = useApp();
   const { i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
+
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+  const isAdminView = activeRole !== 'VIEWER' || pathname.startsWith('/dashboard') || pathname.startsWith('/admin');
   const [isMinimized, setIsMinimized] = useState(false);
   const [inputMsg, setInputMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -196,6 +199,8 @@ export const AiConciergeChat: React.FC = () => {
       );
     });
   };
+
+  if (isAdminView) return null;
 
   if (!isOpen) {
     return (

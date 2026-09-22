@@ -1,16 +1,21 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useApp } from '../../context/AppContext.js';
 import { api } from '../../services/api.js';
 import { useDraggable } from '../../hooks/useDraggable.js';
 import { getWhatsAppUrl } from '../../utils/whatsapp.js';
 import { WhatsAppIcon } from '../common/Icons.js';
 
 export const WhatsAppFloatingButton: React.FC = () => {
+  const { activeRole } = useApp();
   const [whatsappNumber, setWhatsappNumber] = useState<string>('+919840011223');
   const [defaultMessage] = useState<string>(
     "Hi, I'm interested in learning more about your properties."
   );
   const [isEnabled, setIsEnabled] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
+
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+  const isAdminView = activeRole !== 'VIEWER' || pathname.startsWith('/dashboard') || pathname.startsWith('/admin');
 
   const getDefaultPos = useCallback(() => ({
     x: typeof window !== 'undefined' ? Math.max(8, window.innerWidth - 72) : 300,
@@ -40,7 +45,7 @@ export const WhatsAppFloatingButton: React.FC = () => {
       });
   }, []);
 
-  if (!isEnabled) return null;
+  if (!isEnabled || isAdminView) return null;
 
   const whatsappUrl = getWhatsAppUrl(whatsappNumber, defaultMessage);
 
