@@ -145,10 +145,10 @@ export const TopBar: React.FC = () => {
                 setIsSearchOpen(true);
               }}
               onFocus={() => setIsSearchOpen(true)}
-              placeholder="Search Plot ID, Project, City, Rate, Survey No... (Press '/' to focus)"
-              className="h-10 w-full rounded-xl border border-slate-300 dark:border-zinc-800 bg-slate-50 dark:bg-[#12161F]/90 pl-10 pr-12 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 shadow-inner outline-none transition-all duration-200 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 font-sans"
+              placeholder="Search plots, projects, cities..."
+              className="h-9 sm:h-10 w-full rounded-xl border border-slate-300 dark:border-zinc-800 bg-slate-50 dark:bg-[#12161F]/90 pl-9 sm:pl-10 pr-8 sm:pr-12 text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 shadow-inner outline-none transition-all duration-200 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 font-sans"
             />
-            <div className="absolute right-3 flex items-center gap-1 rounded bg-slate-200 dark:bg-zinc-800 px-1.5 py-0.5 text-[10px] font-mono text-slate-600 dark:text-zinc-400 border border-slate-300 dark:border-zinc-700">
+            <div className="hidden sm:flex absolute right-3 items-center gap-1 rounded bg-slate-200 dark:bg-zinc-800 px-1.5 py-0.5 text-[10px] font-mono text-slate-600 dark:text-zinc-400 border border-slate-300 dark:border-zinc-700">
               <Command className="h-3 w-3" />
               <span>/</span>
             </div>
@@ -210,7 +210,7 @@ export const TopBar: React.FC = () => {
         </div>
 
         {/* Top Bar Actions & Profile */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           {/* Book Site Visit CTA for Customers */}
           <button
             onClick={() => openSiteVisitModal()}
@@ -224,11 +224,12 @@ export const TopBar: React.FC = () => {
           {isStaff && (
             <button
               onClick={() => setIsAddModalOpen(true)}
-              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-3.5 py-2 text-xs font-bold text-black shadow-lg shadow-amber-500/20 hover:from-amber-400 hover:to-amber-500 transition-all duration-200"
+              className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs font-bold text-black shadow-lg shadow-amber-500/20 hover:from-amber-400 hover:to-amber-500 transition-all duration-200"
+              title="Add Property"
             >
               <Plus className="h-4 w-4 stroke-[3]" />
-              <span>Add Property</span>
-              <span className="ml-1 rounded bg-black/20 px-1 text-[10px] font-mono">N</span>
+              <span className="hidden sm:inline">Add Property</span>
+              <span className="hidden sm:inline-block ml-1 rounded bg-black/20 px-1 text-[10px] font-mono">N</span>
             </button>
           )}
 
@@ -237,7 +238,7 @@ export const TopBar: React.FC = () => {
             <div className="flex items-center gap-2">
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-100 dark:bg-[#12161F] px-3 py-1.5 text-xs text-slate-600 dark:text-zinc-400 hover:bg-rose-500/10 hover:text-rose-500 hover:border-rose-500/30 transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-100 dark:bg-[#12161F] px-2.5 sm:px-3 py-1.5 text-xs text-slate-600 dark:text-zinc-400 hover:bg-rose-500/10 hover:text-rose-500 hover:border-rose-500/30 transition-colors cursor-pointer"
                 title="Exit to Main Portal Gateway"
               >
                 <LogOut className="h-3.5 w-3.5" />
@@ -245,9 +246,9 @@ export const TopBar: React.FC = () => {
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-1.5 sm:gap-2.5">
               {/* Bespoke RKS Admin Crest Badge */}
-              <div className="flex items-center gap-2 pl-2.5 pr-3 py-1 rounded-xl bg-slate-100 dark:bg-gradient-to-r dark:from-brand-teal/20 dark:via-slate-900 dark:to-[#12161F] border border-slate-200 dark:border-brand-teal/40 shadow-inner">
+              <div className="hidden md:flex items-center gap-2 pl-2.5 pr-3 py-1 rounded-xl bg-slate-100 dark:bg-gradient-to-r dark:from-brand-teal/20 dark:via-slate-900 dark:to-[#12161F] border border-slate-200 dark:border-brand-teal/40 shadow-inner">
                 <div className="relative flex items-center justify-center text-amber-600 dark:text-brand-gold">
                   <Shield className="h-3.5 w-3.5 fill-amber-500/20 stroke-amber-600 dark:fill-brand-gold/20 dark:stroke-brand-gold" />
                   <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />

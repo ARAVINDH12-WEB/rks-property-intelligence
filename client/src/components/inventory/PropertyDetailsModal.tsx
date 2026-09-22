@@ -178,14 +178,14 @@ export const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
               </script>
             </Helmet>
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-[#12161F] px-8 py-5">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-mono font-extrabold text-base shadow-inner">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-[#12161F] px-4 sm:px-8 py-4 sm:py-5 gap-3 sm:gap-0">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="flex h-10 sm:h-12 w-10 sm:w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-mono font-extrabold text-sm sm:text-base shadow-inner">
                   {property.property_code.split('-')[0]}
                 </div>
                 <div>
-                  <div className="flex items-center gap-3">
-                    <h2 className="font-mono text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+                  <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                    <h2 className="font-mono text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
                       {property.property_code}
                     </h2>
                     <StatusBadge status={property.status} size="md" />
@@ -199,7 +199,7 @@ export const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2 sm:gap-2.5 overflow-x-auto pb-1 sm:pb-0">
                 {/* Status Quick Switch */}
                 {canEdit && (
                   <div className="relative">

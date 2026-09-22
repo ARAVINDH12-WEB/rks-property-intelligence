@@ -248,19 +248,19 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
   const facings = ['North', 'South', 'East', 'West', 'North-East', 'North-West', 'South-East', 'South-West'];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in">
-      <div className="flex h-[90vh] w-full max-w-4xl flex-col rounded-2xl border border-zinc-800 bg-[#0D1017] shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in">
+      <div className="flex h-[95vh] sm:h-[90vh] w-full max-w-4xl flex-col rounded-2xl border border-zinc-800 bg-[#0D1017] shadow-2xl overflow-hidden">
         {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-zinc-800 bg-[#12161F] px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
-              <Building className="h-5 w-5" />
+        <div className="flex items-center justify-between border-b border-zinc-800 bg-[#12161F] px-4 sm:px-6 py-3.5 sm:py-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex h-9 sm:h-10 w-9 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              <Building className="h-4 sm:h-5 w-4 sm:w-5" />
             </div>
-            <div>
-              <h3 className="text-lg font-bold text-white">
-                {isEditing ? `Edit Property: ${property?.property_code}` : 'Add New Property to Inventory'}
+            <div className="truncate">
+              <h3 className="text-sm sm:text-lg font-bold text-white truncate">
+                {isEditing ? `Edit: ${property?.property_code}` : 'Add New Property'}
               </h3>
-              <p className="text-xs text-zinc-400">
+              <p className="text-[11px] sm:text-xs text-zinc-400 truncate hidden sm:block">
                 {isEditing ? 'Modify property parameters and auto-recalculate valuations' : 'Register a new unit into RKS inventory'}
               </p>
             </div>
@@ -268,14 +268,14 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
 
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-white"
+            className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-white shrink-0"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="flex border-b border-zinc-800 bg-[#0A0C10] px-6">
+        {/* Tab Navigation (Scrollable on mobile) */}
+        <div className="flex overflow-x-auto scrollbar-none border-b border-zinc-800 bg-[#0A0C10] px-2 sm:px-6 shrink-0">
           {[
             { id: 'basic', label: '1. Basic Information', icon: <Building className="h-4 w-4" /> },
             { id: 'pricing', label: '2. Dimensions & Pricing', icon: <DollarSign className="h-4 w-4" /> },
