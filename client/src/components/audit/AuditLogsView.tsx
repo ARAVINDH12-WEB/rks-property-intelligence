@@ -136,7 +136,7 @@ export const AuditLogsView: React.FC = () => {
         </div>
       ) : (
         <div className="overflow-x-auto rounded-2xl border border-zinc-800 bg-[#12161F] shadow-xl">
-          <table className="w-full text-left text-xs text-zinc-300 font-sans">
+          <table className="w-full min-w-[650px] text-left text-xs text-zinc-300 font-sans">
             <thead className="border-b border-zinc-800 bg-[#0A0C10] font-bold uppercase text-[10px] text-zinc-400">
               <tr>
                 <th className="px-4 py-3.5">Timestamp</th>

@@ -329,7 +329,7 @@ export const LeadsView: React.FC = () => {
       </div>
 
       {/* 2. Executive KPI Funnel Strip */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <div className="bg-[#0D121C] border border-slate-800/80 p-3.5 rounded-xl flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-[11px] font-semibold uppercase tracking-wider">Total Enquiries</span>

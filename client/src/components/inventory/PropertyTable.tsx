@@ -102,7 +102,7 @@ export const PropertyTable: React.FC<PropertyTableProps> = ({
 
   return (
     <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#12161F]/95 shadow-sm dark:shadow-xl backdrop-blur-md">
-      <table className="w-full text-left text-sm text-slate-800 dark:text-zinc-300">
+      <table className="w-full min-w-[750px] text-left text-sm text-slate-800 dark:text-zinc-300">
         <thead className="border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-[#0A0C10]/80 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
           <tr>
             {canEdit && (

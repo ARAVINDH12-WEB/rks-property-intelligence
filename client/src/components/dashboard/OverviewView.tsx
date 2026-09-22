@@ -125,7 +125,7 @@ export const OverviewView: React.FC = () => {
         </div>
 
         {isStaff ? (
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <button
               onClick={() => setIsExportModalOpen(true)}
               className="flex items-center gap-2 rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors shadow-sm"
@@ -149,7 +149,7 @@ export const OverviewView: React.FC = () => {
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <button
               onClick={() => openSiteVisitModal()}
               className="flex items-center gap-2 rounded-xl bg-[#0F766E] hover:bg-[#0D655E] text-white px-5 py-2.5 text-xs font-bold shadow-md transition-all cursor-pointer"
@@ -169,7 +169,7 @@ export const OverviewView: React.FC = () => {
       </div>
 
       {/* KPI ROW */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* HERO KPI CARD - Span 2 columns */}
         <div className="lg:col-span-2 relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0A1128] to-[#1a2340] border border-slate-800 shadow-lg p-6 flex flex-col justify-between">
           <BlueprintPattern opacity={0.2} color="teal" />

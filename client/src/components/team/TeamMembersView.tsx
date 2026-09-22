@@ -212,7 +212,7 @@ export const TeamMembersView: React.FC = () => {
         </div>
       ) : (
         <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#12161F] shadow-xl">
-          <table className="w-full text-left text-xs text-slate-800 dark:text-zinc-300 font-sans">
+          <table className="w-full min-w-[650px] text-left text-xs text-slate-800 dark:text-zinc-300 font-sans">
             <thead className="border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-[#0A0C10] font-bold uppercase text-[10px] text-slate-500 dark:text-zinc-400">
               <tr>
                 <th className="px-4 py-3.5">Member</th>
