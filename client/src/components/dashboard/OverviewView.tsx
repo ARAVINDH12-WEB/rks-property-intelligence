@@ -45,22 +45,38 @@ export const OverviewView: React.FC = () => {
     openSiteVisitModal,
     theme,
   } = useApp();
-  const [reportsData, setReportsData] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+
+  const [reportsData, setReportsData] = useState<any>(() => {
+    try {
+      const cached = localStorage.getItem('rks_cached_reports');
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [isLoading, setIsLoading] = useState(!reportsData);
 
   useEffect(() => {
-    setIsLoading(true);
+    let mounted = true;
     api
       .getReports()
       .then((data) => {
-        setReportsData(data);
+        if (mounted && data) {
+          setReportsData(data);
+          try {
+            localStorage.setItem('rks_cached_reports', JSON.stringify(data));
+          } catch {}
+        }
       })
       .catch((err) => {
         console.error('Failed to load dashboard data:', err);
       })
       .finally(() => {
-        setIsLoading(false);
+        if (mounted) setIsLoading(false);
       });
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const kpis = reportsData?.kpis || {};

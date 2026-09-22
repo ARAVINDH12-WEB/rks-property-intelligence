@@ -59,13 +59,22 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ forcedStatusFilter
     }
   }, [defaultViewMode, setViewMode]);
 
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 25, totalPages: 1 });
+  const [cachedInventoryData] = useState(() => {
+    try {
+      const cached = localStorage.getItem('rks_cached_inventory');
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [properties, setProperties] = useState<Property[]>(cachedInventoryData?.properties || []);
+  const [pagination, setPagination] = useState(cachedInventoryData?.pagination || { total: 0, page: 1, limit: 25, totalPages: 1 });
   const [projects, setProjects] = useState<Project[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!cachedInventoryData);
 
   // Sorting state
   const [sortField, setSortField] = useState<string>('created_at');
@@ -75,17 +84,32 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ forcedStatusFilter
   const [propToDelete, setPropToDelete] = useState<Property | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Load Projects and Locations for filter dropdowns
+  // Load Projects and Locations for filter dropdowns in parallel
   useEffect(() => {
-    api.getProjects().then((res) => setProjects(res.projects)).catch(() => {});
-    api.getLocations().then((res) => setLocations(res.locations)).catch(() => {});
+    let mounted = true;
+    Promise.all([
+      api.getProjects().catch(() => ({ projects: [] })),
+      api.getLocations().catch(() => ({ locations: [] })),
+    ]).then(([projRes, locRes]) => {
+      if (mounted) {
+        if (projRes?.projects) setProjects(projRes.projects);
+        if (locRes?.locations) setLocations(locRes.locations);
+      }
+    });
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   // Fetch properties with filters, search, pagination, and sorting
   useEffect(() => {
-    setIsLoading(true);
+    let mounted = true;
+    const isDefaultFetch = !debouncedSearchQuery && !forcedStatusFilter && Object.keys(filterParams).length === 0;
+    if (!isDefaultFetch || !cachedInventoryData) {
+      setIsLoading(true);
+    }
 
     const mergedParams = {
       ...filterParams,
@@ -100,15 +124,26 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ forcedStatusFilter
     api
       .getProperties(mergedParams)
       .then((res) => {
-        setProperties(res.properties);
-        setPagination(res.pagination);
+        if (mounted && res) {
+          setProperties(res.properties);
+          setPagination(res.pagination);
+          if (isDefaultFetch) {
+            try {
+              localStorage.setItem('rks_cached_inventory', JSON.stringify({ properties: res.properties, pagination: res.pagination }));
+            } catch {}
+          }
+        }
       })
       .catch((err) => {
         showToast('Error loading properties', err.message, 'error');
       })
       .finally(() => {
-        setIsLoading(false);
+        if (mounted) setIsLoading(false);
       });
+
+    return () => {
+      mounted = false;
+    };
   }, [debouncedSearchQuery, filterParams, forcedStatusFilter, sortField, sortOrder, refreshTrigger]);
 
   // Sort handler

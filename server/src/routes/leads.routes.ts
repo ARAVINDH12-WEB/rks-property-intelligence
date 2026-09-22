@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { query } from '../db/index.js';
+import { memoryCache } from '../utils/cache.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { dispatchWhatsAppAlert } from '../services/whatsapp.service.js';
 
@@ -52,6 +53,14 @@ router.post('/', async (req: Request, res: Response) => {
 // Protected: List all leads with optional status filter (Staff Only)
 router.get('/', authenticate, authorize(['ADMIN', 'MANAGER', 'EMPLOYEE']), async (req: Request, res: Response) => {
   try {
+    const cacheKey = `leads_${JSON.stringify(req.query)}`;
+    const cached = memoryCache.get<any>(cacheKey);
+    if (cached) {
+      res.setHeader('Cache-Control', 'public, max-age=15, s-maxage=30, stale-while-revalidate=60');
+      res.setHeader('X-Cache-Status', 'HIT');
+      return res.json(cached);
+    }
+
     const { status, limit = '50', offset = '0', q } = req.query as Record<string, string>;
     const conditions: string[] = [];
     const params: any[] = [];
@@ -59,22 +68,34 @@ router.get('/', authenticate, authorize(['ADMIN', 'MANAGER', 'EMPLOYEE']), async
     if (status) { conditions.push(`l.status = $${i++}`); params.push(status); }
     if (q) { conditions.push(`(l.name ILIKE $${i} OR l.phone ILIKE $${i} OR l.email ILIKE $${i})`); params.push(`%${q}%`); i++; }
     const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-    const dataResult = await query(
-      `SELECT l.*, p.total_price, p.area_sqft, p.property_type,
-              loc.city as property_city
-       FROM leads l
-       LEFT JOIN properties p ON l.property_id = p.id
-       LEFT JOIN locations loc ON p.location_id = loc.id
-       ${where} ORDER BY l.created_at DESC LIMIT $${i} OFFSET $${i+1}`,
-      [...params, parseInt(limit), parseInt(offset)]
-    );
-    const countResult = await query(`SELECT COUNT(*) FROM leads l ${where}`, params);
-    const statsResult = await query(
-      `SELECT status, COUNT(*) as count FROM leads GROUP BY status`
-    );
+
+    const [dataResult, countResult, statsResult] = await Promise.all([
+      query(
+        `SELECT l.*, p.total_price, p.area_sqft, p.property_type,
+                loc.city as property_city
+         FROM leads l
+         LEFT JOIN properties p ON l.property_id = p.id
+         LEFT JOIN locations loc ON p.location_id = loc.id
+         ${where} ORDER BY l.created_at DESC LIMIT $${i} OFFSET $${i+1}`,
+        [...params, parseInt(limit), parseInt(offset)]
+      ),
+      query(`SELECT COUNT(*) FROM leads l ${where}`, params),
+      query(`SELECT status, COUNT(*) as count FROM leads GROUP BY status`),
+    ]);
+
     const stats: Record<string, number> = {};
     statsResult.rows.forEach((r: any) => { stats[r.status] = parseInt(r.count); });
-    res.json({ leads: dataResult.rows, total: parseInt(countResult.rows[0].count), stats });
+
+    const payload = {
+      leads: dataResult.rows,
+      total: parseInt(countResult.rows[0].count),
+      stats,
+    };
+
+    memoryCache.set(cacheKey, payload, 30);
+    res.setHeader('Cache-Control', 'public, max-age=15, s-maxage=30, stale-while-revalidate=60');
+    res.setHeader('X-Cache-Status', 'MISS');
+    res.json(payload);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

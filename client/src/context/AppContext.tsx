@@ -235,52 +235,55 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setSearchQuery('');
   };
 
-  // Badge Counts from DB
-  const [badgeCounts, setBadgeCounts] = useState({
-    total: 0,
-    available: 0,
-    reserved: 0,
-    sold: 0,
-    siteVisits: 0,
-    leads: 0,
+  // Badge Counts initialized from localStorage cache for 0ms instant boot
+  const [badgeCounts, setBadgeCounts] = useState(() => {
+    try {
+      const cached = localStorage.getItem('rks_cached_badge_counts');
+      return cached ? JSON.parse(cached) : { total: 0, available: 0, reserved: 0, sold: 0, siteVisits: 0, leads: 0 };
+    } catch {
+      return { total: 0, available: 0, reserved: 0, sold: 0, siteVisits: 0, leads: 0 };
+    }
   });
 
   const refreshInventory = () => {
     setRefreshTrigger((prev) => prev + 1);
   };
 
-  // Load KPI Badge counts on boot and on refresh
+  // Load KPI Badge counts on boot and on refresh (Parallel fetch for staff, skipped for VIEWER)
   useEffect(() => {
-    api.getReports().then((data) => {
-      if (data && data.kpis) {
-        setBadgeCounts((prev) => ({
-          ...prev,
-          total: data.kpis.total_properties || 0,
-          available: data.kpis.available_count || 0,
-          reserved: data.kpis.reserved_count || 0,
-          sold: data.kpis.sold_count || 0,
-        }));
-      }
-    }).catch(() => {});
+    if (activeRole === 'VIEWER') return;
 
-    api.getSiteVisits().then((data) => {
-      if (data && data.stats) {
-        setBadgeCounts((prev) => ({
-          ...prev,
-          siteVisits: (data.stats.requested_count || 0) + (data.stats.confirmed_count || 0),
-        }));
-      }
-    }).catch(() => {});
+    let mounted = true;
+    Promise.all([
+      api.getReports().catch(() => null),
+      api.getSiteVisits().catch(() => null),
+      api.getLeads({ status: 'NEW', limit: 1 }).catch(() => null),
+    ]).then(([reportsData, siteVisitsData, leadsData]) => {
+      if (!mounted) return;
 
-    api.getLeads({ status: 'NEW', limit: 1 }).then((data) => {
-      if (data && data.total !== undefined) {
-        setBadgeCounts((prev) => ({
+      setBadgeCounts((prev: typeof badgeCounts) => {
+        const nextCounts = {
           ...prev,
-          leads: data.total,
-        }));
-      }
-    }).catch(() => {});
-  }, [refreshTrigger]);
+          total: reportsData?.kpis?.total_properties ?? prev.total,
+          available: reportsData?.kpis?.available_count ?? prev.available,
+          reserved: reportsData?.kpis?.reserved_count ?? prev.reserved,
+          sold: reportsData?.kpis?.sold_count ?? prev.sold,
+          siteVisits: siteVisitsData?.stats
+            ? (siteVisitsData.stats.requested_count || 0) + (siteVisitsData.stats.confirmed_count || 0)
+            : prev.siteVisits,
+          leads: leadsData?.total !== undefined ? leadsData.total : prev.leads,
+        };
+        try {
+          localStorage.setItem('rks_cached_badge_counts', JSON.stringify(nextCounts));
+        } catch {}
+        return nextCounts;
+      });
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [refreshTrigger, activeRole]);
 
   // Toast System
   const showToast = (title: string, description?: string, type: 'success' | 'error' | 'info' | 'warning' = 'success') => {

@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { query } from '../db/index.js';
+import { memoryCache } from '../utils/cache.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { dispatchWhatsAppAlert } from '../services/whatsapp.service.js';
 
@@ -178,6 +179,15 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
 // GET /api/site-visits - List all Site Visits with filters
 router.get('/', authenticate, authorize(['ADMIN', 'MANAGER', 'EMPLOYEE']), async (req: Request, res: Response): Promise<void> => {
   try {
+    const cacheKey = `site_visits_${JSON.stringify(req.query)}`;
+    const cached = memoryCache.get<any>(cacheKey);
+    if (cached) {
+      res.setHeader('Cache-Control', 'public, max-age=15, s-maxage=30, stale-while-revalidate=60');
+      res.setHeader('X-Cache-Status', 'HIT');
+      res.json(cached);
+      return;
+    }
+
     const { status, date, property_id } = req.query;
 
     const conditions: string[] = [];
@@ -204,39 +214,44 @@ router.get('/', authenticate, authorize(['ADMIN', 'MANAGER', 'EMPLOYEE']), async
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-    const result = await query(`
-      SELECT
-        sv.*,
-        p.plot_number,
-        p.area_sqft,
-        p.rate_per_sqft,
-        p.total_price,
-        prj.name as project_name,
-        loc.city as city,
-        loc.name as location_name
-      FROM site_visits sv
-      LEFT JOIN properties p ON sv.property_id = p.id
-      LEFT JOIN projects prj ON p.project_id = prj.id
-      LEFT JOIN locations loc ON p.location_id = loc.id
-      ${whereClause}
-      ORDER BY sv.visit_date ASC, sv.id DESC
-    `, params);
+    const [result, statsResult] = await Promise.all([
+      query(`
+        SELECT
+          sv.*,
+          p.plot_number,
+          p.area_sqft,
+          p.rate_per_sqft,
+          p.total_price,
+          prj.name as project_name,
+          loc.city as city,
+          loc.name as location_name
+        FROM site_visits sv
+        LEFT JOIN properties p ON sv.property_id = p.id
+        LEFT JOIN projects prj ON p.project_id = prj.id
+        LEFT JOIN locations loc ON p.location_id = loc.id
+        ${whereClause}
+        ORDER BY sv.visit_date ASC, sv.id DESC
+      `, params),
+      query(`
+        SELECT
+          COUNT(*)::int as total_bookings,
+          COUNT(CASE WHEN status = 'REQUESTED' THEN 1 END)::int as requested_count,
+          COUNT(CASE WHEN status = 'CONFIRMED' THEN 1 END)::int as confirmed_count,
+          COUNT(CASE WHEN status = 'COMPLETED' THEN 1 END)::int as completed_count,
+          COUNT(CASE WHEN visit_date = CURRENT_DATE THEN 1 END)::int as today_count
+        FROM site_visits
+      `),
+    ]);
 
-    // KPI breakdown
-    const statsResult = await query(`
-      SELECT
-        COUNT(*)::int as total_bookings,
-        COUNT(CASE WHEN status = 'REQUESTED' THEN 1 END)::int as requested_count,
-        COUNT(CASE WHEN status = 'CONFIRMED' THEN 1 END)::int as confirmed_count,
-        COUNT(CASE WHEN status = 'COMPLETED' THEN 1 END)::int as completed_count,
-        COUNT(CASE WHEN visit_date = CURRENT_DATE THEN 1 END)::int as today_count
-      FROM site_visits
-    `);
-
-    res.json({
+    const payload = {
       site_visits: result.rows,
       stats: statsResult.rows[0] || {},
-    });
+    };
+
+    memoryCache.set(cacheKey, payload, 30);
+    res.setHeader('Cache-Control', 'public, max-age=15, s-maxage=30, stale-while-revalidate=60');
+    res.setHeader('X-Cache-Status', 'MISS');
+    res.json(payload);
   } catch (error: any) {
     console.error('Error fetching site visits:', error);
     res.status(500).json({ error: error?.message || 'Failed to fetch site visits' });

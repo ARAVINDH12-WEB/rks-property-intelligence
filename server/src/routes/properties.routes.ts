@@ -137,6 +137,15 @@ router.get('/public-stats', async (_req: Request, res: Response): Promise<void> 
 // GET /api/properties - High-Performance Search, Filter, Sort & Paginate
 router.get('/', optionalAuthenticate, async (req: Request, res: Response): Promise<void> => {
   try {
+    const cacheKey = `properties_list_${JSON.stringify(req.query)}`;
+    const cached = memoryCache.get<any>(cacheKey);
+    if (cached) {
+      res.setHeader('Cache-Control', 'public, max-age=15, s-maxage=30, stale-while-revalidate=60');
+      res.setHeader('X-Cache-Status', 'HIT');
+      res.json(cached);
+      return;
+    }
+
     const page = Math.max(1, parseInt(req.query.page as string) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 25));
     const offset = (page - 1) * limit;
@@ -301,8 +310,6 @@ router.get('/', optionalAuthenticate, async (req: Request, res: Response): Promi
       LEFT JOIN locations loc ON p.location_id = loc.id
       ${whereClause}
     `;
-    const countResult = await query(countSql, params);
-    const total = countResult.rows[0]?.total || 0;
 
     // 2. Data Fetch Query with Primary Image & User info
     const dataSql = `
@@ -332,9 +339,15 @@ router.get('/', optionalAuthenticate, async (req: Request, res: Response): Promi
     `;
 
     const dataParams = [...params, limit, offset];
-    const dataResult = await query(dataSql, dataParams);
 
-    res.json({
+    const [countResult, dataResult] = await Promise.all([
+      query(countSql, params),
+      query(dataSql, dataParams),
+    ]);
+
+    const total = countResult.rows[0]?.total || 0;
+
+    const responsePayload = {
       properties: dataResult.rows,
       pagination: {
         total,
@@ -342,7 +355,12 @@ router.get('/', optionalAuthenticate, async (req: Request, res: Response): Promi
         limit,
         totalPages: Math.ceil(total / limit) || 1,
       },
-    });
+    };
+
+    memoryCache.set(cacheKey, responsePayload, 30);
+    res.setHeader('Cache-Control', 'public, max-age=15, s-maxage=30, stale-while-revalidate=60');
+    res.setHeader('X-Cache-Status', 'MISS');
+    res.json(responsePayload);
   } catch (error) {
     console.error('Error fetching properties:', error);
     res.status(500).json({ error: 'Failed to fetch properties inventory' });
