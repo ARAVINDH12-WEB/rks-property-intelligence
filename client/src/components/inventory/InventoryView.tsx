@@ -10,6 +10,11 @@ import { FilterDrawer } from './FilterDrawer.js';
 import { BulkActionBar } from './BulkActionBar.js';
 import { ConfirmationModal } from '../common/ConfirmationModal.js';
 import {
+  RealEstateLoadingSkeleton,
+  RealEstateNoSearchResults,
+  RealEstateEmptyState,
+} from '../common/UIStates.js';
+import {
   Table as TableIcon,
   LayoutGrid,
   List,
@@ -365,26 +370,18 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ forcedStatusFilter
 
       {/* MAIN VIEW CONTENT AREA */}
       {isLoading ? (
-        <div className="flex h-72 items-center justify-center rounded-2xl border border-zinc-800 bg-[#12161F]/60 text-zinc-400">
-          <div className="flex flex-col items-center gap-3">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
-            <span className="text-xs font-medium">Fetching PostgreSQL Inventory...</span>
-          </div>
-        </div>
+        <RealEstateLoadingSkeleton type={viewMode === 'cards' ? 'cards' : 'table'} rows={6} />
       ) : properties.length === 0 ? (
-        <div className="flex h-72 flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-800 bg-[#12161F]/40 p-8 text-center">
-          <Building className="h-10 w-10 text-zinc-600 mb-3" />
-          <h3 className="text-base font-bold text-white">No properties found</h3>
-          <p className="text-xs text-zinc-400 mt-1 max-w-sm">
-            No properties match your current search or filter criteria. Try resetting filters or adding new inventory.
-          </p>
-          <button
-            onClick={resetFilters}
-            className="mt-4 rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2 text-xs font-semibold text-zinc-200 hover:bg-zinc-700"
-          >
-            Reset All Filters
-          </button>
-        </div>
+        searchQuery || Object.keys(filterParams).some(k => filterParams[k as keyof typeof filterParams]) ? (
+          <RealEstateNoSearchResults query={searchQuery} onReset={resetFilters} />
+        ) : (
+          <RealEstateEmptyState
+            title="No Plots Available in Inventory"
+            description="Your inventory database is currently empty. Click below to add your first plot or import data."
+            actionLabel="Add New Plot"
+            onAction={() => setIsAddModalOpen(true)}
+          />
+        )
       ) : (
         <>
           {viewMode === 'table' && (

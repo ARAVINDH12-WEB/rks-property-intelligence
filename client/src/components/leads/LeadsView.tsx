@@ -14,6 +14,11 @@ import {
 import { LeadImportModal } from './LeadImportModal.js';
 import { formatCurrencyINR } from '../../utils/formatters.js';
 import { openWhatsApp } from '../../utils/whatsapp.js';
+import {
+  RealEstateLoadingSkeleton,
+  RealEstateNoSearchResults,
+  RealEstateEmptyState,
+} from '../common/UIStates.js';
 
 function formatRelativeTime(dateStr: string): string {
   try {
@@ -452,28 +457,18 @@ export const LeadsView: React.FC = () => {
 
       {/* 4. Leads Content Presentation */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center h-72 bg-[#0D121C] rounded-2xl border border-slate-800">
-          <div className="animate-spin w-9 h-9 border-3 border-brand-teal border-t-transparent rounded-full" />
-          <p className="text-xs text-slate-400 mt-3 font-mono">Synchronizing property buyer pipeline...</p>
-        </div>
+        <RealEstateLoadingSkeleton type="cards" rows={6} />
       ) : filteredLeads.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 bg-[#0D121C] border border-dashed border-slate-800 rounded-2xl text-center px-4">
-          <div className="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500 mb-3">
-            <PlotOutlineIcon size={28} />
-          </div>
-          <h4 className="text-base font-bold text-white">No Matching Leads Found</h4>
-          <p className="text-xs text-slate-400 max-w-sm mt-1">
-            {searchFilter 
-              ? `No inquiries match "${searchFilter}". Try another keyword or clear search.` 
-              : 'There are no active inquiries in this stage. Add a new lead or import records to populate.'}
-          </p>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="mt-4 px-4 py-2 rounded-xl bg-brand-teal hover:bg-brand-teal-light text-white text-xs font-bold transition-colors"
-          >
-            + Add New Lead
-          </button>
-        </div>
+        searchFilter ? (
+          <RealEstateNoSearchResults query={searchFilter} onReset={() => setSearchFilter('')} />
+        ) : (
+          <RealEstateEmptyState
+            title="No Lead Inquiries Registered"
+            description="Your buyer lead pipeline is currently empty. Add your first buyer inquiry or import lead CSV records."
+            actionLabel="Add New Enquiry"
+            onAction={() => setShowAddModal(true)}
+          />
+        )
       ) : (
         <>
           {/* VIEW MODE A: PRIMARY HYBRID DENSE CARDS */}

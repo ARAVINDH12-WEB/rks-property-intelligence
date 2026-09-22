@@ -78,6 +78,13 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
   const timeoutMs = 15000; // 15s timeout
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
+  // Slow network detection timer (>3000ms)
+  let isSlowTimer = setTimeout(() => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('rks_slow_network', { detail: { slow: true } }));
+    }
+  }, 3000);
+
   let res: Response;
   try {
     res = await fetch(primaryEndpoint, {
@@ -86,8 +93,17 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
       signal: controller.signal,
     });
     clearTimeout(timeoutId);
+    clearTimeout(isSlowTimer);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('rks_slow_network', { detail: { slow: false } }));
+    }
   } catch (networkErr: any) {
     clearTimeout(timeoutId);
+    clearTimeout(isSlowTimer);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('rks_slow_network', { detail: { slow: false } }));
+    }
+
     if (networkErr.name === 'AbortError') {
       throw new Error('Request timed out (15s). Please check your connection or try again.');
     }
@@ -104,17 +120,30 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
         });
         clearTimeout(retryTimeoutId);
       } catch (retryErr: any) {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('rks_offline', { detail: { offline: true } }));
+        }
         if (retryErr.name === 'AbortError') {
           throw new Error('Request timed out (15s). Please check your connection or try again.');
         }
         throw networkErr;
       }
     } else {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('rks_offline', { detail: { offline: true } }));
+      }
       throw networkErr;
     }
   }
 
   if (!res.ok) {
+    if (res.status === 401 && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('rks_session_expired'));
+    }
+    if (res.status === 403 && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('rks_permission_denied'));
+    }
+
     const errorData = await res.json().catch(() => ({ error: 'Request failed with status ' + res.status }));
     throw new Error(errorData.error || `HTTP ${res.status}`);
   }

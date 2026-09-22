@@ -4,6 +4,10 @@ import { api } from '../../services/api.js';
 import { Project } from '../../types/index.js';
 import { formatCurrencyINR, formatSqFt } from '../../utils/formatters.js';
 import {
+  RealEstateLoadingSkeleton,
+  RealEstateEmptyState,
+} from '../common/UIStates.js';
+import {
   FolderKanban,
   MapPin,
   Building2,
@@ -50,12 +54,12 @@ export const ProjectsView: React.FC = () => {
 
       {/* Projects Grid */}
       {isLoading ? (
-        <div className="flex h-72 items-center justify-center rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#12161F]/60 text-slate-400 dark:text-zinc-400 shadow-sm">
-          <div className="flex flex-col items-center gap-3">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
-            <span className="text-xs font-medium">Loading Projects...</span>
-          </div>
-        </div>
+        <RealEstateLoadingSkeleton type="cards" rows={6} />
+      ) : projects.length === 0 ? (
+        <RealEstateEmptyState
+          title="No Project Townships Found"
+          description="There are currently no active projects or layout developments registered in the system."
+        />
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {projects.map((proj) => {

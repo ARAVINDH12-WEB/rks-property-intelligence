@@ -66,6 +66,12 @@ interface AppContextType {
   removeToast: (id: string) => void;
   refreshInventory: () => void;
   refreshTrigger: number;
+  isOffline: boolean;
+  isSlowNetwork: boolean;
+  isSessionExpired: boolean;
+  setIsSessionExpired: (val: boolean) => void;
+  isPermissionDenied: boolean;
+  setIsPermissionDenied: (val: boolean) => void;
   badgeCounts: {
     total: number;
     available: number;
@@ -93,6 +99,37 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  // 10 UI States — Global Network & Auth Flags
+  const [isOffline, setIsOffline] = useState<boolean>(() => typeof navigator !== 'undefined' ? !navigator.onLine : false);
+  const [isSlowNetwork, setIsSlowNetwork] = useState<boolean>(false);
+  const [isSessionExpired, setIsSessionExpired] = useState<boolean>(false);
+  const [isPermissionDenied, setIsPermissionDenied] = useState<boolean>(false);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    const handleCustomOffline = (e: any) => setIsOffline(!!e.detail?.offline);
+    const handleSlowNetwork = (e: any) => setIsSlowNetwork(!!e.detail?.slow);
+    const handleSessionExpired = () => setIsSessionExpired(true);
+    const handlePermissionDenied = () => setIsPermissionDenied(true);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('rks_offline', handleCustomOffline);
+    window.addEventListener('rks_slow_network', handleSlowNetwork);
+    window.addEventListener('rks_session_expired', handleSessionExpired);
+    window.addEventListener('rks_permission_denied', handlePermissionDenied);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('rks_offline', handleCustomOffline);
+      window.removeEventListener('rks_slow_network', handleSlowNetwork);
+      window.removeEventListener('rks_session_expired', handleSessionExpired);
+      window.removeEventListener('rks_permission_denied', handlePermissionDenied);
+    };
+  }, []);
 
   const openSiteVisitModal = (prop?: Property | null) => {
     setSiteVisitProperty(prop || null);
@@ -328,6 +365,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         removeToast,
         refreshInventory,
         refreshTrigger,
+        isOffline,
+        isSlowNetwork,
+        isSessionExpired,
+        setIsSessionExpired,
+        isPermissionDenied,
+        setIsPermissionDenied,
         badgeCounts,
       }}
     >

@@ -197,8 +197,27 @@ const MainLayout: React.FC = () => {
   );
 };
 
+import {
+  RealEstateOfflineBanner,
+  RealEstateSlowNetworkBanner,
+  RealEstatePermissionDeniedModal,
+  RealEstateSessionExpiredModal,
+  RealEstateErrorBoundary,
+} from './components/common/UIStates.js';
+
 const AppContent: React.FC = () => {
-  const { isLoggedIn, setIsLoggedIn, setActiveRole } = useApp();
+  const {
+    isLoggedIn,
+    setIsLoggedIn,
+    setActiveRole,
+    isOffline,
+    isSlowNetwork,
+    isSessionExpired,
+    setIsSessionExpired,
+    isPermissionDenied,
+    setIsPermissionDenied,
+    logoutToGateway,
+  } = useApp();
   const location = useLocation();
   const { i18n } = useTranslation();
 
@@ -214,6 +233,22 @@ const AppContent: React.FC = () => {
 
   return (
     <>
+      <RealEstateOfflineBanner isOffline={isOffline} />
+      <RealEstateSlowNetworkBanner isSlow={isSlowNetwork} />
+
+      <RealEstatePermissionDeniedModal
+        isOpen={isPermissionDenied}
+        onClose={() => setIsPermissionDenied(false)}
+      />
+
+      <RealEstateSessionExpiredModal
+        isOpen={isSessionExpired}
+        onReLogin={() => {
+          setIsSessionExpired(false);
+          logoutToGateway();
+        }}
+      />
+
       <Routes>
         {/* English public routes */}
         <Route path="/" element={<LandingPageView />} />
@@ -269,8 +304,10 @@ const AppContent: React.FC = () => {
 
 export default function App() {
   return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
+    <RealEstateErrorBoundary>
+      <AppProvider>
+        <AppContent />
+      </AppProvider>
+    </RealEstateErrorBoundary>
   );
 }
