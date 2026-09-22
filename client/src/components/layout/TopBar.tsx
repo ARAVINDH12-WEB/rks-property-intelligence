@@ -248,7 +248,7 @@ export const TopBar: React.FC = () => {
           ) : (
             <div className="flex items-center gap-1.5 sm:gap-2.5">
               {/* Bespoke RKS Admin Crest Badge */}
-              <div className="hidden sm:flex items-center gap-2 pl-2 pr-3 py-1 rounded-xl bg-slate-100 dark:bg-gradient-to-r dark:from-brand-teal/20 dark:via-slate-900 dark:to-[#12161F] border border-slate-200 dark:border-brand-teal/40 shadow-inner">
+              <div className="flex items-center gap-2 pl-2 pr-3 py-1 rounded-xl bg-slate-100 dark:bg-gradient-to-r dark:from-brand-teal/20 dark:via-slate-900 dark:to-[#12161F] border border-slate-200 dark:border-brand-teal/40 shadow-inner">
                 <div className="relative flex items-center justify-center shrink-0">
                   <img
                     src={currentUser?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(currentUser?.name || 'RKS')}`}

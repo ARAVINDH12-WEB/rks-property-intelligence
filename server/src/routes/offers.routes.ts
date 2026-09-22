@@ -81,8 +81,8 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
     `;
 
     if (!isStaff) {
-      // Customer / Public View: STRICTLY ACTIVE & VALID DATE RANGE
-      sql += ` WHERE o.is_active = true AND CURRENT_DATE >= o.start_date AND CURRENT_DATE <= o.end_date`;
+      // Customer / Public View: ALL ACTIVE OFFERS
+      sql += ` WHERE o.is_active = true`;
     }
 
     sql += ` ORDER BY o.is_active DESC, o.end_date DESC, o.id DESC`;

@@ -193,10 +193,9 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
         }
 
         if (mounted && offersRes?.offers && Array.isArray(offersRes.offers)) {
-          const activeOffers = offersRes.offers.filter((o: Offer) => o.is_active);
-          setOffers(activeOffers);
+          setOffers(offersRes.offers);
           try {
-            localStorage.setItem('rks_cached_offers', JSON.stringify(activeOffers));
+            localStorage.setItem('rks_cached_offers', JSON.stringify(offersRes.offers));
           } catch {
             // LocalStorage quota
           }

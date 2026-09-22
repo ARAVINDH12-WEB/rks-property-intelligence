@@ -121,13 +121,20 @@ export const TeamMembersView: React.FC = () => {
 
       const res = await api.updateUser(editingUser.id, payload);
       showToast('Team Member Updated', res.message, 'success');
-      if (editingUser.id === currentUser.id || editingUser.email === currentUser.email || editingUser.role === activeRole) {
-        updateCurrentUser({
-          name: payload.name,
-          email: payload.email,
-          phone: payload.phone,
-          role: payload.role,
-        });
+      const updatedUserObj = res.user || {
+        ...editingUser,
+        name: payload.name,
+        email: payload.email,
+        phone: payload.phone,
+        role: payload.role,
+      };
+      if (
+        editingUser.id === currentUser.id ||
+        editingUser.email === currentUser.email ||
+        editingUser.role === 'ADMIN' ||
+        activeRole === 'ADMIN'
+      ) {
+        updateCurrentUser(updatedUserObj);
       }
       setIsEditModalOpen(false);
       setEditingUser(null);
