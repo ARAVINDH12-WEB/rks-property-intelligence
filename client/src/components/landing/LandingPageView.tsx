@@ -97,8 +97,21 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
   const [locationList, setLocationList] = useState<string[]>([]);
   const [whatsappNumber, setWhatsappNumber] = useState('+919840011223');
 
-  // Poster carousel state
-  const [posters, setPosters] = useState<Poster[]>(DEFAULT_POSTERS);
+  // Poster carousel state initialized from localStorage cache to avoid flash of old default posters
+  const [posters, setPosters] = useState<Poster[]>(() => {
+    try {
+      const cached = localStorage.getItem('rks_cached_posters');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch {
+      // Ignore storage parse error
+    }
+    return DEFAULT_POSTERS;
+  });
   const [currentPosterIndex, setCurrentPosterIndex] = useState(0);
   const [isPosterPaused, setIsPosterPaused] = useState(false);
 
@@ -145,6 +158,11 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
         const postersRes = await api.getPosters().catch(() => ({ posters: [] }));
         if (mounted && postersRes.posters && postersRes.posters.length > 0) {
           setPosters(postersRes.posters);
+          try {
+            localStorage.setItem('rks_cached_posters', JSON.stringify(postersRes.posters));
+          } catch {
+            // LocalStorage quota
+          }
         }
       } catch (err) {
         console.error('Error fetching landing page data:', err);

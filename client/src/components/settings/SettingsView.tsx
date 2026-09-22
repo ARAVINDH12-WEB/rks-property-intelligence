@@ -71,7 +71,19 @@ export const SettingsView: React.FC = () => {
   const fetchPosters = () => {
     setLoadingPosters(true);
     api.getAdminPosters()
-      .then((res) => setPosters(res.posters || []))
+      .then((res) => {
+        setPosters(res.posters || []);
+        try {
+          const activeOnly = (res.posters || []).filter((p: Poster) => p.is_active);
+          if (activeOnly.length > 0) {
+            localStorage.setItem('rks_cached_posters', JSON.stringify(activeOnly));
+          } else {
+            localStorage.removeItem('rks_cached_posters');
+          }
+        } catch {
+          // Ignore storage error
+        }
+      })
       .catch((err) => console.warn('Failed to load admin posters:', err))
       .finally(() => setLoadingPosters(false));
   };
