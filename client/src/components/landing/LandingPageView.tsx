@@ -86,16 +86,25 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
 
   const currentLocale: Locale = i18n.language === 'ta' ? 'ta' : 'en';
 
-  const [totalPlots, setTotalPlots] = useState<number | null>(null);
-  const [availablePlots, setAvailablePlots] = useState<number | null>(null);
-  const [completedVisits, setCompletedVisits] = useState<number | null>(null);
-  const [startingRate, setStartingRate] = useState<number | null>(null);
-  const [featuredPlots, setFeaturedPlots] = useState<Property[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [cityCounts, setCityCounts] = useState<Record<string, number>>({});
-  const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
-  const [locationList, setLocationList] = useState<string[]>([]);
-  const [whatsappNumber, setWhatsappNumber] = useState('+919840011223');
+  const [cachedStatsData] = useState(() => {
+    try {
+      const cached = localStorage.getItem('rks_cached_public_stats');
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [totalPlots, setTotalPlots] = useState<number | null>(cachedStatsData?.totalPlots ?? null);
+  const [availablePlots, setAvailablePlots] = useState<number | null>(cachedStatsData?.availablePlots ?? null);
+  const [completedVisits, setCompletedVisits] = useState<number | null>(cachedStatsData?.completedVisits ?? null);
+  const [startingRate, setStartingRate] = useState<number | null>(cachedStatsData?.startingRate ?? null);
+  const [featuredPlots, setFeaturedPlots] = useState<Property[]>(cachedStatsData?.featuredPlots || []);
+  const [isLoading, setIsLoading] = useState(!cachedStatsData);
+  const [cityCounts, setCityCounts] = useState<Record<string, number>>(cachedStatsData?.cityCounts || {});
+  const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>(cachedStatsData?.categoryCounts || {});
+  const [locationList, setLocationList] = useState<string[]>(cachedStatsData?.locations || []);
+  const [whatsappNumber, setWhatsappNumber] = useState(cachedStatsData?.settings?.whatsapp_number || '+919840011223');
 
   // Poster carousel state initialized from localStorage cache to avoid flash of old default posters
   const [posters, setPosters] = useState<Poster[]>(() => {
@@ -138,10 +147,12 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
     let mounted = true;
     const fetchData = async () => {
       try {
-        setIsLoading(true);
-        const stats = await api.getPublicStats();
+        const [stats, postersRes] = await Promise.all([
+          api.getPublicStats().catch(() => null),
+          api.getPosters().catch(() => ({ posters: [] }))
+        ]);
 
-        if (mounted) {
+        if (mounted && stats) {
           setTotalPlots(stats.totalPlots);
           setAvailablePlots(stats.availablePlots);
           setStartingRate(stats.startingRate);
@@ -153,10 +164,14 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
           if (stats.settings?.whatsapp_number) {
             setWhatsappNumber(stats.settings.whatsapp_number);
           }
+          try {
+            localStorage.setItem('rks_cached_public_stats', JSON.stringify(stats));
+          } catch {
+            // LocalStorage quota
+          }
         }
 
-        const postersRes = await api.getPosters().catch(() => ({ posters: [] }));
-        if (mounted && postersRes.posters && postersRes.posters.length > 0) {
+        if (mounted && postersRes?.posters && postersRes.posters.length > 0) {
           setPosters(postersRes.posters);
           try {
             localStorage.setItem('rks_cached_posters', JSON.stringify(postersRes.posters));
@@ -170,9 +185,10 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
         if (mounted) setIsLoading(false);
       }
     };
-
     fetchData();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   // Poster Auto-scroll timer

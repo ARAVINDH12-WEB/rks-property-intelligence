@@ -47,21 +47,11 @@ function getHeaders(): HeadersInit {
   return headers;
 }
 
-async function ensureGuestToken(): Promise<void> {
+function ensureGuestToken(): void {
   const existingToken = localStorage.getItem('rks_auth_token');
-  if (existingToken) return;
-
-  try {
-    const res = await fetch(`${API_BASE}/auth/guest-token`);
-    if (res.ok) {
-      const data = await res.json();
-      if (data.token) {
-        localStorage.setItem('rks_auth_token', data.token);
-        localStorage.setItem('rks_active_role', 'VIEWER');
-      }
-    }
-  } catch {
-    // Fail silently
+  if (!existingToken) {
+    localStorage.setItem('rks_auth_token', 'rks_guest_viewer_session');
+    localStorage.setItem('rks_active_role', 'VIEWER');
   }
 }
 

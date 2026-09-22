@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { query } from '../db/index.js';
+import { memoryCache } from '../utils/cache.js';
 import { authenticate, optionalAuthenticate, requireRole } from '../middleware/auth.js';
 
 const router = Router();
@@ -7,6 +8,15 @@ const router = Router();
 // GET /api/projects - List projects with live KPI metrics
 router.get('/', optionalAuthenticate, async (_req: Request, res: Response): Promise<void> => {
   try {
+    const cacheKey = 'public_projects';
+    const cached = memoryCache.get<any>(cacheKey);
+    if (cached) {
+      res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=60, stale-while-revalidate=120');
+      res.setHeader('X-Cache-Status', 'HIT');
+      res.json(cached);
+      return;
+    }
+
     const projectsResult = await query(`
       SELECT
         prj.*,
@@ -27,7 +37,11 @@ router.get('/', optionalAuthenticate, async (_req: Request, res: Response): Prom
       ORDER BY prj.name ASC
     `);
 
-    res.json({ projects: projectsResult.rows });
+    const payload = { projects: projectsResult.rows };
+    memoryCache.set(cacheKey, payload, 60);
+    res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=60, stale-while-revalidate=120');
+    res.setHeader('X-Cache-Status', 'MISS');
+    res.json(payload);
   } catch (error) {
     console.error('Error fetching projects:', error);
     res.status(500).json({ error: 'Failed to fetch projects' });

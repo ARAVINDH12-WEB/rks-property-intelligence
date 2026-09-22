@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { query } from '../db/index.js';
+import { memoryCache } from '../utils/cache.js';
 import { authenticate, optionalAuthenticate, requireRole } from '../middleware/auth.js';
 
 const router = Router();
@@ -7,6 +8,15 @@ const router = Router();
 // GET /api/locations - Micro-markets list with property stats
 router.get('/', optionalAuthenticate, async (_req: Request, res: Response): Promise<void> => {
   try {
+    const cacheKey = 'public_locations';
+    const cached = memoryCache.get<any>(cacheKey);
+    if (cached) {
+      res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=60, stale-while-revalidate=120');
+      res.setHeader('X-Cache-Status', 'HIT');
+      res.json(cached);
+      return;
+    }
+
     const locationsResult = await query(`
       SELECT
         loc.*,
@@ -22,7 +32,11 @@ router.get('/', optionalAuthenticate, async (_req: Request, res: Response): Prom
       ORDER BY loc.city ASC, loc.name ASC
     `);
 
-    res.json({ locations: locationsResult.rows });
+    const payload = { locations: locationsResult.rows };
+    memoryCache.set(cacheKey, payload, 60);
+    res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=60, stale-while-revalidate=120');
+    res.setHeader('X-Cache-Status', 'MISS');
+    res.json(payload);
   } catch (error) {
     console.error('Error fetching locations:', error);
     res.status(500).json({ error: 'Failed to fetch locations' });

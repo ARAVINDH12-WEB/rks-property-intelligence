@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { query } from '../db/index.js';
+import { memoryCache } from '../utils/cache.js';
 import { authenticate, optionalAuthenticate, authorize } from '../middleware/auth.js';
 import { deleteStorageFile } from '../utils/storage.js';
 
@@ -8,6 +9,15 @@ const router = Router();
 // GET /api/posters — Public: Get active, non-expired posters ordered by display_order
 router.get('/', async (_req: Request, res: Response): Promise<void> => {
   try {
+    const cacheKey = 'public_posters';
+    const cachedPosters = memoryCache.get<any>(cacheKey);
+    if (cachedPosters) {
+      res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=60, stale-while-revalidate=120');
+      res.setHeader('X-Cache-Status', 'HIT');
+      res.json(cachedPosters);
+      return;
+    }
+
     const result = await query(
       `SELECT * FROM posters 
        WHERE is_active = true 
@@ -15,7 +25,11 @@ router.get('/', async (_req: Request, res: Response): Promise<void> => {
          AND (end_date IS NULL OR end_date >= CURRENT_DATE)
        ORDER BY display_order ASC, created_at DESC`
     );
-    res.json({ posters: result.rows });
+    const payload = { posters: result.rows };
+    memoryCache.set(cacheKey, payload, 60);
+    res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=60, stale-while-revalidate=120');
+    res.setHeader('X-Cache-Status', 'MISS');
+    res.json(payload);
   } catch (error: any) {
     console.error('Error fetching posters:', error);
     res.status(500).json({ error: 'Failed to fetch posters' });
@@ -58,6 +72,7 @@ router.post('/', authenticate, authorize(['ADMIN']), async (req: Request, res: R
       ]
     );
 
+    memoryCache.clearAll();
     res.status(201).json({ message: 'Poster created successfully', poster: result.rows[0] });
   } catch (error: any) {
     console.error('Error creating poster:', error);
@@ -106,6 +121,7 @@ router.put('/:id', authenticate, authorize(['ADMIN']), async (req: Request, res:
       return;
     }
 
+    memoryCache.clearAll();
     res.json({ message: 'Poster updated successfully', poster: result.rows[0] });
   } catch (error: any) {
     console.error('Error updating poster:', error);
@@ -124,6 +140,7 @@ router.patch('/:id/toggle', authenticate, authorize(['ADMIN']), async (req: Requ
       return;
     }
 
+    memoryCache.clearAll();
     res.json({ message: 'Poster status updated', poster: result.rows[0] });
   } catch (error: any) {
     res.status(500).json({ error: error?.message || 'Failed to toggle poster' });
@@ -141,14 +158,16 @@ router.delete('/:id', authenticate, authorize(['ADMIN']), async (req: Request, r
       return;
     }
 
-    if (existing.rows[0].image_url) {
-      await deleteStorageFile(existing.rows[0].image_url);
+    const imageUrl = existing.rows[0].image_url;
+    await query(`DELETE FROM posters WHERE id = $1`, [id]);
+    if (imageUrl) {
+      await deleteStorageFile(imageUrl).catch(() => {});
     }
 
-    await query(`DELETE FROM posters WHERE id = $1`, [id]);
-
-    res.json({ message: 'Poster deleted successfully', id });
+    memoryCache.clearAll();
+    res.json({ message: 'Poster deleted successfully' });
   } catch (error: any) {
+    console.error('Error deleting poster:', error);
     res.status(500).json({ error: error?.message || 'Failed to delete poster' });
   }
 });

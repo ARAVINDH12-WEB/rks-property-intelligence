@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { query } from '../db/index.js';
+import { memoryCache } from '../utils/cache.js';
 import { authenticate, optionalAuthenticate, requireRole } from '../middleware/auth.js';
 import { calculateAreaConversions, calculateTotalPrice } from '../utils/calculations.js';
 import { deleteStorageFile } from '../utils/storage.js';
@@ -16,6 +17,14 @@ const router = Router();
 // GET /api/properties/public-stats — Aggregated stats for the public front page (unauthenticated)
 router.get('/public-stats', async (_req: Request, res: Response): Promise<void> => {
   try {
+    const cacheKey = 'public_stats';
+    const cachedStats = memoryCache.get<any>(cacheKey);
+    if (cachedStats) {
+      res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=60, stale-while-revalidate=120');
+      res.setHeader('X-Cache-Status', 'HIT');
+      res.json(cachedStats);
+      return;
+    }
     // 1. Total plots (non-archived)
     const totalRes = await query(`SELECT COUNT(*)::int as total FROM properties WHERE archived = false`);
     const totalPlots = totalRes.rows[0]?.total || 0;
@@ -103,7 +112,7 @@ router.get('/public-stats', async (_req: Request, res: Response): Promise<void> 
       settings[row.key] = row.value;
     }
 
-    res.json({
+    const responsePayload = {
       totalPlots,
       availablePlots,
       startingRate,
@@ -113,7 +122,12 @@ router.get('/public-stats', async (_req: Request, res: Response): Promise<void> 
       locations,
       featuredPlots: featuredRes.rows,
       settings,
-    });
+    };
+
+    memoryCache.set('public_stats', responsePayload, 60);
+    res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=60, stale-while-revalidate=120');
+    res.setHeader('X-Cache-Status', 'MISS');
+    res.json(responsePayload);
   } catch (error) {
     console.error('Error fetching public stats:', error);
     res.status(500).json({ error: 'Failed to fetch public stats' });
