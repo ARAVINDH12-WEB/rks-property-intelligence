@@ -249,12 +249,40 @@ export async function seedDatabase(force: boolean = false) {
 
   // 8. Seed Offers
   await query(
-    `INSERT INTO offers (title, description, discount_percentage, valid_from, valid_until, status, created_by) VALUES ($1,$2,$3,$4,$5,$6,$7)`.replace(
-      'INSERT INTO offers',
-      'INSERT INTO offers'
-    ),
-    ['Monsoon Special', '5% off on all Trichy plots above 1200 sq.ft', 5, '2026-08-01', '2026-10-31', 'ACTIVE', adminId]
-  ).catch(() => console.log('Offers table may not have all columns, skipping offers seed'));
+    `INSERT INTO offers (title, description, discount_type, discount_value, start_date, end_date, is_active, applicable_properties, banner_image_url, terms_conditions, created_by) 
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+    [
+      'Festive Launch Special - 5% Concession',
+      'Enjoy 5% direct developer concession on all Trichy and Perungalathur residential plot bookings this season.',
+      'PERCENTAGE',
+      '5% OFF',
+      '2026-08-01',
+      '2026-12-31',
+      true,
+      'ALL',
+      'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&auto=format&fit=crop&q=80',
+      'Valid for buyers registering interest and completing booking within campaign period.',
+      adminId,
+    ]
+  ).catch((err) => console.log('Offers seed note:', err.message));
+
+  await query(
+    `INSERT INTO offers (title, description, discount_type, discount_value, start_date, end_date, is_active, applicable_properties, banner_image_url, terms_conditions, created_by) 
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+    [
+      'Zero Registration & Stamp Duty Concession',
+      'Complete registration charge waiver up to ₹75,000 on select Emerald Valley & Golden Acres plot purchases.',
+      'FIXED_AMOUNT',
+      '₹75,000 WAIVER',
+      '2026-09-01',
+      '2026-11-30',
+      true,
+      'Emerald Valley, Golden Acres',
+      'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=80',
+      'Applicable on initial 10 plot bookings this month.',
+      adminId,
+    ]
+  ).catch((err) => console.log('Offers seed note:', err.message));
 
   // 9. Seed CMS Pages
   await query('DELETE FROM pages').catch(() => {});

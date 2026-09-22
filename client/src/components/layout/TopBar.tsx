@@ -248,17 +248,21 @@ export const TopBar: React.FC = () => {
           ) : (
             <div className="flex items-center gap-1.5 sm:gap-2.5">
               {/* Bespoke RKS Admin Crest Badge */}
-              <div className="hidden md:flex items-center gap-2 pl-2.5 pr-3 py-1 rounded-xl bg-slate-100 dark:bg-gradient-to-r dark:from-brand-teal/20 dark:via-slate-900 dark:to-[#12161F] border border-slate-200 dark:border-brand-teal/40 shadow-inner">
-                <div className="relative flex items-center justify-center text-amber-600 dark:text-brand-gold">
-                  <Shield className="h-3.5 w-3.5 fill-amber-500/20 stroke-amber-600 dark:fill-brand-gold/20 dark:stroke-brand-gold" />
-                  <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <div className="hidden sm:flex items-center gap-2 pl-2 pr-3 py-1 rounded-xl bg-slate-100 dark:bg-gradient-to-r dark:from-brand-teal/20 dark:via-slate-900 dark:to-[#12161F] border border-slate-200 dark:border-brand-teal/40 shadow-inner">
+                <div className="relative flex items-center justify-center shrink-0">
+                  <img
+                    src={currentUser?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(currentUser?.name || 'RKS')}`}
+                    alt={currentUser?.name}
+                    className="h-6 w-6 rounded-full border border-amber-500/40 object-cover"
+                  />
+                  <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500 ring-1 ring-white dark:ring-zinc-900" />
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-[9px] font-mono tracking-widest uppercase text-amber-700 dark:text-brand-gold-light font-bold leading-none">
-                    RKS · {activeRole}
+                <div className="flex flex-col truncate max-w-[130px]">
+                  <span className="text-[10px] font-bold text-slate-900 dark:text-white leading-none truncate">
+                    {currentUser?.name || 'RKS Admin'}
                   </span>
-                  <span className="text-[8px] text-slate-600 dark:text-slate-400 font-mono leading-tight mt-0.5">
-                    Authorized
+                  <span className="text-[8px] font-mono tracking-wider uppercase text-amber-600 dark:text-brand-gold-light font-semibold leading-tight mt-0.5">
+                    {activeRole}
                   </span>
                 </div>
               </div>

@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 
 export const TeamMembersView: React.FC = () => {
-  const { activeRole, showToast, refreshTrigger } = useApp();
+  const { activeRole, showToast, refreshTrigger, currentUser, updateCurrentUser } = useApp();
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -121,6 +121,14 @@ export const TeamMembersView: React.FC = () => {
 
       const res = await api.updateUser(editingUser.id, payload);
       showToast('Team Member Updated', res.message, 'success');
+      if (editingUser.id === currentUser.id || editingUser.email === currentUser.email || editingUser.role === activeRole) {
+        updateCurrentUser({
+          name: payload.name,
+          email: payload.email,
+          phone: payload.phone,
+          role: payload.role,
+        });
+      }
       setIsEditModalOpen(false);
       setEditingUser(null);
       fetchUsers();

@@ -231,8 +231,14 @@ export const Sidebar: React.FC = () => {
               sidebarCollapsed ? 'justify-center' : ''
             }`}
           >
-            <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-brand-gold/30 to-amber-700/30 border border-brand-gold/40 text-brand-gold font-bold">
-              <Shield className="h-4 w-4" />
+            <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg overflow-hidden border border-brand-gold/40">
+              {currentUser?.avatar_url ? (
+                <img src={currentUser.avatar_url} alt={currentUser.name} className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand-gold/30 to-amber-700/30 text-brand-gold font-bold">
+                  <Shield className="h-4 w-4" />
+                </div>
+              )}
               <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-[#12161F]" />
             </div>
 

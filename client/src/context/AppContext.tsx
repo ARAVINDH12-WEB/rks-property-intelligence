@@ -72,6 +72,7 @@ interface AppContextType {
   setIsSessionExpired: (val: boolean) => void;
   isPermissionDenied: boolean;
   setIsPermissionDenied: (val: boolean) => void;
+  updateCurrentUser: (userPartial: Partial<User>) => void;
   badgeCounts: {
     total: number;
     available: number;
@@ -218,11 +219,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   });
 
+  const updateCurrentUser = (userPartial: Partial<User>) => {
+    setSavedUser((prev: any) => {
+      const updated = { ...(prev || {}), ...userPartial };
+      try {
+        sessionStorage.setItem('rks_auth_session', JSON.stringify(updated));
+        localStorage.setItem('rks_auth_session', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
+
   const currentUser: User = {
     id: savedUser?.id || (activeRole === 'ADMIN' ? 1 : 999),
     name: savedUser?.name || (activeRole === 'ADMIN' ? 'Rajesh Kumar S (Director)' : 'Guest Customer'),
     email: savedUser?.email || (activeRole === 'ADMIN' ? 'admin@rks.com' : 'customer@rks.com'),
-    role: activeRole,
+    role: savedUser?.role || activeRole,
     phone: savedUser?.phone || '+91 98400 11223',
     avatar_url: savedUser?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
   };
@@ -374,6 +386,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setIsSessionExpired,
         isPermissionDenied,
         setIsPermissionDenied,
+        updateCurrentUser,
         badgeCounts,
       }}
     >

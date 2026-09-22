@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext.js';
 import { api } from '../../services/api.js';
-import { Property, Poster } from '../../types/index.js';
+import { Property, Poster, Offer } from '../../types/index.js';
 import { 
   PlotOutlineIcon,
   VerifiedShieldIcon,
@@ -22,10 +22,11 @@ import {
   IndustrialFactoryIcon,
   DuplexHouseIcon
 } from '../common/Icons.js';
-import { ArrowRight, MapPin, ChevronLeft, ChevronRight, Maximize2, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { ArrowRight, MapPin, ChevronLeft, ChevronRight, Maximize2, X, ZoomIn, ZoomOut, Tag, Sparkles, Gift, Percent, Calendar } from 'lucide-react';
 import { getWhatsAppUrl } from '../../utils/whatsapp.js';
 import { PublicNavbar } from '../common/PublicNavbar.js';
 import { PublicFooter } from '../common/PublicFooter.js';
+import { OfferCard } from '../common/OfferCard.js';
 import { getLocalizedPath, Locale } from '../../utils/locale.js';
 
 interface LandingPageViewProps {
@@ -143,13 +144,24 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // Active promotional offers state initialized from cache
+  const [offers, setOffers] = useState<Offer[]>(() => {
+    try {
+      const cached = localStorage.getItem('rks_cached_offers');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+
   useEffect(() => {
     let mounted = true;
     const fetchData = async () => {
       try {
-        const [stats, postersRes] = await Promise.all([
+        const [stats, postersRes, offersRes] = await Promise.all([
           api.getPublicStats().catch(() => null),
-          api.getPosters().catch(() => ({ posters: [] }))
+          api.getPosters().catch(() => ({ posters: [] })),
+          api.getOffers().catch(() => ({ offers: [] })),
         ]);
 
         if (mounted && stats) {
@@ -175,6 +187,16 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
           setPosters(postersRes.posters);
           try {
             localStorage.setItem('rks_cached_posters', JSON.stringify(postersRes.posters));
+          } catch {
+            // LocalStorage quota
+          }
+        }
+
+        if (mounted && offersRes?.offers && Array.isArray(offersRes.offers)) {
+          const activeOffers = offersRes.offers.filter((o: Offer) => o.is_active);
+          setOffers(activeOffers);
+          try {
+            localStorage.setItem('rks_cached_offers', JSON.stringify(activeOffers));
           } catch {
             // LocalStorage quota
           }
@@ -610,6 +632,89 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* E. Exclusive Offers & Seasonal Promotions */}
+      <section id="offers" className="py-20 bg-gradient-to-b from-amber-500/5 via-slate-50 to-white dark:from-amber-950/20 dark:via-[#090C12] dark:to-[#0A0C10] border-t border-b border-amber-500/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-bold uppercase tracking-wider mb-3">
+                <Sparkles className="h-4 w-4" />
+                <span>Limited Time Concessions</span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold font-heading text-slate-900 dark:text-white">
+                {currentLocale === 'ta' ? 'சிறப்பு சலுகைகள் & தள்ளுபடிகள்' : 'Exclusive Deals & Festive Offers'}
+              </h2>
+              <p className="text-slate-600 dark:text-zinc-400 mt-2 text-sm sm:text-base max-w-2xl">
+                {currentLocale === 'ta'
+                  ? 'RKS பிரைம் ப்ராப்பர்டீஸ் வழங்கும் பிரத்யேக விலை தள்ளுபடி மற்றும் பதிவுக் கட்டண சலுகைகள்.'
+                  : 'Avail direct developer discounts, stamp duty concessions, and complimentary site visit cab tours.'}
+              </p>
+            </div>
+
+            <button
+              onClick={() => openSiteVisitModal()}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-5 py-3 text-xs font-bold text-black shadow-lg shadow-amber-500/20 hover:from-amber-400 hover:to-amber-500 transition-all cursor-pointer shrink-0"
+            >
+              <Calendar className="h-4 w-4" />
+              <span>{currentLocale === 'ta' ? 'சலுகையைப் பெற முன்பதிவு செய்' : 'Claim Offer & Book Visit'}</span>
+            </button>
+          </div>
+
+          {offers.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+              {offers.map((offer) => (
+                <OfferCard
+                  key={offer.id}
+                  offer={offer}
+                  onClaim={() => openSiteVisitModal()}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="rounded-3xl border border-amber-500/30 bg-white dark:bg-[#12161F] p-6 shadow-md flex flex-col justify-between">
+                <div>
+                  <div className="inline-flex items-center gap-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 px-3 py-1 text-xs font-bold text-amber-500">
+                    <Gift className="h-4 w-4" /> FESTIVAL PROMO
+                  </div>
+                  <h3 className="mt-4 text-lg font-bold text-slate-900 dark:text-white">Zero Registration & Legal Fees Waiver</h3>
+                  <p className="mt-2 text-xs text-slate-500 dark:text-zinc-400">Save up to ₹75,000 on DTCP plot registration fees when booking this month.</p>
+                </div>
+                <button onClick={() => openSiteVisitModal()} className="mt-6 w-full rounded-xl bg-slate-100 dark:bg-zinc-800 py-2.5 text-xs font-bold text-slate-900 dark:text-white hover:bg-amber-500 hover:text-black transition-all cursor-pointer">
+                  Book Visit to Claim
+                </button>
+              </div>
+
+              <div className="rounded-3xl border border-cyan-500/30 bg-white dark:bg-[#12161F] p-6 shadow-md flex flex-col justify-between">
+                <div>
+                  <div className="inline-flex items-center gap-1.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 px-3 py-1 text-xs font-bold text-cyan-400">
+                    <CabPickupIcon size={16} /> FREE DOORSTEP PICKUP
+                  </div>
+                  <h3 className="mt-4 text-lg font-bold text-slate-900 dark:text-white">Complimentary AC Cab Inspection Tour</h3>
+                  <p className="mt-2 text-xs text-slate-500 dark:text-zinc-400">Free door-to-door AC cab pickup for your family to inspect layout developments.</p>
+                </div>
+                <button onClick={() => openSiteVisitModal()} className="mt-6 w-full rounded-xl bg-slate-100 dark:bg-zinc-800 py-2.5 text-xs font-bold text-slate-900 dark:text-white hover:bg-cyan-500 hover:text-black transition-all cursor-pointer">
+                  Schedule Free Pickup
+                </button>
+              </div>
+
+              <div className="rounded-3xl border border-emerald-500/30 bg-white dark:bg-[#12161F] p-6 shadow-md flex flex-col justify-between">
+                <div>
+                  <div className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 text-xs font-bold text-emerald-400">
+                    <Percent className="h-4 w-4" /> DIRECT SAVINGS
+                  </div>
+                  <h3 className="mt-4 text-lg font-bold text-slate-900 dark:text-white">₹100/sq.ft Concession on Bulk Plot Bookings</h3>
+                  <p className="mt-2 text-xs text-slate-500 dark:text-zinc-400">Special developer concession for dual plot bookings in Chennai & Trichy corridors.</p>
+                </div>
+                <button onClick={() => openSiteVisitModal()} className="mt-6 w-full rounded-xl bg-slate-100 dark:bg-zinc-800 py-2.5 text-xs font-bold text-slate-900 dark:text-white hover:bg-emerald-500 hover:text-black transition-all cursor-pointer">
+                  Inquire Concession
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

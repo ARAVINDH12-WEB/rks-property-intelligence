@@ -44,7 +44,7 @@ async function runMasterVerificationTests() {
     const adminLoginRes = await fetch(`${BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'admin@rks.com', password: 'admin123' }),
+      body: JSON.stringify({ email: 'admin@rksprime.com', password: 'admin123' }),
     });
     const adminLoginData = (await adminLoginRes.json()) as any;
     assert(adminLoginRes.status === 200 && !!adminLoginData.token, `POST /api/auth/login (Admin) -> 200 OK (Token issued for ${adminLoginData.user?.name})`);
@@ -54,7 +54,7 @@ async function runMasterVerificationTests() {
     const managerLoginRes = await fetch(`${BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'manager@rks.com', password: 'manager123' }),
+      body: JSON.stringify({ email: 'priya@rksprime.com', password: 'rks_staff_2026' }),
     });
     const managerLoginData = (await managerLoginRes.json()) as any;
     assert(managerLoginRes.status === 200 && !!managerLoginData.token, `POST /api/auth/login (Manager) -> 200 OK`);
@@ -94,9 +94,9 @@ async function runMasterVerificationTests() {
     console.log('\n--- PART 1: Verifying Data Deletion Permanence (No Re-appearing on Refresh) ---');
 
     // 1. Delete a property permanently as Admin
-    const propToDelRes = await query("SELECT id, property_code FROM properties WHERE property_code = 'RKS-00124'");
+    const propToDelRes = await query("SELECT id, property_code FROM properties ORDER BY id DESC LIMIT 1");
     const testPropId = propToDelRes.rows[0]?.id;
-    assert(!!testPropId, `Found target property RKS-00124 (ID: ${testPropId})`);
+    assert(!!testPropId, `Found target property ${propToDelRes.rows[0]?.property_code} (ID: ${testPropId})`);
 
     const delPropRes = await fetch(`${BASE_URL}/properties/${testPropId}?permanent=true`, {
       method: 'DELETE',
@@ -221,7 +221,7 @@ async function runMasterVerificationTests() {
     console.log('\n--- PART 4: Verifying Team Member Edit Feature (Admin Only) ---');
 
     // 1. Get employee user
-    const empRes = await query("SELECT id, name, email, role, phone FROM users WHERE email = 'employee@rks.com'");
+    const empRes = await query("SELECT id, name, email, role, phone FROM users WHERE email = 'karthik@rksprime.com'");
     const empUser = empRes.rows[0];
     assert(!!empUser, `Found target staff member ${empUser?.name} (ID: ${empUser?.id})`);
 
