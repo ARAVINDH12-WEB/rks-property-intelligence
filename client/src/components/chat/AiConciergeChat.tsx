@@ -172,22 +172,29 @@ export const AiConciergeChat: React.FC = () => {
   };
 
   const renderText = (text: string) => {
-    return text
-      .split('\n')
-      .map((line, i) => {
-        // Escape raw HTML entities first to neutralize any script/event injection
-        const escaped = line
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#039;');
-        // Safe inline markdown replacement for bold and italic
-        const formatted = escaped
-          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-          .replace(/\*(.*?)\*/g, '<em>$1</em>');
-        return <p key={i} className="text-xs leading-relaxed" dangerouslySetInnerHTML={{ __html: formatted }} />;
-      });
+    if (!text) return null;
+
+    return text.split('\n').map((line, i) => {
+      // 1. Process Markdown Links [label](url)
+      let formatted = line.replace(
+        /\[([^\]]+)\]\(([^)]+)\)/g,
+        (_, label, url) => `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-brand-teal-light underline hover:text-white font-semibold transition-colors">${label}</a>`
+      );
+
+      // 2. Process Bold **text**
+      formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-slate-100">$1</strong>');
+
+      // 3. Process Italic *text*
+      formatted = formatted.replace(/\*(.*?)\*/g, '<em class="italic text-slate-300">$1</em>');
+
+      return (
+        <p
+          key={i}
+          className="text-xs leading-relaxed min-h-[1.25em] my-0.5"
+          dangerouslySetInnerHTML={{ __html: formatted }}
+        />
+      );
+    });
   };
 
   if (!isOpen) {

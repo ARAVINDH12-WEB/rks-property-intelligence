@@ -100,11 +100,13 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     }
 
     // 2. Fetch Live Database Context concurrently (Source of Truth for Listings, Settings & CMS)
-    const [livePropsRes, settingsRes, pagesRes] = await Promise.all([
+    // 2. Fetch Live Database Context concurrently (Source of Truth for Listings, Settings, Projects & Locations)
+    const [livePropsRes, settingsRes, pagesRes, projectsRes, locationsRes] = await Promise.all([
       query(
         `SELECT p.id, p.property_code, p.plot_number, p.area_sqft, p.rate_per_sqft, p.total_price,
                 p.status, p.facing, p.survey_number, p.approval_number, p.ownership, p.amenities,
-                p.description, p.description_ta, prj.name as project_name, prj.code as project_code,
+                p.description, p.description_ta, p.property_type, p.road_width,
+                prj.name as project_name, prj.code as project_code,
                 loc.city, loc.name as location_name
          FROM properties p
          LEFT JOIN projects prj ON p.project_id = prj.id
@@ -114,11 +116,15 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
       ),
       query(`SELECT key, value FROM system_settings`),
       query(`SELECT title, slug, content FROM pages WHERE is_published = true`),
+      query(`SELECT id, name, code, description FROM projects`),
+      query(`SELECT id, name, city, district, state FROM locations`),
     ]);
 
     const properties = livePropsRes.rows;
     const availablePlots = properties.filter((p: any) => p.status === 'AVAILABLE');
     const availableCount = availablePlots.length;
+    const dbProjects = projectsRes.rows;
+    const dbLocations = locationsRes.rows;
 
     // Build settings map from DB with fallback defaults
     const settingsMap: Record<string, string> = {
@@ -138,9 +144,14 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     const livePhone = settingsMap.contact_phone;
     const liveEmail = settingsMap.contact_email;
     const liveAddress = settingsMap.contact_address;
-    const cmsPages = pagesRes.rows;
 
-    // 3. Intent Detection & Live RAG Routing
+    // 3. Multi-Turn History Context Aggregation
+    const historyUserTexts = Array.isArray(history)
+      ? history.filter((h: any) => h.role === 'user' || h.role === 'customer').map((h: any) => String(h.content || ''))
+      : [];
+    const contextualText = [...historyUserTexts.slice(-2), trimmedMsg].join(' ').toLowerCase();
+
+    // 4. Intent Detection & Live RAG Entity Extraction
     let reply = '';
     const suggestedActions: string[] = [];
     let detectedIntent = 'GENERAL';
@@ -162,12 +173,15 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     const plotCodeMatch = trimmedMsg.match(/RKS-[A-Z]{2}-\d{3}/i) || 
                           trimmedMsg.match(/(?:plot|மனை)\s*(?:no\.?|number)?\s*([0-9]{1,3})/i);
 
-    // Comparison query (e.g. "plot 1 or plot 2", "plot 53 or plot 58", "compare plot X and plot Y")
+    // Comparison query
     const compareMatches = [...trimmedMsg.matchAll(/(?:plot|மனை)\s*(?:no\.?|number)?\s*([0-9]{1,3})/gi)];
     const isComparison = (compareMatches.length >= 2 || lowerMsg.includes('compare') || lowerMsg.includes('bigger') || lowerMsg.includes('ஒப்பிடு') || lowerMsg.includes('பெரியது')) && compareMatches.length >= 2;
 
-    // City mention
-    const cityList = ['chennai', 'trichy', 'coimbatore', 'hosur', 'bangalore'];
+    // Dynamic City / Location Matching (English & Tamil)
+    const knownCities = Array.from(new Set([
+      ...dbLocations.map((l: any) => l.city?.toLowerCase()).filter(Boolean),
+      'chennai', 'trichy', 'coimbatore', 'hosur', 'bangalore', 'kancheepuram', 'chengalpattu', 'krishnagiri'
+    ]));
     const tamilCityMap: Record<string, string> = {
       'சென்னை': 'chennai',
       'திருச்சி': 'trichy',
@@ -176,15 +190,44 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
       'ஓசூர்': 'hosur',
       'பெங்களூரு': 'bangalore'
     };
-    let mentionedCity = cityList.find(c => lowerMsg.includes(c));
+
+    let mentionedCity = knownCities.find(c => contextualText.includes(c));
     if (!mentionedCity) {
       for (const [taCity, enCity] of Object.entries(tamilCityMap)) {
-        if (trimmedMsg.includes(taCity)) {
+        if (contextualText.includes(taCity)) {
           mentionedCity = enCity;
           break;
         }
       }
     }
+
+    // Dynamic Micro-market / Location Name matching
+    const matchedLocObj = dbLocations.find((l: any) => 
+      l.name && contextualText.includes(l.name.toLowerCase())
+    );
+
+    // Dynamic Project Name / Code matching
+    const matchedProjectObj = dbProjects.find((p: any) => 
+      (p.name && contextualText.includes(p.name.toLowerCase())) ||
+      (p.code && contextualText.includes(p.code.toLowerCase()))
+    );
+
+    // Dynamic Property Type matching
+    const propertyTypesList = ['residential plot', 'commercial plot', 'villa', 'independent house', 'agricultural land', 'industrial zone', 'apartment', 'duplex'];
+    const matchedPropertyType = propertyTypesList.find(pt => contextualText.includes(pt)) ||
+      (contextualText.includes('commercial') || contextualText.includes('வணிக') ? 'commercial' : undefined) ||
+      (contextualText.includes('residential') || contextualText.includes('குடியிருப்பு') ? 'residential' : undefined) ||
+      (contextualText.includes('villa') || contextualText.includes('வில்லா') ? 'villa' : undefined) ||
+      (contextualText.includes('agricultural') || contextualText.includes('விவசாய') ? 'agricultural' : undefined) ||
+      (contextualText.includes('industrial') || contextualText.includes('தொழில்') ? 'industrial' : undefined);
+
+    // Dynamic Facing matching
+    const facingsList = ['north', 'south', 'east', 'west', 'north-east', 'north-west', 'south-east', 'south-west'];
+    const matchedFacing = facingsList.find(f => contextualText.includes(f)) ||
+      (contextualText.includes('வடக்கு') ? 'north' : undefined) ||
+      (contextualText.includes('தெற்கு') ? 'south' : undefined) ||
+      (contextualText.includes('கிழக்கு') ? 'east' : undefined) ||
+      (contextualText.includes('மேற்கு') ? 'west' : undefined);
 
     // Budget match (e.g. "under 5 lakhs", "under 15L", "below 10 lakh", "500000", "5 lakhs")
     const budgetMatch = lowerMsg.match(/(?:under|below|less than|within|குறைவாக|வரை)?\s*₹?\s*(\d+(?:\.\d+)?)\s*(?:lakh|lakhs|l|லட்சம்|crore|cr|கோடி)?/i);
@@ -384,8 +427,8 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
         suggestedActions.push('Check Specific Plot', 'Book Free Site Visit', 'View Legal FAQ');
       }
 
-    // Intent D: City Filter and/or Budget Filter
-    } else if (mentionedCity || budgetFilter) {
+    // Intent D: Progressive Inventory Filtering (City, Micro-Market, Project, Type, Facing, Budget)
+    } else if (mentionedCity || matchedLocObj || matchedProjectObj || matchedPropertyType || matchedFacing || budgetFilter) {
       detectedIntent = 'INVENTORY_FILTER';
       let filtered = availablePlots;
 
@@ -396,33 +439,67 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
         );
       }
 
+      if (matchedLocObj) {
+        filtered = filtered.filter((p: any) => 
+          (p.location_name && p.location_name.toLowerCase().includes(matchedLocObj.name.toLowerCase()))
+        );
+      }
+
+      if (matchedProjectObj) {
+        filtered = filtered.filter((p: any) => 
+          (p.project_name && p.project_name.toLowerCase().includes(matchedProjectObj.name.toLowerCase())) ||
+          (p.project_code && p.project_code.toLowerCase().includes(matchedProjectObj.code.toLowerCase()))
+        );
+      }
+
+      if (matchedPropertyType) {
+        filtered = filtered.filter((p: any) => 
+          (p.property_type && p.property_type.toLowerCase().includes(matchedPropertyType.toLowerCase()))
+        );
+      }
+
+      if (matchedFacing) {
+        filtered = filtered.filter((p: any) => 
+          (p.facing && p.facing.toLowerCase().includes(matchedFacing.toLowerCase()))
+        );
+      }
+
       if (budgetFilter) {
         filtered = filtered.filter((p: any) => Number(p.total_price) <= budgetFilter!);
       }
 
       const count = filtered.length;
-      const top3 = filtered.slice(0, 3);
+      const top3 = filtered.slice(0, 4);
+
+      const filterDescr = [
+        mentionedCity ? `in ${mentionedCity.toUpperCase()}` : '',
+        matchedLocObj ? `(${matchedLocObj.name})` : '',
+        matchedProjectObj ? `[${matchedProjectObj.name}]` : '',
+        matchedPropertyType ? `Type: ${matchedPropertyType}` : '',
+        matchedFacing ? `Facing: ${matchedFacing}` : '',
+        budgetFilter ? `under ${formatPriceINR(budgetFilter)}` : ''
+      ].filter(Boolean).join(' ');
 
       if (count === 0) {
         if (isTa) {
-          reply = `மன்னிக்கவும், ${mentionedCity ? mentionedCity.toUpperCase() : ''} ${budgetFilter ? `${formatPriceINR(budgetFilter, true)}-க்குள்` : ''} உடனடி விற்பனைக்கு மனைகள் தற்போது இல்லை. எங்கள் அருகிலுள்ள பிற வளர்ச்சி மண்டலங்களை பார்க்க விரும்புகிறீர்களா?`;
+          reply = `மன்னிக்கவும், ${filterDescr} தங்களின் நிபந்தனைகளுக்கு ஏற்ற உடனடி விற்பனை மனைகள் தற்போது நேரடி தரவுத்தளத்தில் இல்லை. எங்கள் அருகிலுள்ள பிற வளர்ச்சி மண்டலங்களை பார்க்க விரும்புகிறீர்களா?`;
           suggestedActions.push('அனைத்து கிடைக்கும் மனைகள்', 'வாட்ஸ்அப் உதவி', 'தளப் பார்வை');
         } else {
-          reply = `Currently, there are no available plots matching ${mentionedCity ? `in ${mentionedCity.toUpperCase()}` : ''} ${budgetFilter ? `under ${formatPriceINR(budgetFilter)}` : ''} in our live inventory. Would you like to view alternative plots in nearby growth corridors?`;
+          reply = `Currently, there are no available plots matching criteria **${filterDescr}** in our live inventory. Would you like to view alternative plots in nearby growth corridors?`;
           suggestedActions.push('View All Available Plots', 'Contact via WhatsApp', 'Book Free Site Visit');
         }
       } else {
         const plotListStr = top3.map((p: any) => 
           isTa 
-            ? `• **${p.property_code}** (${p.city || p.location_name}): ${formatArea(p.area_sqft, true)} @ ₹${p.rate_per_sqft}/சதுர அடி = **${formatPriceINR(p.total_price, true)}**`
-            : `• **${p.property_code}** (${p.city || p.location_name}): ${formatArea(p.area_sqft)} @ ₹${p.rate_per_sqft}/sq.ft = **${formatPriceINR(p.total_price)}**`
+            ? `• **${p.property_code}** (${p.project_name || p.city || p.location_name}): ${formatArea(p.area_sqft, true)}, திசை: ${p.facing || 'கிழக்கு'}, சதுர அடி: ₹${p.rate_per_sqft} = **${formatPriceINR(p.total_price, true)}**`
+            : `• **${p.property_code}** (${p.project_name || p.city || p.location_name}): ${formatArea(p.area_sqft)}, Facing: ${p.facing || 'East'}, ₹${p.rate_per_sqft}/sq.ft = **${formatPriceINR(p.total_price)}**`
         ).join('\n');
 
         if (isTa) {
-          reply = `📍 **${count} மனைகள் நேரடி தரவுத்தளத்தில் கண்டறியப்பட்டன:**\n\n${plotListStr}\n\n${count > 3 ? `...மற்றும் ${count - 3} கூடுதல் மனைகள் உள்ளன.` : ''}\n\nஇலவச வாகனத்துடன் கூடிய நேரடி தளப் பார்வையை முன்பதிவு செய்ய விரும்புகிறீர்களா?`;
-          suggestedActions.push('தளப் பார்வை முன்பதிவு', 'விலை விவரங்கள்', 'வாட்ஸ்அப் உதவி');
+          reply = `📍 **${count} சரிபார்க்கப்பட்ட மனைகள் கண்டறியப்பட்டன (${filterDescr}):**\n\n${plotListStr}\n\n${count > 4 ? `...மற்றும் ${count - 4} கூடுதல் மனைகள் உள்ளன.` : ''}\n\nஇலவச வாகனத்துடன் கூடிய நேரடி தளப் பார்வையை முன்பதிவு செய்ய விரும்புகிறீர்களா?`;
+          suggestedActions.push('தளப் பார்வை முன்பதிவு', 'வங்கி கடன் உதவி', 'வாட்ஸ்அப் உதவி');
         } else {
-          reply = `📍 **Found ${count} verified plots matching your criteria:**\n\n${plotListStr}\n\n${count > 3 ? `...and ${count - 3} more plots in this range.` : ''}\n\nWould you like to book a complimentary cab tour to inspect these plots in person?`;
+          reply = `📍 **Found ${count} verified plots matching criteria (${filterDescr}):**\n\n${plotListStr}\n\n${count > 4 ? `...and ${count - 4} more plots in this range.` : ''}\n\nWould you like to book a complimentary cab tour to inspect these plots in person?`;
           suggestedActions.push('Book Free Site Visit', 'Check Bank Loan Eligibility', 'Speak to Executive');
         }
       }
