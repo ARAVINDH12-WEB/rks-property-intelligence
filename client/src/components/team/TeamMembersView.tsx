@@ -130,9 +130,8 @@ export const TeamMembersView: React.FC = () => {
       };
       if (
         editingUser.id === currentUser.id ||
-        editingUser.email === currentUser.email ||
-        editingUser.role === 'ADMIN' ||
-        activeRole === 'ADMIN'
+        editingUser.email.toLowerCase() === (currentUser.email || '').toLowerCase() ||
+        (editingUser.role === 'ADMIN' && currentUser.role === 'ADMIN')
       ) {
         updateCurrentUser(updatedUserObj);
       }

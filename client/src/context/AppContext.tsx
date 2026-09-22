@@ -219,6 +219,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   });
 
+  // Automatically fetch fresh profile from database whenever an auth token exists
+  useEffect(() => {
+    const token = localStorage.getItem('rks_auth_token') || sessionStorage.getItem('rks_auth_token');
+    if (token && token !== 'rks_guest_viewer_session') {
+      api.getMe()
+        .then((res) => {
+          if (res?.user) {
+            setSavedUser(res.user);
+            try {
+              sessionStorage.setItem('rks_auth_session', JSON.stringify(res.user));
+              localStorage.setItem('rks_auth_session', JSON.stringify(res.user));
+            } catch {}
+          }
+        })
+        .catch(() => {});
+    }
+  }, [isLoggedIn]);
+
   const updateCurrentUser = (userPartial: Partial<User>) => {
     setSavedUser((prev: any) => {
       const updated = { ...(prev || {}), ...userPartial };
@@ -232,10 +250,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const currentUser: User = {
     id: savedUser?.id || (activeRole === 'ADMIN' ? 1 : 999),
-    name: savedUser?.name || (activeRole === 'ADMIN' ? 'Rajesh Kumar S (Director)' : 'Guest Customer'),
-    email: savedUser?.email || (activeRole === 'ADMIN' ? 'admin@rks.com' : 'customer@rks.com'),
+    name: savedUser?.name || (activeRole === 'ADMIN' ? 'Rajesh Kumar S' : 'Guest Customer'),
+    email: savedUser?.email || (activeRole === 'ADMIN' ? 'admin@rksprime.com' : 'customer@rks.com'),
     role: savedUser?.role || activeRole,
-    phone: savedUser?.phone || '+91 98400 11223',
+    phone: savedUser?.phone || '+91 98400 12345',
     avatar_url: savedUser?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
   };
 
