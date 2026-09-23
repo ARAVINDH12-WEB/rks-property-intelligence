@@ -175,12 +175,32 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
-    return !!sessionStorage.getItem('rks_auth_session');
+    return !!(
+      sessionStorage.getItem('rks_auth_session') ||
+      localStorage.getItem('rks_auth_session') ||
+      (localStorage.getItem('rks_auth_token') && localStorage.getItem('rks_auth_token') !== 'rks_guest_viewer_session')
+    );
+  });
+
+  const [savedUser, setSavedUser] = useState<any>(() => {
+    try {
+      const stored = sessionStorage.getItem('rks_auth_session') || localStorage.getItem('rks_auth_session');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
   });
 
   // Role Management
   const [activeRole, setActiveRoleState] = useState<UserRole>(() => {
-    return (sessionStorage.getItem('rks_active_role') as UserRole) || 'VIEWER';
+    const sessionRole = sessionStorage.getItem('rks_active_role') || localStorage.getItem('rks_active_role');
+    if (sessionRole && sessionRole !== 'VIEWER') {
+      return sessionRole as UserRole;
+    }
+    if (savedUser?.role) {
+      return savedUser.role as UserRole;
+    }
+    return (sessionRole as UserRole) || 'VIEWER';
   });
 
   const setActiveRole = (role: UserRole) => {
@@ -210,15 +230,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       .catch(() => {});
   };
 
-  const [savedUser, setSavedUser] = useState<any>(() => {
-    try {
-      const stored = sessionStorage.getItem('rks_auth_session') || localStorage.getItem('rks_auth_session');
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
-    }
-  });
-
   // Automatically fetch fresh profile from database whenever an auth token exists
   useEffect(() => {
     const token = localStorage.getItem('rks_auth_token') || sessionStorage.getItem('rks_auth_token');
@@ -227,6 +238,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         .then((res) => {
           if (res?.user) {
             setSavedUser(res.user);
+            setIsLoggedIn(true);
+            if (res.user.role) {
+              setActiveRoleState(res.user.role as UserRole);
+              sessionStorage.setItem('rks_active_role', res.user.role);
+              localStorage.setItem('rks_active_role', res.user.role);
+            }
             try {
               sessionStorage.setItem('rks_auth_session', JSON.stringify(res.user));
               localStorage.setItem('rks_auth_session', JSON.stringify(res.user));
@@ -240,6 +257,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const updateCurrentUser = (userPartial: Partial<User>) => {
     setSavedUser((prev: any) => {
       const updated = { ...(prev || {}), ...userPartial };
+      if (updated.role) {
+        setActiveRoleState(updated.role as UserRole);
+        sessionStorage.setItem('rks_active_role', updated.role);
+        localStorage.setItem('rks_active_role', updated.role);
+      }
       try {
         sessionStorage.setItem('rks_auth_session', JSON.stringify(updated));
         localStorage.setItem('rks_auth_session', JSON.stringify(updated));
