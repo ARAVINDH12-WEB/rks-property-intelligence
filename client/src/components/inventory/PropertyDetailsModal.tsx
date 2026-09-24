@@ -37,8 +37,8 @@ import {
 interface PropertyDetailsModalProps {
   propertyId: number | null;
   onClose: () => void;
-  onEdit: (prop: Property) => void;
-  onDeleteRequest: (prop: Property) => void;
+  onEdit?: (prop: Property) => void;
+  onDeleteRequest?: (prop: Property) => void;
 }
 
 export const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
@@ -237,7 +237,7 @@ export const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
 
                 {canEdit && (
                   <button
-                    onClick={() => onEdit(property)}
+                    onClick={() => onEdit?.(property)}
                     className="flex items-center gap-1.5 rounded-xl bg-amber-500 px-3.5 py-2 text-xs font-bold text-black shadow-lg shadow-amber-500/20 hover:bg-amber-400 transition-colors cursor-pointer"
                   >
                     <Edit2 className="h-3.5 w-3.5 stroke-[2.5]" />
@@ -265,7 +265,7 @@ export const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
 
                 {canEdit && (
                   <button
-                    onClick={() => onDeleteRequest(property)}
+                    onClick={() => onDeleteRequest?.(property)}
                     title="Archive or Delete"
                     className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-2 text-rose-500 dark:text-rose-400 hover:bg-rose-500/20 transition-colors cursor-pointer"
                   >

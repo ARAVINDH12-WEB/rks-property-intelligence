@@ -25,7 +25,7 @@ const statusColors = {
 
 export const PropertyListingPage: React.FC<PropertyListingPageProps> = ({ cityFilter, hideNavFooter, children }) => {
   const { t, i18n } = useTranslation();
-  const { theme, openSiteVisitModal } = useApp();
+  const { theme, openSiteVisitModal, setSelectedPropertyId } = useApp();
   const navigate = useNavigate();
 
   const currentLocale: Locale = i18n.language === 'ta' ? 'ta' : 'en';
@@ -433,8 +433,8 @@ export const PropertyListingPage: React.FC<PropertyListingPageProps> = ({ cityFi
 
                       <div className={`mt-4 gap-2 ${viewMode === 'list' ? 'flex' : 'grid grid-cols-2'}`}>
                         <button 
-                          onClick={() => navigate(getLocalizedPath('/contact', currentLocale))} 
-                          className="flex-1 py-2 rounded-lg border border-brand-teal text-brand-teal font-semibold hover:bg-brand-teal/5 transition-colors text-center text-xs sm:text-sm"
+                          onClick={() => setSelectedPropertyId(plot.id)} 
+                          className="flex-1 py-2 rounded-lg border border-brand-teal text-brand-teal font-semibold hover:bg-brand-teal/5 transition-colors text-center text-xs sm:text-sm cursor-pointer"
                         >
                           {t('featured.viewDetails')}
                         </button>

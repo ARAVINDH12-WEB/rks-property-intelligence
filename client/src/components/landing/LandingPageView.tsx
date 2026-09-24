@@ -82,7 +82,7 @@ const CATEGORY_ITEMS = [
 
 export const LandingPageView: React.FC<LandingPageViewProps> = () => {
   const { t, i18n } = useTranslation();
-  const { openSiteVisitModal } = useApp();
+  const { openSiteVisitModal, setSelectedPropertyId } = useApp();
   const navigate = useNavigate();
 
   const currentLocale: Locale = i18n.language === 'ta' ? 'ta' : 'en';
@@ -794,8 +794,8 @@ export const LandingPageView: React.FC<LandingPageViewProps> = () => {
 
                       <div className="flex gap-3 mt-auto">
                         <button 
-                          onClick={handleExplore} 
-                          className="flex-1 py-2.5 rounded-lg border border-brand-teal text-brand-teal font-semibold hover:bg-brand-teal/5 transition-colors text-center text-sm"
+                          onClick={() => setSelectedPropertyId(plot.id)} 
+                          className="flex-1 py-2.5 rounded-lg border border-brand-teal text-brand-teal font-semibold hover:bg-brand-teal/5 transition-colors text-center text-sm cursor-pointer"
                         >
                           {t('featured.viewDetails')}
                         </button>

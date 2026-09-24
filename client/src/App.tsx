@@ -130,18 +130,6 @@ const MainLayout: React.FC = () => {
         </main>
       </div>
 
-      {/* Slide-over Property Details Modal */}
-      {selectedPropertyId && (
-        <PropertyDetailsModal
-          propertyId={selectedPropertyId}
-          onClose={() => setSelectedPropertyId(null)}
-          onEdit={(prop) => {
-            setEditingProperty(prop);
-          }}
-          onDeleteRequest={(prop) => setPropToDelete(prop)}
-        />
-      )}
-
       {/* Add / Edit Property Workspace Modal */}
       {(isAddModalOpen || editingProperty) && (
         <PropertyFormModal
@@ -211,6 +199,9 @@ const AppContent: React.FC = () => {
     isSiteVisitModalOpen,
     setIsSiteVisitModalOpen,
     siteVisitProperty,
+    selectedPropertyId,
+    setSelectedPropertyId,
+    setEditingProperty,
   } = useApp();
   const location = useLocation();
   const { i18n } = useTranslation();
@@ -288,6 +279,17 @@ const AppContent: React.FC = () => {
         
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+
+      {/* Global Slide-over Property Details Modal accessible across public & admin pages */}
+      {selectedPropertyId && (
+        <PropertyDetailsModal
+          propertyId={selectedPropertyId}
+          onClose={() => setSelectedPropertyId(null)}
+          onEdit={(prop) => {
+            setEditingProperty(prop);
+          }}
+        />
+      )}
 
       {/* Global Site Visit Booking Modal accessible across public & admin views */}
       {isSiteVisitModalOpen && (
