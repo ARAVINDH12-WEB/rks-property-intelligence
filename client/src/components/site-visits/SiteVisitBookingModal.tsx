@@ -35,9 +35,8 @@ export const SiteVisitBookingModal: React.FC<SiteVisitBookingModalProps> = ({
 }) => {
   const { showToast, refreshInventory } = useApp();
 
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const minDate = tomorrow.toISOString().split('T')[0];
+  const today = new Date();
+  const minDate = today.toISOString().split('T')[0];
 
   const [formData, setFormData] = useState({
     customer_name: '',
@@ -92,6 +91,17 @@ export const SiteVisitBookingModal: React.FC<SiteVisitBookingModalProps> = ({
 
   const handleReset = () => {
     setBookingConfirmation(null);
+    setFormData({
+      customer_name: '',
+      customer_phone: '',
+      customer_email: '',
+      visit_date: minDate,
+      time_slot: '10:00 AM - 12:00 PM',
+      pickup_required: false,
+      pickup_location: '',
+      attendees_count: 2,
+      notes: '',
+    });
     onClose();
   };
 

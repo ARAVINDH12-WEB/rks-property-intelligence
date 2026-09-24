@@ -159,6 +159,9 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
       console.warn('[Site Visits] WhatsApp alert dispatch warning:', err);
     });
 
+    // Invalidate site visits cache so admin dashboard shows fresh live bookings instantly
+    memoryCache.clearPattern('site_visits');
+
     res.status(201).json({
       message: 'Site visit successfully scheduled!',
       bookingReference: `SV-${String(booking.id).padStart(5, '0')}`,
@@ -301,6 +304,7 @@ router.patch('/:id/status', authenticate, authorize(['ADMIN', 'MANAGER', 'EMPLOY
       );
     } catch {}
 
+    memoryCache.clearPattern('site_visits');
     res.json({
       message: `Site visit status updated to ${newStatus}`,
       booking: updated,
@@ -315,6 +319,7 @@ router.delete('/:id', authenticate, authorize(['ADMIN', 'MANAGER']), async (req:
   try {
     const id = parseInt(req.params.id);
     await query('DELETE FROM site_visits WHERE id = $1', [id]);
+    memoryCache.clearPattern('site_visits');
     res.json({ message: 'Site visit booking removed' });
   } catch (error: any) {
     res.status(500).json({ error: error?.message || 'Failed to delete site visit' });

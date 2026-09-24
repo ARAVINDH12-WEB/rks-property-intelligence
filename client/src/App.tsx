@@ -142,15 +142,6 @@ const MainLayout: React.FC = () => {
         />
       )}
 
-      {/* Site Visit Booking Modal */}
-      {isSiteVisitModalOpen && (
-        <SiteVisitBookingModal
-          isOpen={isSiteVisitModalOpen}
-          property={siteVisitProperty}
-          onClose={() => setIsSiteVisitModalOpen(false)}
-        />
-      )}
-
       {/* Add / Edit Property Workspace Modal */}
       {(isAddModalOpen || editingProperty) && (
         <PropertyFormModal
@@ -217,6 +208,9 @@ const AppContent: React.FC = () => {
     isPermissionDenied,
     setIsPermissionDenied,
     logoutToGateway,
+    isSiteVisitModalOpen,
+    setIsSiteVisitModalOpen,
+    siteVisitProperty,
   } = useApp();
   const location = useLocation();
   const { i18n } = useTranslation();
@@ -294,6 +288,15 @@ const AppContent: React.FC = () => {
         
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+
+      {/* Global Site Visit Booking Modal accessible across public & admin views */}
+      {isSiteVisitModalOpen && (
+        <SiteVisitBookingModal
+          isOpen={isSiteVisitModalOpen}
+          property={siteVisitProperty}
+          onClose={() => setIsSiteVisitModalOpen(false)}
+        />
+      )}
 
       <WhatsAppFloatingButton />
       <AiConciergeChat />
